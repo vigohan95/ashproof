@@ -1,0 +1,222 @@
+"""Control plane API.
+
+    POST /tasks                     create + start a task (JSON; files as base64)
+    GET  /tasks                     list
+    GET  /tasks/{id}                timeline (status, plan, sandboxes, events, cost so far)
+    POST /tasks/{id}/approve        {"approved": true|false} - human approval gate for new egress domains
+    POST /tasks/{id}/kill           kill switch: revoke tokens, destroy VMs, record it
+    GET  /tasks/{id}/receipt        receipt JSON   (?format=md for Markdown, also /receipt.md)
+    GET  /tasks/{id}/outputs/{name} an output file of the primary run
+    GET  /health
+
+The orchestrator and its backend are injected through ``create_app(deps)`` so the same app
+is exercised end-to-end against mock Vultr + FakeLLM + local runner in tests.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import base64
+from contextlib import asynccontextmanager
+from typing import Any
+
+from fastapi import FastAPI, HTTPException, Query, Response
+from fastapi.responses import JSONResponse, PlainTextResponse
+from pydantic import BaseModel, Field
+
+from brz import __version__
+from brz.orchestrator import TaskRequest, TaskState
+
+from .deps import Deps, build_deps_from_env
+
+
+class FileIn(BaseModel):
+    name: str = Field(min_length=1, max_length=120, pattern=r"^[A-Za-z0-9._-]+$")
+    content_b64: str
+
+
+class TaskCreate(BaseModel):
+    task: str = Field(min_length=3, max_length=20_000)
+    budget_usd: float = Field(default=0.25, gt=0, le=50)
+    allowed_domains: list[str] = Field(default_factory=list)
+    files: list[FileIn] = Field(default_factory=list)
+
+
+class ApproveIn(BaseModel):
+    approved: bool = True
+
+
+class KillIn(BaseModel):
+    reason: str = "user"
+
+
+class TaskStore:
+    def __init__(self) -> None:
+        self.tasks: dict[str, TaskState] = {}
+        self.runs: dict[str, asyncio.Task] = {}
+
+    def get(self, task_id: str) -> TaskState:
+        state = self.tasks.get(task_id)
+        if state is None:
+            raise HTTPException(status_code=404, detail="task not found")
+        return state
+
+    async def wait(self, task_id: str, timeout: float = 120.0) -> TaskState:
+        """Test helper: block until the orchestration task for ``task_id`` finishes."""
+        run = self.runs.get(task_id)
+        if run is not None:
+            await asyncio.wait_for(asyncio.shield(run), timeout=timeout)
+        return self.get(task_id)
+
+
+def create_app(deps: Deps | None = None) -> FastAPI:
+    store = TaskStore()
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        app.state.deps = deps or build_deps_from_env()
+        app.state.store = store
+        try:
+            yield
+        finally:
+            for run in list(store.runs.values()):
+                if not run.done():
+                    run.cancel()
+            await app.state.deps.aclose()
+
+    app = FastAPI(
+        title="Blast Radius Zero control plane",
+        version=__version__,
+        description=(
+            "Containment-first agent execution on Vultr: one throwaway VM per task, verified, receipted, destroyed."
+        ),
+        lifespan=lifespan,
+    )
+
+    def _deps() -> Deps:
+        return app.state.deps
+
+    @app.get("/health")
+    async def health() -> dict[str, Any]:
+        d = _deps()
+        running = sum(1 for r in store.runs.values() if not r.done())
+        return {
+            "ok": True,
+            "version": __version__,
+            "mode": d.mode,
+            "provider": d.backend.provider,
+            "inner_isolation": d.backend.inner_isolation,
+            "tasks": len(store.tasks),
+            "running": running,
+        }
+
+    @app.post("/tasks", status_code=202)
+    async def create_task(body: TaskCreate) -> dict[str, Any]:
+        try:
+            files = {f.name: base64.b64decode(f.content_b64, validate=True) for f in body.files}
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"bad base64 in files: {exc}") from exc
+        request = TaskRequest(
+            task=body.task, budget_usd=body.budget_usd, allowed_domains=body.allowed_domains, files=files
+        )
+        orch = _deps().orchestrator
+        state = orch.new_task(request)
+        store.tasks[state.id] = state
+        store.runs[state.id] = asyncio.create_task(orch.run(state), name=f"brz-task-{state.id}")
+        return {
+            "id": state.id,
+            "status": state.status,
+            "links": {
+                "timeline": f"/tasks/{state.id}",
+                "receipt": f"/tasks/{state.id}/receipt",
+                "kill": f"/tasks/{state.id}/kill",
+            },
+        }
+
+    @app.get("/tasks")
+    async def list_tasks() -> dict[str, Any]:
+        return {
+            "tasks": [
+                {
+                    "id": s.id,
+                    "status": s.status,
+                    "created_at": s.created_at.isoformat(),
+                    "task": s.request.task[:120],
+                    "total_usd": s.cost.total_usd,
+                }
+                for s in store.tasks.values()
+            ]
+        }
+
+    @app.get("/tasks/{task_id}")
+    async def get_task(task_id: str) -> dict[str, Any]:
+        return store.get(task_id).timeline()
+
+    @app.post("/tasks/{task_id}/approve")
+    async def approve(task_id: str, body: ApproveIn) -> dict[str, Any]:
+        state = store.get(task_id)
+        if state.status != "awaiting_approval":
+            raise HTTPException(status_code=409, detail=f"task is {state.status}, not awaiting_approval")
+        _deps().orchestrator.approve(state, body.approved)
+        return {"id": task_id, "approved": body.approved, "domains": state.pending_domains}
+
+    @app.post("/tasks/{task_id}/kill")
+    async def kill(task_id: str, body: KillIn | None = None) -> dict[str, Any]:
+        state = store.get(task_id)
+        reason = body.reason if body else "user"
+        if state.finished_at is not None:
+            return {"id": task_id, "status": state.status, "killed": False, "detail": "task already finished"}
+        await _deps().orchestrator.kill(state, reason)
+        return {
+            "id": task_id,
+            "status": state.status,
+            "killed": True,
+            "sandboxes": [
+                {"instance_id": h.instance_id, "destroyed": bool(h.proof and h.proof.destroyed)}
+                for h in state.sandboxes
+            ],
+        }
+
+    @app.get("/tasks/{task_id}/receipt")
+    async def receipt(task_id: str, format: str = Query(default="json", pattern="^(json|md)$")) -> Response:
+        state = store.get(task_id)
+        if state.receipt is None:
+            raise HTTPException(status_code=409, detail=f"receipt not ready (task is {state.status})")
+        if format == "md":
+            return PlainTextResponse(state.receipt.to_markdown(), media_type="text/markdown; charset=utf-8")
+        return JSONResponse(content=state.receipt.model_dump(mode="json"))
+
+    @app.get("/tasks/{task_id}/receipt.md")
+    async def receipt_md(task_id: str) -> Response:
+        return await receipt(task_id, format="md")
+
+    @app.get("/tasks/{task_id}/outputs/{name}")
+    async def output_file(task_id: str, name: str) -> Response:
+        state = store.get(task_id)
+        data = state.outputs.get(name)
+        if data is None:
+            raise HTTPException(status_code=404, detail="no such output")
+        media = "application/json" if name.endswith(".json") else "text/plain; charset=utf-8"
+        return Response(content=data, media_type=media)
+
+    return app
+
+
+app = create_app()
+
+
+def main() -> None:
+    import os
+
+    import uvicorn
+
+    uvicorn.run(
+        "apps.control_plane.app:app",
+        host=os.environ.get("BRZ_HOST", "127.0.0.1"),
+        port=int(os.environ.get("BRZ_PORT", "8000")),
+        reload=False,
+    )
+
+
+if __name__ == "__main__":
+    main()
