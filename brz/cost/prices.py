@@ -1,0 +1,113 @@
+"""Price tables.
+
+Static numbers come from RESEARCH.md section 4 (2026-10-30):
+
+* Serverless Inference ``GET /v1/models`` per-model pricing ($ per 1M tokens).
+* Cloud Compute hourly rates: VX1 from third-party snapshots (2c/8g $0.060/h, 4c/16g
+  $0.12/h, m-2c/16g $0.08/h); regular/HF/HP from the monthly price / 672 h.
+
+``LivePriceTable`` is the event-day replacement: it is fed by ``GET /v2/plans`` (which carries
+``monthly_cost`` and, on newer payloads, ``hourly_cost``) and ``GET /v1/models`` (pricing shape
+to be confirmed against the live JSON - see docs/EVENT-DAY-TODO.md). Both implement the same
+protocol so the meter does not care which one it gets.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Protocol
+
+HOURS_PER_MONTH = 672  # Vultr's monthly billing cap for standard plans
+
+
+@dataclass(frozen=True)
+class TokenPrice:
+    input_per_1m: float
+    output_per_1m: float
+
+
+# model id -> ($/1M input, $/1M output); RESEARCH.md section 4.1 table
+STATIC_TOKEN_PRICES: dict[str, TokenPrice] = {
+    "glm-5.3": TokenPrice(0.75, 3.00),
+    "glm-5.3-flash": TokenPrice(0.10, 0.35),
+    "qwen3.8-27b": TokenPrice(0.15, 1.00),
+    "deepseek-v4.1-flash-1017": TokenPrice(0.15, 0.60),
+    "minimax-m3.1-flash": TokenPrice(0.20, 0.90),
+    "nemotron-3-nano-omni-30b-a3b-reasoning": TokenPrice(0.10, 0.25),
+    "nemotron-3.5-content-safety": TokenPrice(0.05, 0.0),
+    # local / test models are free
+    "gemma3:4b": TokenPrice(0.0, 0.0),
+    "fake-llm": TokenPrice(0.0, 0.0),
+}
+
+# Vultr documented flat rate when a model is missing from the table ($0.55 in / $2.75 out)
+FALLBACK_TOKEN_PRICE = TokenPrice(0.55, 2.75)
+
+# plan id -> $/hour; RESEARCH.md section 4.2
+STATIC_VM_HOURLY: dict[str, float] = {
+    "vx1-g-2c-8g": 0.060,
+    "vx1-g-4c-16g": 0.120,
+    "vx1-g-4c-16g-240s": 0.120,
+    "vx1-m-2c-16g": 0.080,
+    "vc2-1c-1gb": round(5.0 / HOURS_PER_MONTH, 6),  # $5/mo regular
+    "vhf-1c-1gb": round(6.0 / HOURS_PER_MONTH, 6),  # $6/mo high frequency
+    "vhp-1c-1gb-amd": round(6.0 / HOURS_PER_MONTH, 6),  # $6/mo high performance
+    "vhp-2c-2gb-amd": round(18.0 / HOURS_PER_MONTH, 6),
+}
+FALLBACK_VM_HOURLY = 0.060  # assume a VX1 2c/8g when unknown (conservative)
+
+
+class PriceTable(Protocol):
+    def vm_hourly(self, plan_id: str) -> float: ...
+
+    def token_price(self, model: str) -> TokenPrice: ...
+
+    @property
+    def source(self) -> str: ...
+
+
+class StaticPriceTable:
+    source = "static (RESEARCH.md 2026-10-30)"
+
+    def __init__(
+        self,
+        vm_hourly: dict[str, float] | None = None,
+        token_prices: dict[str, TokenPrice] | None = None,
+    ):
+        self._vm = dict(STATIC_VM_HOURLY if vm_hourly is None else vm_hourly)
+        self._tok = dict(STATIC_TOKEN_PRICES if token_prices is None else token_prices)
+
+    def vm_hourly(self, plan_id: str) -> float:
+        return self._vm.get(plan_id, FALLBACK_VM_HOURLY)
+
+    def token_price(self, model: str) -> TokenPrice:
+        return self._tok.get(model, FALLBACK_TOKEN_PRICE)
+
+
+class LivePriceTable(StaticPriceTable):
+    """Built from live Vultr payloads; falls back to the static table for anything missing."""
+
+    source = "live (/v2/plans + /v1/models)"
+
+    @classmethod
+    def from_payloads(cls, plans: list[dict], models: list[dict] | None = None) -> LivePriceTable:
+        vm: dict[str, float] = dict(STATIC_VM_HOURLY)
+        for p in plans:
+            pid = p.get("id")
+            if not pid:
+                continue
+            if p.get("hourly_cost") is not None:
+                vm[pid] = float(p["hourly_cost"])
+            elif p.get("monthly_cost") is not None:
+                vm[pid] = round(float(p["monthly_cost"]) / HOURS_PER_MONTH, 6)
+        tok: dict[str, TokenPrice] = dict(STATIC_TOKEN_PRICES)
+        for m in models or []:
+            mid = m.get("id")
+            pricing = m.get("pricing") or {}
+            # EVENT-DAY: confirm the exact keys in https://api.vultrinference.com/v1/models
+            if mid and pricing:
+                tok[mid] = TokenPrice(
+                    float(pricing.get("input", pricing.get("prompt", 0.0)) or 0.0),
+                    float(pricing.get("output", pricing.get("completion", 0.0)) or 0.0),
+                )
+        return cls(vm, tok)
