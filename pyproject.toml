@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools==75.6.0", "wheel==0.45.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "blast-radius-zero"
+version = "0.1.0"
+description = "Containment-first agent execution on Vultr: one throwaway VM per task, default-deny egress, zero secrets in the sandbox, independent re-run verification, hash-chained receipts."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "fastapi==0.143.0",
+    "uvicorn==0.54.0",
+    "httpx==0.28.1",
+    "pydantic==2.13.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.0.3",
+    "pytest-asyncio==1.4.0",
+    "respx==0.23.1",
+    "PyYAML==6.0.3",
+    "ruff==0.16.10",
+]
+
+[project.scripts]
+brz-control-plane = "apps.control_plane.app:main"
+
+[tool.setuptools]
+packages = [
+    "brz", "brz.vultr", "brz.llm", "brz.audit", "brz.cost", "brz.sandbox",
+    "apps", "apps.control_plane",
+    "brz_runner",
+]
+package-dir = { "" = ".", "brz_runner" = "sandbox/runner/brz_runner" }
+
+[tool.setuptools.package-data]
+"brz.sandbox" = ["templates/*.tmpl"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = [".", "sandbox/runner"]
+addopts = "-ra"
+markers = [
+    "live: tests that talk to a locally running OpenAI-compatible server (skipped when unreachable)",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["B008", "UP017"]
