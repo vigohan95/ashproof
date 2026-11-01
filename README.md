@@ -65,10 +65,11 @@ step. Both go to zero when the task ends.
 git clone <repo> && cd blast-radius-zero
 python -m venv .venv && . .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
-python -m pytest -q                                   # 90 offline tests, no credentials, no network
+python -m pytest -q                                   # 94 offline tests, no credentials, no network
 
 # Offline demo (mock Vultr + local runner + demo planner): zero credentials
 BRZ_MODE=mock uvicorn apps.control_plane.app:app --port 8000
+# open http://localhost:8000/ui  -> new task -> live timeline (approval gate, kill switch, VM 404 proof) -> receipt
 curl -s localhost:8000/health
 curl -s -X POST localhost:8000/tasks -H 'content-type: application/json' -d '{
   "task": "Total the amount column per region and write summary.json",
@@ -114,14 +115,14 @@ hostnames sharing an approved IP are reachable. The roadmap item is DNS-aware dy
 | Hash-chained audit log + self-verifying receipt (JSON + Markdown) | **real**, tamper tests | `tests/audit` (12 tests) |
 | Cost meter | real; prices from a static table (RESEARCH 2026-10-30); `LivePriceTable.from_payloads` ready for `/v2/plans` + `/v1/models` | `tests/cost` (6 tests) |
 | In-VM runner (HTTP, tokens, executor, secret scan, egress log) | **real**, exercised over real HTTP in tests with a subprocess executor | `tests/sandbox/test_runner.py` |
-| gVisor executor (`runsc --platform=systrap`, OCI bundle) | bundle/config generation tested; `runsc run` **not yet executed** - event day D1 | `tests/sandbox/test_runner.py::test_gvisor_executor_bundle_config` |
-| cloud-init template (nftables default-deny, fixed DNS, TTL timer, runner service, embedded runner) | renders valid YAML, lock-down ordering tested; **not yet booted on a real VM** - event day D1 | `tests/sandbox/test_cloudinit.py` |
-| nftables egress log parsing | real parser; `journalctl -k` reader untested until a VM exists | `tests/sandbox/test_netlog_egress.py` |
-| Orchestrator + control plane API (plan, approval gate, budget breaker, steps + repair, fresh-VM re-run, verify, scan, destroy, receipt, kill switch) | **real**, full flow end-to-end against mock Vultr + local runner + FakeLLM | `tests/app` (10 tests) |
-| Web UI | not started (API + Markdown receipts today); planned for event week | - |
+| gVisor executor (`runsc --platform=systrap`, OCI bundle) | **real, exercised in WSL2 Ubuntu 24.04 (2026-11-01)**: runsc release-20261026.0 ran the repo-generated bundle; Python step as uid 1000 inside kernel `4.19.0-gvisor` in 0.12 s, outputs collected, root read-only, two re-runs byte-identical, timeout -> 124, `needs_network` step reached https://example.com (HTTP 200) while no-network steps have no interface. Not yet run on a Vultr VM | `tests/sandbox/test_runner.py`, `docs/EVENT-DAY-TODO.md` (WSL log) |
+| cloud-init template (nftables default-deny, fixed DNS, TTL timer, runner service, embedded runner) | renders valid YAML; **`cloud-init schema --config-file` valid (cloud-init 26.1), yamllint clean, `nft -c -f` accepts the generated ruleset (nftables 1.0.9)** - all in WSL; **not yet booted on a real VM** - event day D1 | `tests/sandbox/test_cloudinit.py`, `tests/sandbox/test_netlog_egress.py` |
+| In-VM runner under gVisor, driven by signed tokens | **real in WSL**: `/health`, `/steps` (gVisor), replay rejected, `/scan` clean, `/revoke`; `journalctl -k` egress reader untested until a VM exists | WSL log in `docs/EVENT-DAY-TODO.md` |
+| Orchestrator + control plane API (plan, approval gate, budget breaker, steps + repair, fresh-VM re-run, verify, scan, destroy, receipt, kill switch) | **real**, full flow end-to-end against mock Vultr + local runner + FakeLLM | `tests/app` (14 tests) |
+| Web UI (`/ui`: task list, new-task form, live timeline with approval gate / kill switch / VM lifecycle with 404 proof / egress / scan / cost, receipt page with chain verification) | **real**, server-rendered (Jinja2 + vanilla JS, no build step); works in mock mode without credentials | `tests/app/test_ui.py` |
 | Object Storage export, snapshot base image, pre-warm pool, Pattern B (Playwright + vision verify) | not started; see `docs/EVENT-DAY-TODO.md` | - |
 
-Test suite: `python -m pytest -q` -> **90 passed, 1 skipped** (the live LLM smoke test skips when no local
+Test suite: `python -m pytest -q` -> **94 passed, 1 skipped** (the live LLM smoke test skips when no local
 OpenAI-compatible server answers). CI runs ruff + pytest on every push (`.github/workflows/ci.yml`).
 
 ## Repository layout
@@ -131,8 +132,8 @@ brz/              library: vultr/ (API client + mock) · llm/ (client, structure
                   audit/ (hash chain, receipt) · cost/ (meter, prices) · sandbox/ (cloud-init, runner client, backends)
                   orchestrator.py
 sandbox/runner/   brz_runner: the stdlib-only program that runs inside the throwaway VM
-apps/control_plane/  FastAPI app, dependency wiring (mock | live), offline demo planner
-tests/            90 offline tests; tests/llm/test_live_ollama.py is the optional live smoke test
+apps/control_plane/  FastAPI app + server-rendered UI (ui.py, templates/), dependency wiring (mock | live), demo planner
+tests/            94 offline tests; tests/llm/test_live_ollama.py is the optional live smoke test
 docs/             EVENT-DAY-TODO · VIDEO-SCRIPT · SLIDES-OUTLINE · COMPETITORS
 ```
 
