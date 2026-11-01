@@ -113,7 +113,7 @@ def _runner_files_block(src_dir: Path, indent: str = "  ") -> str:
 def render_cloud_init(spec: SandboxSpec, *, runner_dir: Path | None = None) -> str:
     src = runner_dir or runner_source_dir()
     domains_block = "\n".join("      " + d for d in spec.allowed_domains) or "      # (none approved)"
-    extra_args = "--no-gvisor" if spec.inner_isolation == "none" else ""
+    extra_args = " --no-gvisor" if spec.inner_isolation == "none" else ""  # leading space: no trailing blank
     text = _Tmpl(_template_text()).substitute(
         task_id=spec.task_id,
         hostname=spec.host,

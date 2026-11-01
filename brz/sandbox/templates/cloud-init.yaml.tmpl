@@ -68,9 +68,13 @@ write_files:
       curl -fsSL --retry 3 -o gvisor.tar.bz2.sha512 "${URL}/gvisor.tar.bz2.sha512"
       sha512sum -c gvisor.tar.bz2.sha512
       tar -xjf gvisor.tar.bz2
-      RUNSC=$(find . -type f -name runsc | head -n 1)
-      test -n "$RUNSC"
-      install -m 0755 "$RUNSC" /usr/local/bin/runsc
+      test -f runsc && test -d gvisor-bin
+      # release-20261026.0+ runs the sentry as sidecar binaries that MUST live in <dir of runsc>/gvisor-bin/
+      # (verified in WSL 2026-11-01: without them `runsc run` fails with 'sidecar "gvisor_sentry" not usable').
+      install -m 0755 runsc /usr/local/bin/runsc
+      rm -rf /usr/local/bin/gvisor-bin
+      cp -r gvisor-bin /usr/local/bin/gvisor-bin
+      chmod -R 0755 /usr/local/bin/gvisor-bin
       cd / && rm -rf "$WORK"
       /usr/local/bin/runsc --version
   - path: /usr/local/bin/brz-egress-apply
@@ -96,7 +100,7 @@ write_files:
       Environment=PYTHONPATH=/opt/brz/runner
       Environment=PYTHONUNBUFFERED=1
       WorkingDirectory=/work
-      ExecStart=/usr/bin/python3 -m brz_runner --task-id @@{task_id} --token-key-file /etc/brz/token.key --workroot /work --port @@{runner_port} --allow-poweroff @@{runner_extra_args}
+      ExecStart=/usr/bin/python3 -m brz_runner --task-id @@{task_id} --token-key-file /etc/brz/token.key --workroot /work --port @@{runner_port} --allow-poweroff@@{runner_extra_args}
       Restart=on-failure
       RestartSec=2
       # The runner itself is root (it has to drive runsc); every STEP runs as uid 1000 inside gVisor.

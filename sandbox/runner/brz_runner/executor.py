@@ -36,6 +36,7 @@ class StepRequest:
     timeout_s: int = 120
     expected_outputs: list[str] = field(default_factory=list)
     env: dict[str, str] = field(default_factory=dict)  # extra NON-secret env (validated by the server)
+    needs_network: bool = False  # gVisor: --network=host (VM nftables still decides) vs --network=none
 
     @classmethod
     def from_dict(cls, d: dict) -> StepRequest:
@@ -50,6 +51,7 @@ class StepRequest:
             timeout_s=int(d.get("timeout_s", 120)),
             expected_outputs=list(d.get("expected_outputs") or []),
             env={str(k): str(v) for k, v in (d.get("env") or {}).items()},
+            needs_network=bool(d.get("needs_network", False)),
         )
 
 
@@ -127,7 +129,29 @@ class BaseExecutor:
                 fh.write(step.code if step.code.endswith("\n") else step.code + "\n")
         else:
             raise ValueError(f"unknown step kind {step.kind!r}")
+        self._hand_over_ownership([self.workroot, inp, out, os.path.join(self.workroot, "steps"), step_dir])
         return inp, out, step_dir
+
+    # uid/gid the step runs as; None = same user as the runner (SubprocessExecutor)
+    step_uid: int | None = None
+    step_gid: int | None = None
+
+    def _hand_over_ownership(self, dirs: list[str]) -> None:
+        """When the runner is root and steps run as another uid (gVisor), that uid must own /work.
+
+        Found in WSL 2026-11-01: without this the step gets ``PermissionError: /work/out/...``.
+        """
+        if self.step_uid is None or not hasattr(os, "chown") or not hasattr(os, "geteuid") or os.geteuid() != 0:
+            return
+        gid = self.step_gid if self.step_gid is not None else self.step_uid
+        for d in dirs:
+            try:
+                os.chown(d, self.step_uid, gid)
+                for entry in os.scandir(d):
+                    if entry.is_file(follow_symlinks=False):
+                        os.chown(entry.path, self.step_uid, gid)
+            except OSError:
+                pass
 
     def collect_outputs(self, out_dir: str) -> dict[str, bytes]:
         files: dict[str, bytes] = {}
@@ -252,7 +276,8 @@ class GvisorExecutor(BaseExecutor):
         uid: int = 1000,
         gid: int = 1000,
         memory_limit_bytes: int = 1_500_000_000,
-        network: str = "sandbox",  # gVisor netstack; VM nftables still governs egress
+        network: str = "none",  # steps without needs_network get no network at all
+        network_when_needed: str = "host",  # steps with needs_network: host networking, filtered by VM nftables
         **kw,
     ):
         super().__init__(workroot, **kw)
@@ -261,8 +286,11 @@ class GvisorExecutor(BaseExecutor):
         self.bundle_root = bundle_root
         self.uid = uid
         self.gid = gid
+        self.step_uid = uid
+        self.step_gid = gid
         self.memory_limit_bytes = memory_limit_bytes
         self.network = network
+        self.network_when_needed = network_when_needed
 
     def inner_command(self, step: StepRequest, step_dir: str) -> list[str]:
         # paths as seen INSIDE the sandbox: /work is bind-mounted from self.workroot
@@ -339,10 +367,13 @@ class GvisorExecutor(BaseExecutor):
     def command(self, step: StepRequest, step_dir: str) -> list[str]:
         bundle = self.write_bundle(step, step_dir)
         container_id = f"brz-{step.step_id}-{int(time.time())}"
+        # WSL 2026-11-01: with an OCI `network` namespace, --network=sandbox has no interface -> no DNS;
+        # --network=sandbox on the root namespace would take over the VM's NIC. So: none, or host when needed.
+        network = self.network_when_needed if step.needs_network else self.network
         return [
             self.runsc_bin,
             f"--platform={self.platform}",
-            f"--network={self.network}",
+            f"--network={network}",
             "--rootless=false",
             "--overlay2=none",
             "run",

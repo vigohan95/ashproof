@@ -132,6 +132,7 @@ class RunnerClient:
                 "files": {n: base64.b64encode(b).decode("ascii") for n, b in (files or {}).items()},
                 "timeout_s": step.timeout_s,
                 "expected_outputs": step.expected_outputs,
+                "needs_network": step.needs_network,
             },
         }
         data = await self._post("/steps", body)
