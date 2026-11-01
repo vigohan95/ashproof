@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}New task · Blast Radius Zero{% endblock %}
+{% block content %}
+<h1>New task</h1>
+<div class="panel">
+  <form id="new-task-form" onsubmit="return submitTask(event)">
+    <label for="task">What should the agent do? (the planner writes the code; it runs in a throwaway VM)</label>
+    <textarea id="task" name="task" required minlength="3" placeholder="Total the amount column per region from the attached CSV and write summary.json">Total the amount column per region from the attached CSV and write summary.json</textarea>
+
+    <label for="file">Optional CSV (or any text file) - becomes /work/input/&lt;name&gt; inside the sandbox</label>
+    <input type="file" id="file" name="file" accept=".csv,.txt,.json,.md">
+    <div class="muted" style="font-size:12px;margin-top:4px">No file? A small demo <code>sales.csv</code> is attached automatically.</div>
+
+    <div class="grid">
+      <div>
+        <label for="budget">Budget (USD) - the task is refused before any VM if the projection exceeds it</label>
+        <input type="number" id="budget" name="budget_usd" value="0.25" min="0.01" max="50" step="0.01" required>
+      </div>
+      <div>
+        <label for="domains">Pre-approved egress domains (comma separated; everything else is denied)</label>
+        <input type="text" id="domains" name="allowed_domains" placeholder="pypi.org, files.pythonhosted.org">
+      </div>
+    </div>
+
+    <label><input type="checkbox" id="require_approval" checked> Require my approval if the plan asks for domains not listed above (approval gate)</label>
+
+    <div class="row" style="margin-top:16px">
+      <button type="submit" class="primary" id="submit-btn">Plan, contain, execute, verify</button>
+      <span id="form-msg" class="muted"></span>
+    </div>
+  </form>
+</div>
+<div class="panel muted" style="font-size:13px">
+  What happens next: planner (structured output) &rarr; approval gate for new domains &rarr; budget preflight &rarr;
+  <code>POST /v2/instances</code> with a locked-down cloud-init &rarr; steps under gVisor with single-use tokens &rarr;
+  independent re-run in a second VM &rarr; verifier &rarr; secret scan &rarr; <code>DELETE</code> + <code>GET</code> 404 &rarr; receipt.
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const DEMO_CSV = "region,amount\nnorth,10\nsouth,20\nnorth,5\nwest,2.5\n";
+function toB64(bytes) { let s = ""; bytes.forEach(b => s += String.fromCharCode(b)); return btoa(s); }
+async function submitTask(ev) {
+  ev.preventDefault();
+  const btn = document.getElementById("submit-btn"); const msg = document.getElementById("form-msg");
+  btn.disabled = true; msg.textContent = "submitting...";
+  const files = [];
+  const f = document.getElementById("file").files[0];
+  if (f) {
+    const buf = new Uint8Array(await f.arrayBuffer());
+    files.push({ name: f.name.replace(/[^A-Za-z0-9._-]/g, "_"), content_b64: toB64(buf) });
+  } else {
+    files.push({ name: "sales.csv", content_b64: btoa(DEMO_CSV) });
+  }
+  const domains = document.getElementById("domains").value.split(",").map(s => s.trim()).filter(Boolean);
+  const body = {
+    task: document.getElementById("task").value,
+    budget_usd: parseFloat(document.getElementById("budget").value),
+    allowed_domains: domains,
+    files: files,
+    require_approval: document.getElementById("require_approval").checked,
+  };
+  const r = await fetch("/tasks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) { msg.textContent = "error: " + (await r.text()); btn.disabled = false; return false; }
+  const data = await r.json();
+  window.location.href = "/ui/tasks/" + data.id;
+  return false;
+}
+</script>
+{% endblock %}

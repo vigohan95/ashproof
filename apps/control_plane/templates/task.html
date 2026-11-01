@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Task {{ task_id }} · Blast Radius Zero{% endblock %}
+{% block content %}
+<div class="row" style="justify-content:space-between">
+  <h1>Task <code>{{ task_id }}</code> <span id="status" class="badge {{ state.status }}">{{ state.status }}</span></h1>
+  <div class="row">
+    <a class="btn" id="receipt-link" href="/ui/tasks/{{ task_id }}/receipt" style="display:none">Receipt</a>
+    <button class="kill" id="kill-btn" onclick="killTask()" title="Revoke all runner tokens, delete every VM, record it in the audit chain">&#9632; KILL SWITCH</button>
+  </div>
+</div>
+<p id="task-text" class="muted"></p>
+
+<div id="approval" class="panel" style="display:none; border-color:var(--warn)">
+  <strong class="warn">Approval required.</strong> The planner asked for egress to domains that are not pre-approved.
+  No VM exists yet; nothing runs until you decide.
+  <div class="row" style="margin-top:10px">
+    <code id="pending-domains"></code>
+    <button class="approve" onclick="approve(true)">Approve these domains</button>
+    <button class="reject" onclick="approve(false)">Reject</button>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="panel"><div class="stat" id="stat-cost">$0.0000<small>running cost (VM hours x plan price + tokens x model price)</small></div></div>
+  <div class="panel"><div class="stat" id="stat-vms">0<small>throwaway VMs created / destroyed</small></div></div>
+  <div class="panel"><div class="stat" id="stat-egress">0<small>egress attempts denied</small></div></div>
+  <div class="panel"><div class="stat" id="stat-verdict">-<small>verifier verdict</small></div></div>
+</div>
+
+<h2>Plan</h2>
+<div class="panel" id="plan"><span class="muted">waiting for the planner...</span></div>
+
+<h2>Sandbox VMs (outer blast radius)</h2>
+<div class="panel"><table><thead><tr><th>Role</th><th>Instance</th><th>Plan / region</th><th>Created</th><th>Active</th><th>Destroyed</th><th>Proof of destruction</th></tr></thead><tbody id="vms"><tr><td colspan="7" class="muted">none yet</td></tr></tbody></table></div>
+
+<h2>Steps</h2>
+<div class="panel"><table><thead><tr><th>Step</th><th>Kind</th><th>Exit</th><th>Duration</th><th>Attempts</th><th>stdout sha256</th><th>Output files</th><th>Executor</th></tr></thead><tbody id="steps"><tr><td colspan="8" class="muted">none yet</td></tr></tbody></table></div>
+
+<h2>Verification</h2>
+<div class="panel" id="verdict"><span class="muted">pending</span></div>
+
+<h2>Egress attempts (default-deny)</h2>
+<div class="panel"><table><thead><tr><th>Time</th><th>Verdict</th><th>Proto</th><th>Destination</th></tr></thead><tbody id="egress"><tr><td colspan="4" class="muted">none observed</td></tr></tbody></table></div>
+
+<h2>Secret hygiene</h2>
+<div class="panel" id="scan"><span class="muted">scan runs at the end of the task</span></div>
+
+<h2>Cost breakdown</h2>
+<div class="panel"><table><thead><tr><th>Line</th><th>Detail</th><th>USD</th></tr></thead><tbody id="cost-lines"></tbody></table></div>
+
+<h2>Audit chain <span class="muted" id="chain-head"></span></h2>
+<div class="panel"><ul class="timeline" id="events"></ul></div>
+{% endblock %}
+{% block scripts %}
+<script>
+const TASK_ID = {{ task_id | tojson }};
+const DONE = new Set(["verified", "failed", "killed", "error"]);
+let timer = null;
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+function t(iso) { return iso ? esc(String(iso).replace("T", " ").slice(11, 19)) : "-"; }
+function money(x) { return "$" + (x ?? 0).toFixed(4); }
+
+function render(d) {
+  const st = document.getElementById("status"); st.textContent = d.status; st.className = "badge " + d.status;
+  document.getElementById("task-text").textContent = d.task;
+  document.getElementById("stat-cost").firstChild.textContent = money(d.cost.total_usd);
+  const destroyed = d.sandboxes.filter(s => s.destroyed).length;
+  document.getElementById("stat-vms").firstChild.textContent = d.sandboxes.length + " / " + destroyed;
+  document.getElementById("stat-egress").firstChild.textContent = d.egress.denied;
+  const sv = document.getElementById("stat-verdict");
+  if (d.verdict) { sv.firstChild.textContent = d.verdict.passed ? "PASSED" : "FAILED"; sv.className = "stat " + (d.verdict.passed ? "ok" : "bad"); }
+
+  const ap = document.getElementById("approval");
+  if (d.status === "awaiting_approval") { ap.style.display = ""; document.getElementById("pending-domains").textContent = d.pending_domains.join(", "); }
+  else { ap.style.display = "none"; }
+
+  if (d.plan) {
+    const p = d.plan;
+    let h = `<p>${esc(p.task_summary)}</p><p class="muted">planner <code>${esc(d.planner_model)}</code> · est. ${money(p.est_cost_usd)} · ~${esc(p.est_minutes)} min · required domains: ${p.required_domains.length ? p.required_domains.map(x => "<code>" + esc(x) + "</code>").join(" ") : "none"}</p>`;
+    h += "<table><thead><tr><th>Step</th><th>Kind</th><th>Expected outputs</th><th>Network</th><th>Code</th></tr></thead><tbody>";
+    for (const s of p.steps) h += `<tr><td>${esc(s.id)} ${esc(s.title)}</td><td>${esc(s.kind)}</td><td>${esc(s.expected_outputs.join(", "))}</td><td>${s.needs_network ? "yes" : "no"}</td><td><details><summary>show</summary><pre>${esc(s.code)}</pre></details></td></tr>`;
+    h += "</tbody></table>";
+    if (p.risk_notes.length) h += `<p class="warn">risk notes: ${p.risk_notes.map(esc).join("; ")}</p>`;
+    document.getElementById("plan").innerHTML = h;
+  }
+
+  const vms = document.getElementById("vms");
+  if (d.sandboxes.length) vms.innerHTML = d.sandboxes.map(s => `<tr class="${s.destroyed ? "allow" : ""}"><td>${esc(s.role)}</td><td><code>${esc(s.instance_id)}</code></td><td>${esc(s.plan)} / ${esc(s.region)}</td><td>${t(s.created_at)}</td><td>${t(s.active_at)}</td><td>${t(s.destroyed_at)}</td><td>${s.proof ? `<span class="${s.proof.http_status === 404 ? "ok" : "bad"}">${esc(s.proof.method)} &rarr; <strong>${s.proof.http_status}</strong></span> <span class="muted">@ ${esc(s.proof.observed_at)}</span>` : '<span class="muted">alive</span>'}</td></tr>`).join("");
+
+  const steps = document.getElementById("steps");
+  if (d.steps.length) steps.innerHTML = d.steps.map(s => `<tr><td>${esc(s.step_id)} ${esc(s.title)}${s.repaired ? ' <span class="warn">(repaired)</span>' : ""}</td><td>${esc(s.kind)}</td><td class="${s.exit_code === 0 ? "ok" : "bad"}">${s.exit_code}</td><td>${s.duration_s.toFixed(2)}s</td><td>${s.attempts}</td><td><code>${esc(s.stdout_sha256.slice(0, 12))}</code></td><td>${Object.entries(s.output_files).map(([n, h]) => `<a href="/tasks/${TASK_ID}/outputs/${encodeURIComponent(n)}">${esc(n)}</a> <code>${esc(h.slice(0, 10))}</code>`).join("<br>")}</td><td>${esc(s.executor)}</td></tr>`).join("");
+
+  if (d.verdict) {
+    const v = d.verdict;
+    let h = `<p><strong class="${v.passed ? "ok" : "bad"}">${v.passed ? "PASSED" : "FAILED"}</strong> · verifier <code>${esc(v.verifier_model)}</code> · independent re-run: ${v.rerun_performed ? "performed" : "not performed"} · hashes identical: <strong>${esc(v.rerun_match)}</strong></p><ul>`;
+    for (const c of v.checks) h += `<li><span class="${c.passed ? "ok" : "bad"}">${c.passed ? "&#10003;" : "&#10007;"}</span> ${esc(c.name)} <span class="muted">${esc(c.detail)}</span></li>`;
+    h += "</ul>";
+    if (v.model_review) h += `<p>model review: satisfies_task=<strong>${v.model_review.satisfies_task}</strong> confidence=${v.model_review.confidence}<br><span class="muted">${v.model_review.reasons.map(esc).join("; ")}</span>${v.model_review.concerns.length ? '<br><span class="warn">concerns: ' + v.model_review.concerns.map(esc).join("; ") + "</span>" : ""}</p>`;
+    if (v.primary_hashes) h += `<details><summary>output hashes (primary vs re-run)</summary><table><tbody>${Object.entries(v.primary_hashes).map(([k, hv]) => `<tr><td>${esc(k)}</td><td><code>${esc(hv.slice(0, 16))}</code></td><td><code>${esc((v.rerun_hashes || {})[k] ? v.rerun_hashes[k].slice(0, 16) : "-")}</code></td></tr>`).join("")}</tbody></table></details>`;
+    document.getElementById("verdict").innerHTML = h;
+  }
+
+  const eg = document.getElementById("egress");
+  if (d.egress.list && d.egress.list.length) eg.innerHTML = d.egress.list.map(a => `<tr class="${a.verdict === "denied" ? "deny" : "allow"}"><td>${esc(a.ts)}</td><td><strong>${esc(a.verdict.toUpperCase())}</strong></td><td>${esc(a.proto)}</td><td>${esc(a.dst_ip)}:${esc(a.dst_port ?? "")} ${esc(a.domain ?? "")}</td></tr>`).join("");
+
+  if (d.secret_scan) {
+    const s = d.secret_scan;
+    document.getElementById("scan").innerHTML = `<strong class="${s.clean ? "ok" : "bad"}">${s.clean ? "CLEAN - no secrets in the sandbox" : s.findings_count + " FINDING(S)"}</strong> <span class="muted">(${s.files_scanned} files, ${s.env_vars_checked} env vars, ${esc(s.scanner)})</span>` + (s.findings.length ? "<ul>" + s.findings.map(f => `<li class="bad">${esc(f.kind)} at ${esc(f.where)}: <code>${esc(f.redacted)}</code></li>`).join("") + "</ul>" : "");
+  }
+
+  document.getElementById("cost-lines").innerHTML = d.cost.lines.map(l => `<tr><td>${esc(l.label)}</td><td class="muted">${l.kind === "vm" ? `${l.seconds}s &rarr; ${l.billed_hours} billed h x $${l.hourly_usd}/h` : `${l.prompt_tokens} in + ${l.completion_tokens} out @ $${l.input_per_1m}/$${l.output_per_1m} per 1M`}</td><td>$${l.usd.toFixed(6)}</td></tr>`).join("") + `<tr><td><strong>total</strong></td><td class="muted">budget ${money(d.budget_usd)} · ${esc(d.cost.price_source)}</td><td><strong>${money(d.cost.total_usd)}</strong></td></tr>`;
+
+  document.getElementById("chain-head").textContent = d.events.length + " events · head " + (d.audit_head_hash || "").slice(0, 16);
+  document.getElementById("events").innerHTML = d.events.map(e => `<li class="${e.kind.startsWith("egress.denied") || e.kind.startsWith("kill") ? "deny" : (e.kind === "vm.destroyed" || e.kind === "task.verified" ? "good" : "")}"><span class="t">${t(e.ts)}</span><strong>${esc(e.kind)}</strong> <span class="muted">${esc(JSON.stringify(e.data)).slice(0, 220)}</span> <span class="muted">#${e.seq} ${esc(e.hash.slice(0, 10))}</span></li>`).join("");
+
+  const done = DONE.has(d.status);
+  document.getElementById("kill-btn").disabled = done;
+  document.getElementById("receipt-link").style.display = d.receipt_ready ? "" : "none";
+  if (done && timer) { clearInterval(timer); timer = null; }
+}
+
+async function refresh() {
+  const r = await fetch("/tasks/" + TASK_ID);
+  if (r.ok) render(await r.json());
+}
+async function approve(yes) {
+  await fetch(`/tasks/${TASK_ID}/approve`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ approved: yes }) });
+  refresh();
+}
+async function killTask() {
+  if (!confirm("Kill this task? Runner tokens are revoked and every VM is deleted now.")) return;
+  await fetch(`/tasks/${TASK_ID}/kill`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reason: "kill switch pressed in UI" }) });
+  refresh();
+}
+refresh();
+timer = setInterval(refresh, 2000);
+</script>
+{% endblock %}

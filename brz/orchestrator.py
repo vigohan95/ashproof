@@ -47,6 +47,7 @@ class TaskRequest(BaseModel):
     budget_usd: float = Field(default=0.25, gt=0, le=50)
     allowed_domains: list[str] = Field(default_factory=list)
     files: dict[str, bytes] = Field(default_factory=dict)  # name -> content
+    require_approval: bool = True  # park on new egress domains until a human approves (UI toggle)
 
 
 @dataclass
@@ -113,6 +114,8 @@ class TaskState:
             "budget_usd": self.request.budget_usd,
             "allowed_domains": sorted({*self.request.allowed_domains, *self.approved_domains}),
             "pending_domains": self.pending_domains,
+            "require_approval": self.request.require_approval,
+            "kill_requested": self.kill_requested,
             "plan": self.plan.model_dump() if self.plan else None,
             "planner_model": self.planner_model,
             "sandboxes": [
@@ -125,6 +128,17 @@ class TaskState:
                     "active_at": h.active_at.isoformat() if h.active_at else None,
                     "destroyed_at": h.destroyed_at.isoformat() if h.destroyed_at else None,
                     "destroyed": bool(h.proof and h.proof.destroyed),
+                    "proof": (
+                        {
+                            "method": h.proof.method,
+                            "http_status": h.proof.http_status,
+                            "observed_at": h.proof.observed_at.isoformat(),
+                            "attempts": h.proof.attempts,
+                        }
+                        if h.proof
+                        else None
+                    ),
+                    "runner_url": h.runner_url,
                 }
                 for h in self.sandboxes
             ],
@@ -133,6 +147,7 @@ class TaskState:
             "egress": {
                 "attempts": len(self.egress_attempts),
                 "denied": sum(1 for a in self.egress_attempts if a.verdict == "denied"),
+                "list": [a.model_dump() for a in self.egress_attempts[:200]],
             },
             "secret_scan": self.secret_scan.model_dump() if self.secret_scan else None,
             "cost": self.cost.breakdown(),
@@ -244,7 +259,7 @@ class Orchestrator:
     async def _approval_gate(self, state: TaskState) -> None:
         if not state.pending_domains:
             return
-        if not self.config.require_approval_for_new_domains:
+        if not self.config.require_approval_for_new_domains or not state.request.require_approval:
             state.approved_domains = list(state.pending_domains)
             state.pending_domains = []
             state.audit.append("approval.auto", {"domains": state.approved_domains})

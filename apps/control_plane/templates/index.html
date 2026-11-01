@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Tasks · Blast Radius Zero{% endblock %}
+{% block content %}
+<div class="row" style="justify-content:space-between">
+  <h1>Tasks</h1>
+  <a class="btn" href="/ui/new">+ New task</a>
+</div>
+<div class="panel">
+{% if tasks %}
+<table id="task-table">
+  <thead><tr><th>Task</th><th>Status</th><th>Created (UTC)</th><th>VMs</th><th>All destroyed</th><th>Cost</th><th>Receipt</th></tr></thead>
+  <tbody>
+  {% for t in tasks %}
+    <tr>
+      <td><a href="/ui/tasks/{{ t.id }}"><code>{{ t.id }}</code></a> {{ t.task }}</td>
+      <td><span class="badge {{ t.status }}">{{ t.status }}</span></td>
+      <td class="muted">{{ t.created_at }}</td>
+      <td>{{ t.vms }}</td>
+      <td>{% if t.destroyed is none %}<span class="muted">-</span>{% elif t.destroyed %}<span class="ok">yes</span>{% else %}<span class="bad">NO</span>{% endif %}</td>
+      <td>${{ '%.4f' % t.total_usd }}</td>
+      <td>{% if t.receipt %}<a href="/ui/tasks/{{ t.id }}/receipt">view</a>{% else %}<span class="muted">pending</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No tasks yet. <a href="/ui/new">Create one</a> - in mock mode it runs on this machine with a simulated Vultr API, no credentials needed.</p>
+{% endif %}
+</div>
+<div class="grid">
+  <div class="panel"><div class="stat">1 VM<small>per task, created through the Vultr API and deleted when the task ends (GET 404 in the receipt)</small></div></div>
+  <div class="panel"><div class="stat">0 secrets<small>inside the sandbox - single-use capability tokens, secret scan in every receipt</small></div></div>
+  <div class="panel"><div class="stat">2 runs<small>the plan is re-run in a second clean VM; output hashes must match byte for byte</small></div></div>
+</div>
+{% endblock %}

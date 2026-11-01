@@ -21,7 +21,7 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Response
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
 from brz import __version__
@@ -40,6 +40,7 @@ class TaskCreate(BaseModel):
     budget_usd: float = Field(default=0.25, gt=0, le=50)
     allowed_domains: list[str] = Field(default_factory=list)
     files: list[FileIn] = Field(default_factory=list)
+    require_approval: bool = True
 
 
 class ApproveIn(BaseModel):
@@ -117,7 +118,11 @@ def create_app(deps: Deps | None = None) -> FastAPI:
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=f"bad base64 in files: {exc}") from exc
         request = TaskRequest(
-            task=body.task, budget_usd=body.budget_usd, allowed_domains=body.allowed_domains, files=files
+            task=body.task,
+            budget_usd=body.budget_usd,
+            allowed_domains=body.allowed_domains,
+            files=files,
+            require_approval=body.require_approval,
         )
         orch = _deps().orchestrator
         state = orch.new_task(request)
@@ -186,6 +191,21 @@ def create_app(deps: Deps | None = None) -> FastAPI:
             return PlainTextResponse(state.receipt.to_markdown(), media_type="text/markdown; charset=utf-8")
         return JSONResponse(content=state.receipt.model_dump(mode="json"))
 
+    @app.get("/tasks/{task_id}/receipt/verify")
+    async def receipt_verify(task_id: str) -> dict[str, Any]:
+        state = store.get(task_id)
+        if state.receipt is None:
+            raise HTTPException(status_code=409, detail=f"receipt not ready (task is {state.status})")
+        ok, problems = state.receipt.verify()
+        return {
+            "id": task_id,
+            "ok": ok,
+            "problems": problems,
+            "events": len(state.receipt.audit_events),
+            "head_hash": state.receipt.audit_head_hash,
+            "receipt_sha256": state.receipt.receipt_sha256,
+        }
+
     @app.get("/tasks/{task_id}/receipt.md")
     async def receipt_md(task_id: str) -> Response:
         return await receipt(task_id, format="md")
@@ -198,6 +218,14 @@ def create_app(deps: Deps | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail="no such output")
         media = "application/json" if name.endswith(".json") else "text/plain; charset=utf-8"
         return Response(content=data, media_type=media)
+
+    from .ui import router as ui_router
+
+    app.include_router(ui_router)
+
+    @app.get("/", include_in_schema=False)
+    async def root() -> Response:
+        return RedirectResponse(url="/ui", status_code=307)
 
     return app
 

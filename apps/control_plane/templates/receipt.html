@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Receipt {{ task_id }} · Blast Radius Zero{% endblock %}
+{% block head %}
+<style>
+  .receipt h1 { font-size:20px; } .receipt h2 { margin-top:20px; }
+  .receipt table { margin:6px 0 10px; } .receipt ul { padding-left:18px; } .receipt ul ul { padding-left:16px; }
+  .receipt li { margin:2px 0; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="row" style="justify-content:space-between">
+  <h1>Receipt <code>{{ task_id }}</code> <span class="badge {{ receipt.status }}">{{ receipt.status }}</span></h1>
+  <div class="row">
+    <a class="btn" href="/ui/tasks/{{ task_id }}">&larr; Timeline</a>
+    <a class="btn" href="/tasks/{{ task_id }}/receipt" download="receipt-{{ task_id }}.json">Download JSON</a>
+    <a class="btn" href="/tasks/{{ task_id }}/receipt.md" download="receipt-{{ task_id }}.md">Download Markdown</a>
+  </div>
+</div>
+
+<div class="panel" id="verify-panel" style="border-color: {{ 'var(--ok)' if verify_ok else 'var(--bad)' }}">
+  <div class="row">
+    <div class="stat {{ 'ok' if verify_ok else 'bad' }}">{{ 'CHAIN VERIFIED' if verify_ok else 'INTEGRITY BROKEN' }}<small>{{ receipt.audit_events | length }} hash-chained events · head <code>{{ receipt.audit_head_hash[:16] }}</code> · receipt sha256 <code>{{ receipt.receipt_sha256[:16] }}</code></small></div>
+    <div class="stat {{ 'ok' if receipt.all_vms_destroyed else 'bad' }}">{{ 'VMs DESTROYED' if receipt.all_vms_destroyed else 'VM STILL EXISTS' }}<small>{{ receipt.sandboxes | length }} sandbox VM(s), each with a GET 404 proof</small></div>
+    <div class="stat {{ 'ok' if receipt.secret_scan and receipt.secret_scan.clean else ('muted' if not receipt.secret_scan else 'bad') }}">{{ 'NO SECRETS' if receipt.secret_scan and receipt.secret_scan.clean else ('not scanned' if not receipt.secret_scan else (receipt.secret_scan.findings_count ~ ' FINDINGS')) }}<small>secret-hygiene scan inside the sandbox</small></div>
+    <div class="stat">{{ '$%.4f' % receipt.cost.total_usd }}<small>total cost · egress denied {{ receipt.egress.denied_count }}</small></div>
+  </div>
+  {% if verify_problems %}<ul>{% for p in verify_problems %}<li class="bad">{{ p }}</li>{% endfor %}</ul>{% endif %}
+  <p class="muted" style="font-size:12px;margin:8px 0 0">Verify offline: <code>python -c "from brz.audit import Receipt; print(Receipt.model_validate_json(open('receipt-{{ task_id }}.json').read()).verify())"</code> &middot; machine-readable: <a href="/tasks/{{ task_id }}/receipt/verify">/tasks/{{ task_id }}/receipt/verify</a></p>
+</div>
+
+<div class="panel receipt">
+{{ receipt_html | safe }}
+</div>
+{% endblock %}

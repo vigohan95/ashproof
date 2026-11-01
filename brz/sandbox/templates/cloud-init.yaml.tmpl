@@ -58,14 +58,20 @@ write_files:
       # Inner isolation layer: gVisor runsc, systrap platform (no KVM needed inside a VM).
       set -euo pipefail
       if [ "@@{inner_isolation}" != "gvisor" ]; then echo "gvisor disabled"; exit 0; fi
+      # Release layout verified 2026-11-01: <release>/<arch>/gvisor.tar.bz2 (+ .sha512); there is NO bare
+      # runsc file under release/latest any more.
       ARCH=$(uname -m)
       URL="@@{gvisor_release_url}/${ARCH}"
-      cd /tmp
-      curl -fsSL --retry 3 -o runsc "${URL}/runsc"
-      curl -fsSL --retry 3 -o runsc.sha512 "${URL}/runsc.sha512"
-      sha512sum -c runsc.sha512
-      install -m 0755 runsc /usr/local/bin/runsc
-      rm -f runsc runsc.sha512
+      WORK=$(mktemp -d)
+      cd "$WORK"
+      curl -fsSL --retry 3 -o gvisor.tar.bz2 "${URL}/gvisor.tar.bz2"
+      curl -fsSL --retry 3 -o gvisor.tar.bz2.sha512 "${URL}/gvisor.tar.bz2.sha512"
+      sha512sum -c gvisor.tar.bz2.sha512
+      tar -xjf gvisor.tar.bz2
+      RUNSC=$(find . -type f -name runsc | head -n 1)
+      test -n "$RUNSC"
+      install -m 0755 "$RUNSC" /usr/local/bin/runsc
+      cd / && rm -rf "$WORK"
       /usr/local/bin/runsc --version
   - path: /usr/local/bin/brz-egress-apply
     permissions: "0755"

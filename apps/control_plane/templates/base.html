@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Blast Radius Zero{% endblock %}</title>
+<style>
+  :root { --bg:#0b0f14; --panel:#121a23; --line:#223042; --fg:#e6edf3; --muted:#8b98a5; --ok:#3fb950; --bad:#f85149; --warn:#d29922; --accent:#58a6ff; }
+  * { box-sizing: border-box; }
+  body { margin:0; font: 15px/1.45 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background:var(--bg); color:var(--fg); }
+  header { display:flex; align-items:center; gap:18px; padding:12px 24px; border-bottom:1px solid var(--line); background:var(--panel); }
+  header .brand { font-weight:700; letter-spacing:.3px; color:var(--fg); text-decoration:none; }
+  header .brand span { color:var(--accent); }
+  header nav a { color:var(--muted); text-decoration:none; margin-right:14px; }
+  header nav a:hover { color:var(--fg); }
+  header .mode { margin-left:auto; color:var(--muted); font-size:13px; }
+  main { max-width:1180px; margin:0 auto; padding:22px 24px 60px; }
+  h1 { font-size:22px; margin:0 0 14px; }
+  h2 { font-size:16px; margin:22px 0 8px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px 16px; margin-bottom:14px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-weight:600; }
+  tr.deny td { background:rgba(248,81,73,.14); color:#ffb4ae; }
+  tr.allow td { background:rgba(63,185,80,.10); }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:13px; }
+  code { background:#0d1117; padding:1px 5px; border-radius:4px; }
+  pre { background:#0d1117; padding:12px; border-radius:6px; overflow:auto; }
+  .badge { display:inline-block; padding:2px 9px; border-radius:999px; font-size:12px; font-weight:600; border:1px solid var(--line); }
+  .badge.verified, .badge.ok { background:rgba(63,185,80,.18); color:var(--ok); border-color:var(--ok); }
+  .badge.failed, .badge.error, .badge.killed, .badge.bad { background:rgba(248,81,73,.18); color:var(--bad); border-color:var(--bad); }
+  .badge.awaiting_approval, .badge.warn { background:rgba(210,153,34,.18); color:var(--warn); border-color:var(--warn); }
+  .badge.running, .badge.planning, .badge.provisioning, .badge.verifying, .badge.scanning, .badge.destroying, .badge.queued { background:rgba(88,166,255,.16); color:var(--accent); border-color:var(--accent); }
+  .ok { color:var(--ok); } .bad { color:var(--bad); } .warn { color:var(--warn); } .muted { color:var(--muted); }
+  button, .btn { cursor:pointer; border:1px solid var(--line); background:#1b2633; color:var(--fg); padding:8px 14px; border-radius:6px; font-size:14px; text-decoration:none; display:inline-block; }
+  button:hover, .btn:hover { border-color:var(--accent); }
+  button.primary { background:var(--accent); color:#06111f; border-color:var(--accent); font-weight:600; }
+  button.approve { background:var(--ok); color:#06111f; border-color:var(--ok); font-weight:600; }
+  button.reject { background:transparent; color:var(--bad); border-color:var(--bad); }
+  button.kill { background:var(--bad); color:#fff; border-color:var(--bad); font-weight:700; font-size:16px; padding:12px 22px; }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:14px; }
+  .stat { font-size:26px; font-weight:700; }
+  .stat small { font-size:12px; color:var(--muted); font-weight:400; display:block; }
+  label { display:block; margin:12px 0 4px; color:var(--muted); font-size:13px; }
+  input[type=text], input[type=number], textarea { width:100%; background:#0d1117; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:9px; font-size:14px; }
+  textarea { min-height:110px; font-family:inherit; }
+  .row { display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
+  .timeline li { list-style:none; padding:4px 0 4px 14px; border-left:2px solid var(--line); margin-left:6px; font-size:13px; }
+  .timeline li.deny { border-left-color:var(--bad); color:#ffb4ae; }
+  .timeline li.good { border-left-color:var(--ok); }
+  .timeline li .t { color:var(--muted); margin-right:8px; font-family:ui-monospace, Menlo, monospace; font-size:12px; }
+  footer { color:var(--muted); font-size:12px; text-align:center; padding:20px; }
+</style>
+{% block head %}{% endblock %}
+</head>
+<body>
+<header>
+  <a class="brand" href="/ui">Blast <span>Radius</span> Zero</a>
+  <nav><a href="/ui">Tasks</a><a href="/ui/new">New task</a><a href="/docs">API</a></nav>
+  <div class="mode">mode <strong>{{ mode }}</strong> · provider <strong>{{ provider }}</strong> · inner layer <strong>{{ inner_isolation }}</strong> · v{{ version }}</div>
+</header>
+<main>
+{% block content %}{% endblock %}
+</main>
+<footer>Every task: one throwaway Vultr VM · default-deny egress · zero secrets inside · independent re-run · hash-chained receipt · VM deleted (GET 404).</footer>
+{% block scripts %}{% endblock %}
+</body>
+</html>
