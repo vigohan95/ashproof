@@ -79,7 +79,7 @@ async def test_csv_task_end_to_end(stack):
     assert tl["verdict"]["primary_hashes"] == tl["verdict"]["rerun_hashes"]
     assert set(tl["verdict"]["primary_hashes"]) == {"s1/stdout", "s1/file/report.md", "s1/file/summary.json"}
     assert tl["secret_scan"]["clean"] is True
-    assert tl["egress"] == {"attempts": 1, "denied": 1}
+    assert tl["egress"]["attempts"] == 1 and tl["egress"]["denied"] == 1 and len(tl["egress"]["list"]) == 1
     assert tl["cost"]["total_usd"] > 0 and tl["cost"]["vm_usd"] > 0 and not tl["cost"]["over_budget"]
     assert len([ln for ln in tl["cost"]["lines"] if ln["kind"] == "vm"]) == 2
     kinds = [e["kind"] for e in tl["events"]]
