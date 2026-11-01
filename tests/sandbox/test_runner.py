@@ -101,8 +101,10 @@ def test_gvisor_executor_bundle_config(tmp_path: Path):
     _inp, _out, step_dir = ex.prepare(step)
     cmd = ex.command(step, step_dir)
     assert cmd[:4] == ["/usr/local/bin/runsc", "--platform=systrap", "--network=none", "--rootless=false"]
-    net_step = StepRequest(step_id="s1", kind="python", code="print(1)", needs_network=True)
+    net_step = StepRequest(step_id="s1net", kind="python", code="print(1)", needs_network=True)
     assert "--network=host" in ex.command(net_step, step_dir)
+    net_ns = {ns["type"] for ns in ex.oci_config(net_step, step_dir)["linux"]["namespaces"]}
+    assert net_ns == {"pid", "ipc", "uts", "mount"}  # no empty netns when the step may use the network
     assert StepRequest.from_dict({"step_id": "x", "needs_network": True}).needs_network is True
     assert "run" in cmd and "--bundle" in cmd
     cfg = json.loads((tmp_path / "bundles" / "s1" / "config.json").read_text())

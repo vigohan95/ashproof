@@ -344,13 +344,11 @@ class GvisorExecutor(BaseExecutor):
                 {"destination": "/etc/brz", "type": "tmpfs", "source": "tmpfs", "options": ["ro", "size=1m"]},
             ],
             "linux": {
-                "namespaces": [
-                    {"type": "pid"},
-                    {"type": "network"},
-                    {"type": "ipc"},
-                    {"type": "uts"},
-                    {"type": "mount"},
-                ],
+                # A fresh (empty) network namespace unless the step may use the network: with --network=host
+                # runsc enters the OCI netns, and an empty one has no interfaces (WSL 2026-11-01: "Could not
+                # resolve host" even with --network=host until the namespace entry was dropped).
+                "namespaces": [{"type": "pid"}, {"type": "ipc"}, {"type": "uts"}, {"type": "mount"}]
+                + ([] if step.needs_network else [{"type": "network"}]),
                 "resources": {"memory": {"limit": self.memory_limit_bytes}, "pids": {"limit": 256}},
                 "maskedPaths": ["/proc/kcore", "/proc/keys", "/proc/sysrq-trigger", "/sys/firmware"],
                 "readonlyPaths": ["/proc/sys", "/proc/sysrq-trigger", "/proc/irq", "/proc/bus"],
