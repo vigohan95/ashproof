@@ -21,7 +21,7 @@ FIXES = {
     "A22": "Streams are scanned and redacted in the runner before they leave it, and the findings reach /scan. A dirty "
     "scan now fails the task.",
     "A23": "The scanner decodes base64 and hex one level, reads binary files, and no longer skips directories by name.",
-    "A27": "Exec tokens now carry the sha256 of the step body. The first run executed swapped code under a valid token.",
+    "A27": "Exec tokens now carry the sha256 of the step body. The first run ran swapped code under a valid token.",
     "A28": "Replies carry an HMAC over the body and the request's token. The first run accepted a forged result.",
     "A29": "A repair may change code only. Turning on the network, raising the timeout or dropping expected outputs "
     "fails the task and is written to the chain. The first run executed the widened step, in two sandboxes.",
