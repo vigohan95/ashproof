@@ -1,0 +1,93 @@
+{
+ "receipt_status": "verified",
+ "audit_events": 26,
+ "audit_head_hash": "4009b3fa1f87c30e8b07fe98db696225e3a7d27b045e6d86943a4039b211ce3c",
+ "receipt_sha256": "7598e85934f6198e196b39f88049dc5dd2897dcc10714351e3fbc89d344ccd5b",
+ "cases": [
+  {
+   "case": "control: untouched receipt",
+   "exit_code": 0,
+   "ok": true,
+   "problems": []
+  },
+  {
+   "case": "flip one byte in a step hash",
+   "exit_code": 1,
+   "ok": false,
+   "problems": [
+    "step s1: stdout_sha256 does not match the chain",
+    "receipt_sha256 does not match the file"
+   ]
+  },
+  {
+   "case": "delete a step from the chain",
+   "exit_code": 1,
+   "ok": false,
+   "problems": [
+    "event 10: sequence gap, found seq 11",
+    "receipt_sha256 does not match the file"
+   ]
+  },
+  {
+   "case": "delete a step from the table, reseal receipt_sha256",
+   "exit_code": 1,
+   "ok": false,
+   "problems": [
+    "steps table ['s1'] does not match the chain ['s1', 's2']"
+   ]
+  },
+  {
+   "case": "reorder steps in the chain",
+   "exit_code": 1,
+   "ok": false,
+   "problems": [
+    "event 9: sequence gap, found seq 10",
+    "receipt_sha256 does not match the file"
+   ]
+  },
+  {
+   "case": "reorder steps in the table, reseal receipt_sha256",
+   "exit_code": 1,
+   "ok": false,
+   "problems": [
+    "steps table ['s2', 's1'] does not match the chain ['s1', 's2']"
+   ]
+  },
+  {
+   "case": "change an exit code in the table, reseal receipt_sha256",
+   "exit_code": 1,
+   "ok": false,
+   "problems": [
+    "step s1: exit_code does not match the chain"
+   ]
+  },
+  {
+   "case": "full rewrite of chain and receipt, no pin",
+   "exit_code": 0,
+   "ok": true,
+   "problems": []
+  },
+  {
+   "case": "full rewrite of chain and receipt, head pinned",
+   "exit_code": 1,
+   "ok": false,
+   "problems": [
+    "head hash differs from the pinned value 4009b3fa1f87c30e8b07fe98db696225e3a7d27b045e6d86943a4039b211ce3c"
+   ]
+  }
+ ],
+ "byte_flip_sweep": {
+  "bytes_in_file": 23632,
+  "single_byte_flips_tried": 23632,
+  "flips_undetected": 1,
+  "undetected_positions": [
+   10727
+  ],
+  "undetected_contexts": [
+   "sd\": 0.018033999999999998,\n "
+  ],
+  "undetected_flips_that_changed_a_parsed_value": 0,
+  "seconds": 6.9
+ },
+ "all_as_expected": true
+}

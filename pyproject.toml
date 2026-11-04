@@ -28,6 +28,7 @@ dev = [
 
 [project.scripts]
 brz-control-plane = "apps.control_plane.app:main"
+brz-verify = "brz.audit.offline_verify:main"
 
 [tool.setuptools]
 packages = [
