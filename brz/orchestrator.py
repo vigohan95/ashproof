@@ -63,6 +63,20 @@ class OrchestratorConfig:
     verifier_model_label: str = ""
 
 
+def repair_violations(original: PlanStep, fixed: PlanStep) -> list[str]:
+    """How a repaired step widens what was planned. Step output reaches the repair prompt, so a repair may
+    change code but nothing that was approved or that the verifier checks: only the human gate can widen those."""
+    problems: list[str] = []
+    if fixed.needs_network and not original.needs_network:
+        problems.append("needs_network turned on")
+    if fixed.timeout_s > original.timeout_s:
+        problems.append(f"timeout raised from {original.timeout_s}s to {fixed.timeout_s}s")
+    dropped = sorted(set(original.expected_outputs) - set(fixed.expected_outputs))
+    if dropped:
+        problems.append(f"expected outputs removed: {dropped}")
+    return problems
+
+
 class TaskKilled(Exception):
     pass
 
@@ -208,7 +222,10 @@ class Orchestrator:
             await self._verify(state)
             await self._scan_and_egress(state, primary)
             await self._destroy(state, primary)
-            final_status = "verified" if state.verdict and state.verdict.passed else "failed"
+            scan_clean = state.secret_scan is None or state.secret_scan.clean
+            if not scan_clean:
+                state.error = "secret scan is not clean"
+            final_status = "verified" if state.verdict and state.verdict.passed and scan_clean else "failed"
         except TaskKilled:
             final_status = "killed"
         except TaskFailed as exc:
@@ -371,6 +388,18 @@ class Orchestrator:
                     stderr=result.stderr,
                 )
                 self._charge_tokens(state, state.planner_model, usage, "planner.repair")
+                violations = repair_violations(current, fixed.step)
+                if violations:
+                    state.audit.append(
+                        "step.repair_rejected",
+                        {
+                            "step_id": current.id,
+                            "violations": violations,
+                            "explanation": fixed.explanation,
+                            "rejected_code_sha256": _sha(fixed.step.code),
+                        },
+                    )
+                    raise TaskFailed(f"repair of step {current.id} rejected: {'; '.join(violations)}")
                 state.audit.append(
                     "step.repaired",
                     {"step_id": current.id, "explanation": fixed.explanation, "new_code_sha256": _sha(fixed.step.code)},
@@ -433,6 +462,8 @@ class Orchestrator:
                 "executor": result.executor,
                 "timed_out": result.timed_out,
                 "missing_expected_outputs": result.missing_expected_outputs,
+                "skipped_outputs": result.skipped_outputs,
+                "secret_findings": result.secret_findings,
             },
         )
         if record:

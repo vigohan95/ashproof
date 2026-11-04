@@ -2,18 +2,20 @@
 
 Policy (table ``inet brz``):
 
-* **output**: policy drop. Allowed: loopback, established/related, DNS to ONE fixed resolver,
-  TCP 80/443 to the IPv4 addresses the approved domains resolved to at boot (set ``allow4``).
-  Everything else is logged with prefix ``BRZ-EGRESS-DENY`` and dropped. Allowed packets to
-  the allowlist are logged (rate-limited) with ``BRZ-EGRESS-ALLOW`` so the receipt shows both.
+* **output**: policy drop. Allowed: loopback, established/related, and TCP 80/443 to the IPv4
+  addresses the approved domains resolved to at boot (set ``allow4``). Everything else is logged
+  with prefix ``BRZ-EGRESS-DENY`` and dropped. Allowed packets to the allowlist are logged
+  (rate-limited) with ``BRZ-EGRESS-ALLOW`` so the receipt shows both.
+* **no DNS after lock-down**: names are resolved once before the ruleset is applied and pinned in
+  ``/etc/brz/hosts``, which steps see as ``/etc/hosts``. Attack A20 showed why: with port 53 open to
+  one resolver, a step can tunnel data out inside query names, whatever the allowlist says.
 * **input**: policy drop. Allowed: loopback, established/related, the runner port from the
   control plane CIDR only. (Vultr firewall groups do the same at the edge; this is defence
   in depth and also applies to traffic that never crosses the Vultr firewall.)
 
-Known limitation (documented in README): domains are resolved once at boot via the fixed
-resolver; a CDN that rotates addresses mid-task can break an allowed domain, and any other
-hostname that happens to share an allowed IP is reachable. v2 plan: DNS-sniffing dynamic
-sets (dnsmasq ``nftset``) - not in scope for the hackathon.
+Known limitation (documented in README): domains are resolved once at boot; a CDN that retires
+an address mid-task can break an allowed domain, a wildcard only pins its apex, and any other
+hostname that happens to share an allowed IP is reachable.
 
 ``main()`` is what cloud-init runs (``brz-egress-apply``); :func:`build_ruleset` is pure.
 """
@@ -61,12 +63,13 @@ def build_ruleset(
     allowed_ipv4: list[str],
     control_plane_cidr: str,
     runner_port: int,
-    dns_server: str,
+    dns_server: str | None = None,  # None (what the VM uses): port 53 stays closed
     allow_ports=ALLOW_PORTS,
     extra_admin_cidr: str | None = None,
 ) -> str:
     ipaddress.ip_network(control_plane_cidr, strict=False)  # validate
-    ipaddress.ip_address(dns_server)
+    if dns_server is not None:
+        ipaddress.ip_address(dns_server)
     for a in allowed_ipv4:
         ipaddress.IPv4Address(a)
     elements = ", ".join(sorted(set(allowed_ipv4))) or ""
@@ -97,8 +100,10 @@ def build_ruleset(
         "    oif lo accept",
         "    ct state established,related accept",
         "    ct state invalid drop",
-        f"    ip daddr {dns_server} udp dport 53 accept",
-        f"    ip daddr {dns_server} tcp dport 53 accept",
+    ]
+    if dns_server is not None:
+        lines += [f"    ip daddr {dns_server} udp dport 53 accept", f"    ip daddr {dns_server} tcp dport 53 accept"]
+    lines += [
         f'    ip daddr @allow4 tcp dport {{ {ports} }} limit rate {LOG_RATE} log prefix "BRZ-EGRESS-ALLOW "',
         f"    ip daddr @allow4 tcp dport {{ {ports} }} accept",
         f'    limit rate {LOG_RATE} log prefix "BRZ-EGRESS-DENY "',
@@ -111,6 +116,11 @@ def build_ruleset(
         "",
     ]
     return "\n".join(lines)
+
+
+def hosts_lines(resolved: dict[str, list[str]]) -> str:
+    """/etc/hosts content for the names resolved at boot. A wildcard has no single name to pin."""
+    return "".join(f"{ip} {d}\n" for d, addrs in resolved.items() if not d.startswith("*.") for ip in addrs)
 
 
 def read_list(path: str) -> list[str]:
@@ -129,20 +139,20 @@ def main(argv: list[str] | None = None) -> int:
     cp = (read_list(os.path.join(conf_dir, "control_plane.cidr")) or ["0.0.0.0/0"])[0]
     env = dict(ln.split("=", 1) for ln in read_list(os.path.join(conf_dir, "task.env")) if "=" in ln)
     port = int(env.get("RUNNER_PORT", "8700"))
-    dns = env.get("DNS_SERVER", "1.1.1.1")
     resolved = resolve_domains(domains)
     ips = sorted({ip for addrs in resolved.values() for ip in addrs})
     ruleset = build_ruleset(
         allowed_ipv4=ips,
         control_plane_cidr=cp,
         runner_port=port,
-        dns_server=dns,
         extra_admin_cidr=env.get("ADMIN_CIDR") or None,
     )
     out_path = "/etc/nftables.conf" if "--dry-run" not in argv else "/dev/stdout"
     with open(os.path.join(conf_dir, "resolved_domains.txt"), "w", encoding="utf-8") as fh:
         for d, addrs in resolved.items():
             fh.write(f"{d} {' '.join(addrs) or '-'}\n")
+    with open(os.path.join(conf_dir, "hosts"), "w", encoding="utf-8") as fh:
+        fh.write(hosts_lines(resolved))
     if out_path == "/dev/stdout":
         sys.stdout.write(ruleset)
         return 0

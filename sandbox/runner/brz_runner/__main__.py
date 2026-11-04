@@ -30,6 +30,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--gvisor-platform", default="systrap")
     p.add_argument("--python-bin", default="python3")
     p.add_argument("--scan-path", action="append", default=None, help="override secret-scan paths")
+    p.add_argument("--hosts-file", default="/etc/brz/hosts", help="names pinned at boot, shown to steps as /etc/hosts")
+    p.add_argument("--work-quota-mb", type=int, default=2048, help="kill a step when the work root exceeds this")
     p.add_argument("--allow-poweroff", action="store_true", help="honour /revoke {poweroff:true}")
     p.add_argument("--no-journal", action="store_true", help="do not read egress attempts from journalctl")
     return p
@@ -56,10 +58,17 @@ def main(argv: list[str] | None = None) -> int:
         sys.stderr.write("token key too short\n")
         return 2
     os.makedirs(args.workroot, exist_ok=True)
+    quota = args.work_quota_mb * 1024 * 1024
     if args.no_gvisor:
-        executor = SubprocessExecutor(args.workroot, python_bin=args.python_bin)
+        executor = SubprocessExecutor(args.workroot, python_bin=args.python_bin, work_quota_bytes=quota)
     else:
-        executor = GvisorExecutor(args.workroot, runsc_bin=args.runsc, platform=args.gvisor_platform)
+        executor = GvisorExecutor(
+            args.workroot,
+            runsc_bin=args.runsc,
+            platform=args.gvisor_platform,
+            hosts_file=args.hosts_file,
+            work_quota_bytes=quota,
+        )
     egress = NullEgressReader() if args.no_journal else JournalEgressReader()
     cfg = RunnerConfig(
         task_id=args.task_id,

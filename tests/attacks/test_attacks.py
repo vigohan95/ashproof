@@ -61,10 +61,15 @@ def test_summary_never_counts_an_error_as_contained():
 
 def test_report_shows_failures_and_escapes_table_cells():
     md = render_markdown({"runsc": "x"}, RESULTS)
-    assert "**1 of 3 attacks contained, 1 succeeded, 1 harness errors.**" in md
+    assert "**1 of 3 scenarios contained, 1 succeeded, 1 harness errors.**" in md
     assert "| A02 | net | second | **FAIL** |" in md
     assert "first \\| attack" in md
     assert "Failures we do not claim to stop: A02." in md
+
+
+def test_report_compares_with_the_first_run():
+    md = render_markdown({}, RESULTS, baseline={"A01": "FAIL", "A02": "FAIL"})
+    assert "| A01 | fs | first \\| attack | FAIL | **PASS** |" in md
 
 
 @pytest.mark.skipif(

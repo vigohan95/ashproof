@@ -8,10 +8,16 @@ the VM (first 4 + last 2 characters only).
 
 The expected result on a Blast Radius Zero sandbox is CLEAN, because the control plane
 never ships a credential into the VM. The scan exists to *prove* that, not to hope it.
+
+It also looks one level inside base64 and hex blobs, reads binary files and every directory
+under the work tree. It is a tripwire, not data-loss prevention: anything encrypted passes
+(attack A24 records that). The real guarantee is that there is nothing to steal and no way out.
 """
 
 from __future__ import annotations
 
+import base64
+import binascii
 import os
 import re
 from dataclasses import asdict, dataclass, field
@@ -53,8 +59,12 @@ ENV_ALLOWLIST = frozenset(
     }
 )
 
-SKIP_DIRS = frozenset({".git", "__pycache__", "node_modules", ".venv", "proc", "sys", "dev", "run"})
-DEFAULT_MAX_FILE_BYTES = 1_000_000
+# Absolute paths, so a step cannot hide a file by naming a directory ".git" or "run".
+SKIP_ROOTS = frozenset({"/proc", "/sys", "/dev", "/run"})
+# Larger than the 5 MB per-file output cap: every file that can leave the VM is scanned.
+DEFAULT_MAX_FILE_BYTES = 8_000_000
+B64_BLOB = re.compile(r"[A-Za-z0-9+/_-]{24,}={0,2}")
+HEX_BLOB = re.compile(r"\b(?:[0-9a-fA-F]{2}){16,}\b")
 
 
 @dataclass
@@ -87,14 +97,56 @@ def redact(value: str) -> str:
     return f"{value[:4]}{'*' * min(len(value) - 6, 12)}{value[-2:]}"
 
 
+def _encoded_blobs(line: str):
+    """Yield (blob, encoding, decoded text) for every base64 or hex run on the line that decodes."""
+    for m in HEX_BLOB.finditer(line):
+        yield m.group(0), "hex", bytes.fromhex(m.group(0)).decode("latin-1")
+    for m in B64_BLOB.finditer(line):
+        blob = m.group(0)
+        padded = blob.rstrip("=").replace("-", "+").replace("_", "/")
+        try:
+            decoded = base64.b64decode(padded + "=" * (-len(padded) % 4))
+        except (binascii.Error, ValueError):
+            continue
+        yield blob, "base64", decoded.decode("latin-1")
+
+
+def _matches(text: str):
+    for kind, rx in PATTERNS:
+        for m in rx.finditer(text):
+            yield kind, m
+
+
+def _secret_of(kind: str, m: re.Match[str]) -> str:
+    return m.group(2) if kind == "generic_assignment" else m.group(0)
+
+
 def scan_text(text: str, where: str) -> list[Finding]:
     findings: list[Finding] = []
     for lineno, line in enumerate(text.splitlines(), 1):
-        for kind, rx in PATTERNS:
-            for m in rx.finditer(line):
-                token = m.group(2) if kind == "generic_assignment" else m.group(0)
-                findings.append(Finding(kind=kind, where=f"{where}:{lineno}", redacted=redact(token)))
+        for kind, m in _matches(line):
+            findings.append(Finding(kind=kind, where=f"{where}:{lineno}", redacted=redact(_secret_of(kind, m))))
+        for blob, encoding, decoded in _encoded_blobs(line):
+            for kind, _m in _matches(decoded):
+                findings.append(Finding(kind=f"{kind}:{encoding}", where=f"{where}:{lineno}", redacted=redact(blob)))
     return findings
+
+
+def scan_and_redact(text: str, where: str) -> tuple[str, list[Finding]]:
+    """Findings in ``text``, and ``text`` with each secret replaced by its redacted form."""
+    findings = scan_text(text, where)
+    if not findings:
+        return text, []
+    out: list[str] = []
+    for line in text.split("\n"):
+        for kind, m in list(_matches(line)):
+            secret = _secret_of(kind, m)
+            line = line.replace(secret, redact(secret))
+        for blob, _encoding, decoded in list(_encoded_blobs(line)):
+            if any(True for _ in _matches(decoded)):
+                line = line.replace(blob, "[redacted encoded secret]")
+        out.append(line)
+    return "\n".join(out), findings
 
 
 def scan_env(environ: dict[str, str] | None = None) -> tuple[list[Finding], int]:
@@ -113,10 +165,6 @@ def scan_env(environ: dict[str, str] | None = None) -> tuple[list[Finding], int]
     return findings, len(env)
 
 
-def _is_binary(chunk: bytes) -> bool:
-    return b"\x00" in chunk
-
-
 def scan_paths(paths: list[str], *, max_file_bytes: int = DEFAULT_MAX_FILE_BYTES) -> tuple[list[Finding], int, int]:
     findings: list[Finding] = []
     scanned = skipped = 0
@@ -127,7 +175,9 @@ def scan_paths(paths: list[str], *, max_file_bytes: int = DEFAULT_MAX_FILE_BYTES
             candidates = []
             for dirpath, dirnames, filenames in os.walk(root_path):
                 dirnames[:] = [
-                    d for d in dirnames if d not in SKIP_DIRS and not os.path.islink(os.path.join(dirpath, d))
+                    d
+                    for d in dirnames
+                    if os.path.join(dirpath, d) not in SKIP_ROOTS and not os.path.islink(os.path.join(dirpath, d))
                 ]
                 for fn in filenames:
                     candidates.append(os.path.join(dirpath, fn))
@@ -141,9 +191,6 @@ def scan_paths(paths: list[str], *, max_file_bytes: int = DEFAULT_MAX_FILE_BYTES
                 with open(path, "rb") as fh:
                     data = fh.read(max_file_bytes)
             except OSError:
-                skipped += 1
-                continue
-            if _is_binary(data[:8192]):
                 skipped += 1
                 continue
             scanned += 1

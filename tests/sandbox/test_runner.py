@@ -14,7 +14,7 @@ import pytest
 from brz_runner.executor import GvisorExecutor, StepRequest, SubprocessExecutor
 from brz_runner.netlog import StaticEgressReader
 from brz_runner.server import BackgroundRunner, RunnerConfig
-from brz_runner.tokens import new_key, sign_token
+from brz_runner.tokens import new_key, sign_step_token, sign_token
 
 from brz.llm import PlanStep
 from brz.sandbox import RunnerClient, RunnerError
@@ -111,11 +111,12 @@ def test_gvisor_executor_bundle_config(tmp_path: Path):
     assert cfg["process"]["args"] == ["python3", "-I", "/work/steps/s1/main.py"]
     assert cfg["process"]["user"] == {"uid": 1000, "gid": 1000}
     assert cfg["process"]["noNewPrivileges"] is True and cfg["process"]["capabilities"]["bounding"] == []
-    assert cfg["root"] == {"path": "/", "readonly": True}
+    assert cfg["root"] == {"path": str(tmp_path / "bundles" / "_rootfs"), "readonly": True}
+    assert not any(m["destination"].startswith("/etc/brz") for m in cfg["mounts"])
     work_mount = next(m for m in cfg["mounts"] if m["destination"] == "/work")
     assert work_mount["source"] == str(tmp_path / "work") and "rw" in work_mount["options"]
     assert {ns["type"] for ns in cfg["linux"]["namespaces"]} == {"pid", "network", "ipc", "uts", "mount"}
-    assert cfg["linux"]["resources"]["memory"]["limit"] == 1_500_000_000
+    assert cfg["linux"]["resources"]["memory"] == {"limit": 1_500_000_000, "swap": 1_500_000_000}
     assert any(e.startswith("BRZ_OUT=/work/out") for e in cfg["process"]["env"])
     shell = StepRequest(step_id="s2", kind="shell", code="echo hi")
     _i, _o, sd2 = ex.prepare(shell)
@@ -197,24 +198,21 @@ async def test_server_rejects_bad_tokens(client: RunnerClient, runner: Backgroun
             "/steps", json={"token": tok, "step": {"step_id": "s2", "kind": "python", "code": "print(1)"}}
         )
         assert r.status_code == 403 and "bound to step" in r.json()["error"]
+        # a token that does not pin this step body
+        r = await raw.post(
+            "/steps", json={"token": tok, "step": {"step_id": "s1", "kind": "python", "code": "print(1)"}}
+        )
+        assert r.status_code == 403 and "step body" in r.json()["error"]
         # replay: valid token twice
-        r1 = await raw.post(
-            "/steps", json={"token": tok, "step": {"step_id": "s1", "kind": "python", "code": "print(1)"}}
-        )
+        step = {"step_id": "s1", "kind": "python", "code": "print(1)"}
+        tok2 = sign_step_token(KEY, task_id=TASK, step=step)
+        r1 = await raw.post("/steps", json={"token": tok2, "step": step})
         assert r1.status_code == 200 and r1.json()["stdout"].strip() == "1"
-        r2 = await raw.post(
-            "/steps", json={"token": tok, "step": {"step_id": "s1", "kind": "python", "code": "print(1)"}}
-        )
+        r2 = await raw.post("/steps", json={"token": tok2, "step": step})
         assert r2.status_code == 403 and "already used" in r2.json()["error"]
         # secrets cannot be smuggled in via step env
-        tok3 = sign_token(KEY, task_id=TASK, scope=["exec"], step_id="s3")
-        r = await raw.post(
-            "/steps",
-            json={
-                "token": tok3,
-                "step": {"step_id": "s3", "kind": "python", "code": "print(1)", "env": {"OPENAI_API_KEY": "sk-xxx"}},
-            },
-        )
+        step3 = {"step_id": "s3", "kind": "python", "code": "print(1)", "env": {"OPENAI_API_KEY": "sk-xxx"}}
+        r = await raw.post("/steps", json={"token": sign_step_token(KEY, task_id=TASK, step=step3), "step": step3})
         assert r.status_code == 400 and "no secrets reach the sandbox" in r.json()["error"]
         # unknown route / bad json
         assert (await raw.post("/nope", json={})).status_code == 404

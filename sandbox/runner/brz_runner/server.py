@@ -4,13 +4,16 @@ Endpoints (all JSON):
 
 * ``GET  /health``   -> {ok, task_id, executor, revoked, version}
 * ``POST /steps``    {token, step:{step_id, kind, code, files{name:b64}, timeout_s, expected_outputs}}
-                     -> StepResult + egress attempts observed during the step
+                     -> StepResult + egress attempts observed during the step + secret findings.
+                     stdout and stderr are redacted before they leave the runner: they feed model
+                     prompts on the control plane.
 * ``POST /scan``     {token, paths?} -> secret-hygiene report (env + work tree + system env files)
 * ``POST /egress``   {token} -> all egress attempts seen so far
 * ``POST /revoke``   {token, poweroff?} -> kill switch: reject every later request, kill running step
 
 Every POST needs a single-use capability token for that action (scope ``exec``, ``scan``,
-``egress`` or ``revoke``). The token key arrives via cloud-init at /etc/brz/token.key.
+``egress`` or ``revoke``); an ``exec`` token also pins the step body. Successful replies carry
+``X-BRZ-Reply-MAC``. The token key arrives via cloud-init at /etc/brz/token.key.
 """
 
 from __future__ import annotations
@@ -21,15 +24,15 @@ import subprocess
 import sys
 import threading
 import time
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from . import __version__
 from .executor import BaseExecutor, StepRequest
 from .netlog import EgressReader, NullEgressReader
-from .secretscan import run_scan
-from .tokens import TokenError, TokenRegistry
+from .secretscan import Finding, run_scan, scan_and_redact, scan_text
+from .tokens import TokenError, TokenRegistry, reply_mac, step_digest
 
 DEFAULT_SCAN_PATHS = ["/work", "/etc/environment", "/etc/profile.d", "/root", "/home", "/etc/brz/task.env"]
 ALLOWED_STEP_ENV_PREFIXES = ("BRZ_", "TASK_", "LC_", "LANG", "TZ", "PYTHON")
@@ -57,6 +60,7 @@ class RunnerState:
         self.steps_run = 0
         self.lock = threading.Lock()  # one step at a time
         self.events: list[dict] = []
+        self.step_findings: list[Finding] = []  # secrets seen in step output; /scan reports them too
 
     def _note(self, event: str, **data) -> None:
         self.events.append({"ts": datetime.now(timezone.utc).isoformat(), "kind": event, **data})
@@ -65,6 +69,7 @@ class RunnerState:
 class _Handler(BaseHTTPRequestHandler):
     server_version = f"brz-runner/{__version__}"
     state: RunnerState  # injected by make_server
+    _reply_token: str | None = None
 
     # ---- plumbing
     def log_message(self, fmt: str, *args) -> None:  # quiet by default
@@ -77,6 +82,8 @@ class _Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        if self._reply_token is not None and status < 400:
+            self.send_header("X-BRZ-Reply-MAC", reply_mac(self.state.cfg.token_key, self._reply_token, body))
         self.end_headers()
         self.wfile.write(body)
 
@@ -90,13 +97,17 @@ class _Handler(BaseHTTPRequestHandler):
             raise ValueError("body must be a JSON object")
         return data
 
-    def _authorize(self, body: dict, action: str, step_id: str | None = None) -> dict | None:
+    def _authorize(
+        self, body: dict, action: str, step_id: str | None = None, body_sha256: str | None = None
+    ) -> dict | None:
         token = body.get("token")
         if not isinstance(token, str):
             self._send(401, {"error": "token required"})
             return None
         try:
-            return self.state.tokens.consume(token, action=action, step_id=step_id)
+            payload = self.state.tokens.consume(token, action=action, step_id=step_id, body_sha256=body_sha256)
+            self._reply_token = token
+            return payload
         except TokenError as exc:
             self.state._note("auth.denied", action=action, reason=str(exc))
             self._send(403, {"error": f"token rejected: {exc}"})
@@ -124,6 +135,7 @@ class _Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         path = self.path.split("?")[0]
+        self._reply_token = None
         try:
             body = self._read_json()
         except ValueError as exc:
@@ -147,7 +159,7 @@ class _Handler(BaseHTTPRequestHandler):
             self._send(400, {"error": "step object with step_id required"})
             return
         step_id = str(step_dict["step_id"])
-        if self._authorize(body, "exec", step_id) is None:
+        if self._authorize(body, "exec", step_id, step_digest(step_dict)) is None:
             return
         try:
             step = StepRequest.from_dict(step_dict)
@@ -167,6 +179,7 @@ class _Handler(BaseHTTPRequestHandler):
             result = st.cfg.executor.run(step)
             st.steps_run += 1
             attempts = [a.to_dict() for a in st.cfg.egress.read_since(since)]
+            findings = self._screen_output(result)
             st._note("step.end", step_id=step_id, exit_code=result.exit_code, egress_attempts=len(attempts))
         finally:
             st.lock.release()
@@ -176,13 +189,26 @@ class _Handler(BaseHTTPRequestHandler):
         payload = result.to_dict()
         payload["egress_attempts"] = attempts
         payload["missing_expected_outputs"] = [n for n in step.expected_outputs if n not in result.files]
+        payload["secret_findings"] = [asdict(f) for f in findings]
         self._send(200, payload)
+
+    def _screen_output(self, result) -> list[Finding]:
+        """Redact secrets from the streams and remember every finding, so the final scan cannot miss them."""
+        result.stdout, findings = scan_and_redact(result.stdout, f"step:{result.step_id}:stdout")
+        result.stderr, more = scan_and_redact(result.stderr, f"step:{result.step_id}:stderr")
+        findings = findings + more
+        for name, data in result.files.items():
+            findings += scan_text(data.decode("utf-8", "replace"), f"step:{result.step_id}:file:{name}")
+        self.state.step_findings.extend(findings)
+        return findings
 
     def _post_scan(self, body: dict) -> None:
         if self._authorize(body, "scan") is None:
             return
         paths = body.get("paths") or self.state.cfg.scan_paths
         report = run_scan([str(p) for p in paths], environ=self.state.cfg.scan_environ)
+        report.findings = [*self.state.step_findings, *report.findings]
+        report.clean = not report.findings
         self.state._note("scan.done", clean=report.clean, findings=len(report.findings))
         self._send(200, report.to_dict())
 

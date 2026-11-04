@@ -93,6 +93,7 @@ def main() -> int:
     p.add_argument("--out", required=True)
     p.add_argument("--only", default="", help="comma-separated scenario ids")
     p.add_argument("--heading", default="Attack suite report")
+    p.add_argument("--baseline", default="", help="results.json of an earlier run, shown side by side")
     args = p.parse_args()
     if os.geteuid() != 0 or not os.path.exists(H.RUNSC):
         print("needs root and /usr/local/bin/runsc", file=sys.stderr)
@@ -106,7 +107,12 @@ def main() -> int:
         json.dumps({"environment": meta, "summary": summarise(results), "results": results}, indent=1, default=str),
         encoding="utf-8",
     )
-    (out / "report.md").write_text(render_markdown(meta, results, heading=args.heading), encoding="utf-8")
+    baseline = {}
+    if args.baseline:
+        earlier = json.loads(Path(args.baseline).read_text(encoding="utf-8"))
+        baseline = {r["id"]: r["result"] for r in earlier["results"]}
+    report = render_markdown(meta, results, heading=args.heading, baseline=baseline)
+    (out / "report.md").write_text(report, encoding="utf-8")
     s = summarise(results)
     print(f"{s['passed']}/{s['total']} contained; failed: {s['failed_ids']}; errors: {s['error_ids']}")
     return 0

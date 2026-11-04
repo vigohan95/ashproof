@@ -96,5 +96,6 @@ def test_egress_main_dry_run(tmp_path: Path, capsys, monkeypatch):
     monkeypatch.setenv("BRZ_CONF_DIR", str(conf))
     assert egress_main(["--dry-run"]) == 0
     out = capsys.readouterr().out
-    assert "ip saddr 198.51.100.7/32 tcp dport 8701 accept" in out and "ip daddr 1.0.0.1 udp dport 53" in out
-    assert os.path.exists(conf / "resolved_domains.txt")
+    assert "ip saddr 198.51.100.7/32 tcp dport 8701 accept" in out
+    assert "dport 53" not in out  # no DNS after lock-down: a resolver is a tunnel out
+    assert os.path.exists(conf / "resolved_domains.txt") and (conf / "hosts").read_text() == ""

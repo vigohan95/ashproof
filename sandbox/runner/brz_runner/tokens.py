@@ -1,12 +1,17 @@
 """Capability tokens: HMAC-SHA256, single-use, scoped, expiring. Standard library only.
 
 Token = base64url(payload JSON) + "." + base64url(HMAC-SHA256(key, payload bytes)).
-Payload: {"v": 1, "tid": task id, "sid": step id or "*", "scope": ["exec"], "iat", "exp", "jti"}.
+Payload: {"v": 1, "tid": task id, "sid": step id or "*", "scope": ["exec"], "iat", "exp", "jti",
+"bsh": sha256 of the step body (exec tokens)}.
 
 The control plane signs one token per request with a short TTL; the runner verifies the
-signature, the task id, the scope, the expiry, the step id and that the ``jti`` has never
-been seen before. Replaying a captured token therefore fails; so does using an "exec"
-token to call "/revoke" or a token minted for step s1 to run step s2.
+signature, the task id, the scope, the expiry, the step id, the step body hash and that the
+``jti`` has never been seen before. Replaying a captured token therefore fails; so does using an
+"exec" token to call "/revoke", a token minted for step s1 to run step s2, or a valid token with
+the step's code swapped on the way (the control link is plain HTTP inside a firewalled path).
+
+Replies are authenticated too: the runner returns ``HMAC(key, token + "\n" + body)``, which ties
+each reply to the single-use token of the request it answers.
 """
 
 from __future__ import annotations
@@ -44,6 +49,16 @@ def key_fingerprint(key: bytes) -> str:
     return hashlib.sha256(key).hexdigest()[:16]
 
 
+def step_digest(step: dict) -> str:
+    """Hash of a step body. Both sides compute it over the same JSON object, so key order does not matter."""
+    raw = json.dumps(step, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
+
+
+def reply_mac(key: bytes, token: str, body: bytes) -> str:
+    return hmac.new(key, token.encode("utf-8") + b"\n" + body, hashlib.sha256).hexdigest()
+
+
 def sign_token(
     key: bytes,
     *,
@@ -52,6 +67,7 @@ def sign_token(
     step_id: str = "*",
     ttl_s: int = DEFAULT_TTL_S,
     now: float | None = None,
+    body_sha256: str | None = None,
 ) -> str:
     now = time.time() if now is None else now
     payload = {
@@ -63,9 +79,23 @@ def sign_token(
         "exp": int(now) + int(ttl_s),
         "jti": secrets.token_hex(16),
     }
+    if body_sha256 is not None:
+        payload["bsh"] = body_sha256
     raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     sig = hmac.new(key, raw, hashlib.sha256).digest()
     return f"{_b64e(raw)}.{_b64e(sig)}"
+
+
+def sign_step_token(key: bytes, *, task_id: str, step: dict, ttl_s: int = DEFAULT_TTL_S) -> str:
+    """The exec token for exactly this step body."""
+    return sign_token(
+        key,
+        task_id=task_id,
+        scope=["exec"],
+        step_id=str(step["step_id"]),
+        ttl_s=ttl_s,
+        body_sha256=step_digest(step),
+    )
 
 
 def verify_token(
@@ -76,6 +106,7 @@ def verify_token(
     action: str,
     step_id: str | None = None,
     now: float | None = None,
+    body_sha256: str | None = None,
 ) -> dict:
     """Return the payload if the token is valid for ``action`` (and ``step_id``); raise TokenError otherwise.
 
@@ -108,6 +139,8 @@ def verify_token(
     sid = payload.get("sid", "*")
     if step_id is not None and sid != "*" and sid != step_id:
         raise TokenError(f"token is bound to step {sid!r}, not {step_id!r}")
+    if body_sha256 is not None and not hmac.compare_digest(str(payload.get("bsh", "")), body_sha256):
+        raise TokenError("token does not match this step body")
     if not isinstance(payload.get("jti"), str) or len(payload["jti"]) < 16:
         raise TokenError("missing jti")
     return payload
@@ -124,12 +157,28 @@ class TokenRegistry:
         self.revoked = False
         self.revoked_at: float | None = None
 
-    def consume(self, token: str, *, action: str, step_id: str | None = None, now: float | None = None) -> dict:
+    def consume(
+        self,
+        token: str,
+        *,
+        action: str,
+        step_id: str | None = None,
+        now: float | None = None,
+        body_sha256: str | None = None,
+    ) -> dict:
         now = time.time() if now is None else now
         with self._lock:
             if self.revoked:
                 raise TokenError("all tokens revoked (kill switch)")
-            payload = verify_token(self.key, token, task_id=self.task_id, action=action, step_id=step_id, now=now)
+            payload = verify_token(
+                self.key,
+                token,
+                task_id=self.task_id,
+                action=action,
+                step_id=step_id,
+                now=now,
+                body_sha256=body_sha256,
+            )
             jti = payload["jti"]
             if jti in self._seen:
                 raise TokenError("token already used (replay)")

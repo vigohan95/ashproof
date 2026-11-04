@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 from typing import Any, Literal
 
+from brz_runner.executor import STEP_ID_RE
 from pydantic import BaseModel, Field, field_validator
 
 from .client import LLM, Usage
@@ -45,6 +46,13 @@ class PlanStep(BaseModel):
     expected_outputs: list[str] = Field(default_factory=list)
     needs_network: bool = False
     timeout_s: int = Field(default=120, ge=1, le=1800)
+
+    @field_validator("id")
+    @classmethod
+    def _safe_id(cls, v: str) -> str:
+        if not STEP_ID_RE.match(v):  # the id becomes a directory and a container name in the VM
+            raise ValueError(f"unsafe step id: {v!r}")
+        return v
 
 
 class Plan(BaseModel):

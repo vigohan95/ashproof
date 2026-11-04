@@ -81,15 +81,15 @@ def test_run_scan_on_planted_tree(tmp_path: Path):
     (work / "out" / "summary.json").write_text('{"north": 10}')
     (work / ".env").write_text(f"OPENAI_API_KEY={FAKE_OPENAI}\n")
     (work / "id_rsa").write_text(FAKE_PEM)
-    (work / "blob.bin").write_bytes(b"\x00\x01" + FAKE_GH.encode())  # binary -> skipped
-    (work / "big.txt").write_text("x" * 2_000_000)  # too large -> skipped
+    (work / "blob.bin").write_bytes(b"\x00\x01" + FAKE_GH.encode())  # binary files are scanned too
+    (work / "big.txt").write_text("x" * 9_000_000)  # larger than any file that can leave the VM -> skipped
     report = run_scan([str(work), str(tmp_path / "missing")], environ={"PATH": "/usr/bin"})
     assert not report.clean
-    assert report.files_scanned == 3 and report.files_skipped == 2 and report.env_vars_checked == 1
+    assert report.files_scanned == 4 and report.files_skipped == 1 and report.env_vars_checked == 1
     kinds = sorted(f.kind for f in report.findings)
-    assert kinds == ["openai_key", "private_key_block"]
+    assert kinds == ["github_token", "openai_key", "private_key_block"]
     d = report.to_dict()
-    assert d["findings_count"] == 2 and d["scanner"] == "brz_runner.secretscan"
+    assert d["findings_count"] == 3 and d["scanner"] == "brz_runner.secretscan"
     assert FAKE_OPENAI not in str(d)
 
 

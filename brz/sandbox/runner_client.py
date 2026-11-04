@@ -4,6 +4,9 @@ Signs one single-use capability token per request (``brz_runner.tokens``), talks
 to the runner port (the VM's nftables + Vultr firewall group restrict who can reach it), and
 converts replies into typed results. The same client is used against a real VM and against
 the in-process :class:`brz_runner.server.BackgroundRunner` in tests.
+
+Plain HTTP is safe to the extent that both directions are authenticated: exec tokens pin the
+step body, and every successful reply must carry a MAC over the body and the request's token.
 """
 
 from __future__ import annotations
@@ -11,11 +14,12 @@ from __future__ import annotations
 import asyncio
 import base64
 import hashlib
+import hmac
 import time
 from typing import Any
 
 import httpx
-from brz_runner.tokens import sign_token
+from brz_runner.tokens import reply_mac, sign_step_token, sign_token
 from pydantic import BaseModel, Field
 
 from brz.llm.planner import PlanStep
@@ -41,6 +45,10 @@ class RunnerStepResult(BaseModel):
     files: dict[str, RunnerFile] = Field(default_factory=dict)
     egress_attempts: list[dict[str, Any]] = Field(default_factory=list)
     missing_expected_outputs: list[str] = Field(default_factory=list)
+    skipped_outputs: list[dict[str, Any]] = Field(default_factory=list)
+    secret_findings: list[dict[str, Any]] = Field(default_factory=list)
+    stdout_truncated: bool = False
+    stderr_truncated: bool = False
 
     @property
     def file_hashes(self) -> dict[str, str]:
@@ -97,6 +105,9 @@ class RunnerClient:
             data = resp.text
         if resp.status_code >= 400:
             raise RunnerError(f"runner {path} -> {resp.status_code}: {data}", resp.status_code, data)
+        expected = reply_mac(self._key, body["token"], resp.content)
+        if not hmac.compare_digest(resp.headers.get("x-brz-reply-mac", ""), expected):
+            raise RunnerError(f"runner {path}: reply failed authentication (MAC mismatch)", resp.status_code)
         return data
 
     # ---- API
@@ -123,19 +134,18 @@ class RunnerClient:
             await sleep(interval)
 
     async def run_step(self, step: PlanStep, files: dict[str, bytes] | None = None) -> RunnerStepResult:
-        body = {
-            "token": self._token("exec", step.id),
-            "step": {
-                "step_id": step.id,
-                "kind": step.kind,
-                "code": step.code,
-                "files": {n: base64.b64encode(b).decode("ascii") for n, b in (files or {}).items()},
-                "timeout_s": step.timeout_s,
-                "expected_outputs": step.expected_outputs,
-                "needs_network": step.needs_network,
-            },
+        payload = {
+            "step_id": step.id,
+            "kind": step.kind,
+            "code": step.code,
+            "files": {n: base64.b64encode(b).decode("ascii") for n, b in (files or {}).items()},
+            "timeout_s": step.timeout_s,
+            "expected_outputs": step.expected_outputs,
+            "needs_network": step.needs_network,
         }
-        data = await self._post("/steps", body)
+        self.tokens_issued += 1
+        token = sign_step_token(self._key, task_id=self.task_id, step=payload, ttl_s=self.token_ttl_s)
+        data = await self._post("/steps", {"token": token, "step": payload})
         files_out: dict[str, RunnerFile] = {}
         for name, meta in (data.get("files") or {}).items():
             content = base64.b64decode(meta["content_b64"]) if meta.get("content_b64") else None
