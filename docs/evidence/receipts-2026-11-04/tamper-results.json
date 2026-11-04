@@ -1,8 +1,8 @@
 {
  "receipt_status": "verified",
  "audit_events": 26,
- "audit_head_hash": "4009b3fa1f87c30e8b07fe98db696225e3a7d27b045e6d86943a4039b211ce3c",
- "receipt_sha256": "7598e85934f6198e196b39f88049dc5dd2897dcc10714351e3fbc89d344ccd5b",
+ "audit_head_hash": "9004bc932e2aa0748d60cbf26843eafcecfda82d511919facf72881c4dba9185",
+ "receipt_sha256": "171c3f0d76f27a6ee2b50a68fc76ca2e0def4717ed4ba2548ea961ba1f00c704",
  "cases": [
   {
    "case": "control: untouched receipt",
@@ -72,7 +72,7 @@
    "exit_code": 1,
    "ok": false,
    "problems": [
-    "head hash differs from the pinned value 4009b3fa1f87c30e8b07fe98db696225e3a7d27b045e6d86943a4039b211ce3c"
+    "head hash differs from the pinned value 9004bc932e2aa0748d60cbf26843eafcecfda82d511919facf72881c4dba9185"
    ]
   }
  ],
@@ -87,7 +87,7 @@
    "sd\": 0.018033999999999998,\n "
   ],
   "undetected_flips_that_changed_a_parsed_value": 0,
-  "seconds": 6.9
+  "seconds": 6.2
  },
  "all_as_expected": true
 }

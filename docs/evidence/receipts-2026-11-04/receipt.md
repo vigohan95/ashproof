@@ -1,18 +1,18 @@
-# Blast Radius Zero receipt `6c06db8c1d13`
+# Ashproof receipt `bb00802abf72`
 
 - **Status:** VERIFIED
-- **Created:** 2026-11-04T12:33:45.086441+00:00
+- **Created:** 2026-11-04T12:39:20.975620+00:00
 - **Task:** Total the amount column per region in sales.csv and write report.md
 - **Task sha256:** `ea2ccd6559796cbaa3b815e6f6af70cc2da5a1a692ae3413d5ff991f22afc88d`
-- **Receipt sha256:** `7598e85934f6198e196b39f88049dc5dd2897dcc10714351e3fbc89d344ccd5b`
+- **Receipt sha256:** `171c3f0d76f27a6ee2b50a68fc76ca2e0def4717ed4ba2548ea961ba1f00c704`
 - **Receipt integrity:** OK
 
 ## Blast radius
 
 | Sandbox | Provider | Instance | Created | Destroyed | Proof | Inner layer | Egress |
 |---|---|---|---|---|---|---|---|
-| primary | local | `local-primary` | 2026-11-04T12:33:43+00:00 | 2026-11-04T12:33:45+00:00 | local runner stopped -> 0 | gvisor runsc --platform=systrap (WSL, no VM) | default-deny |
-| verifier | local | `local-verifier` | 2026-11-04T12:33:44+00:00 | 2026-11-04T12:33:45+00:00 | local runner stopped -> 0 | gvisor runsc --platform=systrap (WSL, no VM) | default-deny |
+| primary | local | `local-primary` | 2026-11-04T12:39:20+00:00 | 2026-11-04T12:39:20+00:00 | local runner stopped -> 0 | gvisor runsc --platform=systrap (WSL, no VM) | default-deny |
+| verifier | local | `local-verifier` | 2026-11-04T12:39:20+00:00 | 2026-11-04T12:39:20+00:00 | local runner stopped -> 0 | gvisor runsc --platform=systrap (WSL, no VM) | default-deny |
 
 All VMs destroyed: **yes**
 
@@ -25,8 +25,8 @@ Planner model: `scripted-model`; est. cost $0.0100; required domains: none
 
 | Step | Kind | Exit | Duration | stdout sha256 | Output files | Executor |
 |---|---|---|---|---|---|---|
-| s1 totals | python | 0 | 0.17s | `f7efd1c6b44a` | summary.json `31aaa7700251` | gvisor-systrap |
-| s2 report | python | 0 | 0.17s | `7689195b7742` | report.md `baf33e6912a2`, summary.json `31aaa7700251` | gvisor-systrap |
+| s1 totals | python | 0 | 0.12s | `f7efd1c6b44a` | summary.json `31aaa7700251` | gvisor-systrap |
+| s2 report | python | 0 | 0.12s | `7689195b7742` | report.md `baf33e6912a2`, summary.json `31aaa7700251` | gvisor-systrap |
 
 ## Verification
 
@@ -60,33 +60,33 @@ Attempts: 0 (denied 0, allowed 0)
 
 ## Audit chain
 
-26 events, head `4009b3fa1f87c30e8b07fe98db696225e3a7d27b045e6d86943a4039b211ce3c`, verification: OK
+26 events, head `9004bc932e2aa0748d60cbf26843eafcecfda82d511919facf72881c4dba9185`, verification: OK
 
 | # | Time | Event | Hash |
 |---|---|---|---|
-| 0 | 2026-11-04T12:33:43.479074+00:00 | task.received | `de95037fa557890e` |
-| 1 | 2026-11-04T12:33:43.479183+00:00 | task.planning | `f05336d988366abb` |
-| 2 | 2026-11-04T12:33:43.486387+00:00 | cost.tokens | `2d3d9a3a26230fb0` |
-| 3 | 2026-11-04T12:33:43.486540+00:00 | plan.created | `9a90ce4b20ab4565` |
-| 4 | 2026-11-04T12:33:43.486657+00:00 | budget.preflight | `61abe6daf99780da` |
-| 5 | 2026-11-04T12:33:43.486705+00:00 | task.provisioning | `8593f9893fe8e7d2` |
-| 6 | 2026-11-04T12:33:43.821868+00:00 | vm.created | `1a0dc30e4f13a3d6` |
-| 7 | 2026-11-04T12:33:43.931704+00:00 | vm.runner_ready | `de0a870f88b966c6` |
-| 8 | 2026-11-04T12:33:43.932089+00:00 | task.running | `abf540508ffc592b` |
-| 9 | 2026-11-04T12:33:44.119383+00:00 | step.finished | `c19ab0eda1fc505d` |
-| 10 | 2026-11-04T12:33:44.302878+00:00 | step.finished | `c32ae11e344acb3b` |
-| 11 | 2026-11-04T12:33:44.302992+00:00 | task.verifying | `b48a2671396052b4` |
-| 12 | 2026-11-04T12:33:44.303018+00:00 | task.provisioning | `968267eee44a534d` |
-| 13 | 2026-11-04T12:33:44.610431+00:00 | vm.created | `f67cdf5bb070f99c` |
-| 14 | 2026-11-04T12:33:44.639150+00:00 | vm.runner_ready | `e862e0834b8e620b` |
-| 15 | 2026-11-04T12:33:44.827480+00:00 | step.finished | `05dbcd3d250a18e8` |
-| 16 | 2026-11-04T12:33:45.014516+00:00 | step.finished | `a6813daf11ec02f3` |
-| 17 | 2026-11-04T12:33:45.014684+00:00 | task.destroying | `77bd4faff68b2b0a` |
-| 18 | 2026-11-04T12:33:45.038806+00:00 | vm.destroyed | `01975cb0caf3059b` |
-| 19 | 2026-11-04T12:33:45.040983+00:00 | cost.tokens | `575972765937ffb5` |
-| 20 | 2026-11-04T12:33:45.041103+00:00 | verify.verdict | `ad66f1e9015ff9f0` |
-| 21 | 2026-11-04T12:33:45.041204+00:00 | task.scanning | `da81ea297665eb2c` |
-| 22 | 2026-11-04T12:33:45.058528+00:00 | secret_scan.done | `b0cfa5a7a24f1c26` |
-| 23 | 2026-11-04T12:33:45.058629+00:00 | task.destroying | `7591e2e2a8f60fda` |
-| 24 | 2026-11-04T12:33:45.083029+00:00 | vm.destroyed | `a5b45b5a5013dd92` |
-| 25 | 2026-11-04T12:33:45.086224+00:00 | task.verified | `4009b3fa1f87c30e` |
+| 0 | 2026-11-04T12:39:19.740029+00:00 | task.received | `63c0a98efdfcec8e` |
+| 1 | 2026-11-04T12:39:19.740103+00:00 | task.planning | `b2a60140c5899339` |
+| 2 | 2026-11-04T12:39:19.742928+00:00 | cost.tokens | `360e41f7a1370342` |
+| 3 | 2026-11-04T12:39:19.742998+00:00 | plan.created | `27a6b65d6348353b` |
+| 4 | 2026-11-04T12:39:19.743064+00:00 | budget.preflight | `6199daab086ad155` |
+| 5 | 2026-11-04T12:39:19.743095+00:00 | task.provisioning | `16b9028a9025a985` |
+| 6 | 2026-11-04T12:39:20.014487+00:00 | vm.created | `9f1b97b956a635a3` |
+| 7 | 2026-11-04T12:39:20.086873+00:00 | vm.runner_ready | `0326955eee7a1f62` |
+| 8 | 2026-11-04T12:39:20.086949+00:00 | task.running | `268ac0ae732d795a` |
+| 9 | 2026-11-04T12:39:20.215139+00:00 | step.finished | `c2931f6c15e987f2` |
+| 10 | 2026-11-04T12:39:20.342877+00:00 | step.finished | `2cbd2b070c827f86` |
+| 11 | 2026-11-04T12:39:20.342972+00:00 | task.verifying | `e45d2561adfe194f` |
+| 12 | 2026-11-04T12:39:20.342998+00:00 | task.provisioning | `e3ac6dcaa2698d33` |
+| 13 | 2026-11-04T12:39:20.598032+00:00 | vm.created | `dbdbcc081e4b9ac4` |
+| 14 | 2026-11-04T12:39:20.621596+00:00 | vm.runner_ready | `6506b8940aa3e33d` |
+| 15 | 2026-11-04T12:39:20.749338+00:00 | step.finished | `43bd03e581d03217` |
+| 16 | 2026-11-04T12:39:20.926653+00:00 | step.finished | `2cc63a38fefd0851` |
+| 17 | 2026-11-04T12:39:20.926742+00:00 | task.destroying | `b00638c4d27d0c49` |
+| 18 | 2026-11-04T12:39:20.944035+00:00 | vm.destroyed | `f2bc643ee20abd67` |
+| 19 | 2026-11-04T12:39:20.945227+00:00 | cost.tokens | `70f3d4dccddb2cd0` |
+| 20 | 2026-11-04T12:39:20.945277+00:00 | verify.verdict | `cd4c893dc059c87d` |
+| 21 | 2026-11-04T12:39:20.945330+00:00 | task.scanning | `9011c18d4b39cf1c` |
+| 22 | 2026-11-04T12:39:20.956114+00:00 | secret_scan.done | `a9200cbfd304341d` |
+| 23 | 2026-11-04T12:39:20.956183+00:00 | task.destroying | `019864400bff5d9a` |
+| 24 | 2026-11-04T12:39:20.972270+00:00 | vm.destroyed | `d9ffbba3024c9b41` |
+| 25 | 2026-11-04T12:39:20.975393+00:00 | task.verified | `9004bc932e2aa074` |

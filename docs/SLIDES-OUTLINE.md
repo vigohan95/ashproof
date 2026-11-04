@@ -26,7 +26,7 @@ Value 4-5 only with market + revenue model, so slides 7-9 are not optional.
    instance active -> results -> receipt with `GET /v2/instances/{id} -> 404`. [A]
 
 6. **Demo 2 - the containment moments** - injected file tries to call out: *EGRESS DENIED*; secret scan:
-   *0 findings*; re-run hashes identical in a second VM; kill switch -> instance gone in 3 s. Each with
+   *0 findings*; re-run hashes identical in a second VM; kill switch -> all sandbox processes gone in 10 ms (measured in WSL), VM gone in <measure on Vultr>. Each with
    the matching line from the audit chain. [O][A]
 
 7. **Competitive analysis** - the table from `docs/COMPETITORS.md` (8 differentiators as rows; Ashproof vs
@@ -44,8 +44,8 @@ Value 4-5 only with market + revenue model, so slides 7-9 are not optional.
    Price tiers: free (self-hosted, MIT) / team ($ per verified task with hosted control plane) /
    enterprise (private Vultr account, SSO, retention). Gross margin illustration from the meter. [B]
 
-10. **Roadmap and ask** - Next 90 days: snapshot image + warm pool (sub-minute start), DNS-aware egress
-    sets, Pattern B (Playwright + vision verifier + human approval of irreversible actions), Object
+10. **Roadmap and ask** - Next 90 days: snapshot image + warm pool (sub-minute start), egress
+    sets that follow DNS changes, Pattern B (Playwright + vision verifier + human approval of irreversible actions), Object
     Storage retention policies, Web UI, Vultr Marketplace listing. Ask: pilot teams. Links. [B][P]
 
 ## Appendix slides (only if asked)
