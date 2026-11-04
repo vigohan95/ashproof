@@ -19,7 +19,7 @@ from .structured import structured
 
 _HOST_RE = re.compile(r"^(\*\.)?([a-z0-9-]+\.)+[a-z0-9-]{2,}$")
 
-SANDBOX_CONTRACT = """You are the planner of Blast Radius Zero, a containment-first agent runtime.
+SANDBOX_CONTRACT = """You are the planner of Ashproof, a containment-first agent runtime.
 Each task runs in a throwaway Linux VM that is destroyed when the task ends. Inside it:
 - There are NO secrets, NO API keys, NO credentials. Never plan a step that needs one.
 - Outbound network is DENIED by default. If a step truly needs the internet, list the exact

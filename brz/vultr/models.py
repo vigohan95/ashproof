@@ -1,4 +1,4 @@
-"""Typed models for the subset of the Vultr API v2 that Blast Radius Zero uses.
+"""Typed models for the subset of the Vultr API v2 that Ashproof uses.
 
 Field names follow the official v2 shapes (see govultr `instance.go`, `plan.go`,
 `region.go`, `os.go`, `firewall_rule.go`). Only the fields we read are typed;

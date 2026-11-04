@@ -4,7 +4,7 @@ Judging rubric mapping in brackets: [A] Application of Technology, [P] Presentat
 [O] Originality. The lablab rubric gives Presentation 5/5 only with a competitive analysis and Business
 Value 4-5 only with market + revenue model, so slides 7-9 are not optional.
 
-1. **Title** - Blast Radius Zero. One line: *Every AI task in its own throwaway Vultr VM: executed,
+1. **Title** - Ashproof. One line: *Every AI task in its own throwaway Vultr VM: executed,
    verified, receipted, destroyed.* Three numbers: 1 VM per task · 0 secrets inside · $0.0x per task.
    Repo + demo URL. [P]
 
@@ -29,7 +29,7 @@ Value 4-5 only with market + revenue model, so slides 7-9 are not optional.
    *0 findings*; re-run hashes identical in a second VM; kill switch -> instance gone in 3 s. Each with
    the matching line from the audit chain. [O][A]
 
-7. **Competitive analysis** - the table from `docs/COMPETITORS.md` (8 differentiators as rows; BRZ vs
+7. **Competitive analysis** - the table from `docs/COMPETITORS.md` (8 differentiators as rows; Ashproof vs
    Vultr tutorial, microsandbox, OpenSandbox, E2B, OpenHands, k8s agent-sandbox, browser-use). Honest
    row: boot time (they win) and runtime breadth (OpenSandbox wins). [P][O]
 
@@ -59,4 +59,4 @@ Value 4-5 only with market + revenue model, so slides 7-9 are not optional.
 
 * One idea per slide, screenshots over bullet lists, the receipt is the hero image.
 * Use the exact rubric words in slide titles where natural ("Application", "Business value").
-* Export PDF; file name `blast-radius-zero-deck.pdf`; check every link in the PDF opens.
+* Export PDF; file name `ashproof-deck.pdf`; check every link in the PDF opens.

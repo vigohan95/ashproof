@@ -129,7 +129,7 @@ def test_receipt_json_roundtrip_and_markdown():
     assert back.receipt_sha256 == r.receipt_sha256 and back.verify()[0]
 
     md = r.to_markdown()
-    assert md.startswith("# Blast Radius Zero receipt `t1`")
+    assert md.startswith("# Ashproof receipt `t1`")
     assert "**Status:** VERIFIED" in md
     assert "Receipt integrity:** OK" in md
     assert "GET /v2/instances/{id} -> 404" in md

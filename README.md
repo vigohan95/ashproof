@@ -1,6 +1,7 @@
-# Blast Radius Zero
+# Ashproof
 
-**Containment-first agent execution on Vultr.** Every task gets its own throwaway Vultr VM, runs with
+**The VM burns. The proof stays.** Containment-first agent execution on Vultr. Every task gets its own
+throwaway Vultr VM, runs with
 outbound network denied by default and zero secrets inside, is re-run by an independent verifier in a
 second clean VM, leaves a hash-chained receipt - and then the VM is deleted. `GET /v2/instances/{id}` -> `404`
 is part of the receipt.
@@ -62,7 +63,7 @@ step. Both go to zero when the task ends.
 ## 5-minute quickstart
 
 ```bash
-git clone <repo> && cd blast-radius-zero
+git clone <repo> ashproof && cd ashproof
 python -m venv .venv && . .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 python -m pytest -q                                   # 94 offline tests, no credentials, no network

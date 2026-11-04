@@ -17,7 +17,7 @@ from .server import DEFAULT_SCAN_PATHS, RunnerConfig, make_server
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="brz_runner", description="Blast Radius Zero in-sandbox step runner")
+    p = argparse.ArgumentParser(prog="brz_runner", description="Ashproof in-sandbox step runner")
     p.add_argument("--task-id", required=True)
     key = p.add_mutually_exclusive_group(required=True)
     key.add_argument("--token-key-file", help="file containing the raw 32-byte HMAC key (or hex)")

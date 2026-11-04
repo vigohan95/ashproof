@@ -1,4 +1,4 @@
-"""Blast Radius Zero: containment-first agent execution on Vultr."""
+"""Ashproof: containment-first agent execution on Vultr."""
 
 from __future__ import annotations
 

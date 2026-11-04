@@ -1,7 +1,7 @@
 """Structured output: ``response_format: json_schema`` first, plain-JSON prompting as fallback.
 
 Vultr Serverless Inference models advertise ``response_format: json_schema``; Ollama with
-gemma3:4b does not (and has no tool calling), so every structured call in BRZ goes through
+gemma3:4b does not (and has no tool calling), so every structured call in Ashproof goes through
 :func:`structured` which:
 
 1. tries ``response_format={"type": "json_schema", ...}``,

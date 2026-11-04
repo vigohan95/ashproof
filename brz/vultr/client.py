@@ -1,6 +1,6 @@
 """Async client for the Vultr API v2 (https://api.vultr.com/v2).
 
-Only the endpoints Blast Radius Zero needs. Every call goes through ``_request`` which
+Only the endpoints Ashproof needs. Every call goes through ``_request`` which
 retries 429 / 5xx / transport errors with exponential backoff (govultr uses 3 retries,
 500 ms base; we do the same by default). ``sleep`` is injectable so tests run instantly.
 

@@ -78,7 +78,7 @@ async def test_pages_render_and_receipt_page(ui):
     assert r.status_code == 200
     assert "CHAIN VERIFIED" in r.text and "VMs DESTROYED" in r.text and "NO SECRETS" in r.text
     assert "GET /v2/instances/{id} -&gt; 404" in r.text or "GET /v2/instances/{id} -> 404" in r.text
-    assert "<table>" in r.text and "Blast Radius Zero receipt" in r.text
+    assert "<table>" in r.text and "Ashproof receipt" in r.text
     assert f'download="receipt-{task_id}.json"' in r.text
     v = (await client.get(f"/tasks/{task_id}/receipt/verify")).json()
     assert v["ok"] is True and v["problems"] == [] and v["events"] > 10

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Receipt {{ task_id }} · Blast Radius Zero{% endblock %}
+{% block title %}Receipt {{ task_id }} · Ashproof{% endblock %}
 {% block head %}
 <style>
   .receipt h1 { font-size:20px; } .receipt h2 { margin-top:20px; }
@@ -25,7 +25,7 @@
     <div class="stat">{{ '$%.4f' % receipt.cost.total_usd }}<small>total cost · egress denied {{ receipt.egress.denied_count }}</small></div>
   </div>
   {% if verify_problems %}<ul>{% for p in verify_problems %}<li class="bad">{{ p }}</li>{% endfor %}</ul>{% endif %}
-  <p class="muted" style="font-size:12px;margin:8px 0 0">Verify offline: <code>python -c "from brz.audit import Receipt; print(Receipt.model_validate_json(open('receipt-{{ task_id }}.json').read()).verify())"</code> &middot; machine-readable: <a href="/tasks/{{ task_id }}/receipt/verify">/tasks/{{ task_id }}/receipt/verify</a></p>
+  <p class="muted" style="font-size:12px;margin:8px 0 0">Verify offline, with nothing but Python: <code>python brz/audit/offline_verify.py receipt-{{ task_id }}.json</code> &middot; machine-readable: <a href="/tasks/{{ task_id }}/receipt/verify">/tasks/{{ task_id }}/receipt/verify</a></p>
 </div>
 
 <div class="panel receipt">

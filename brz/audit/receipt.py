@@ -148,7 +148,7 @@ class Receipt(BaseModel):
     def to_markdown(self) -> str:
         ok, problems = self.verify()
         lines: list[str] = []
-        lines.append(f"# Blast Radius Zero receipt `{self.task_id}`")
+        lines.append(f"# Ashproof receipt `{self.task_id}`")
         lines.append("")
         lines.append(f"- **Status:** {self.status.upper()}")
         lines.append(f"- **Created:** {self.created_at.isoformat()}")

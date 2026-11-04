@@ -171,8 +171,8 @@ def main() -> int:
         "A negative heartbeat figure means the last beat was written before T0. The harness polls /proc with a 0.2 ms "
         "sleep between checks. The figures come from one workstation, not from a Vultr VM.",
         "",
-        "Not in these numbers: the control-plane half of the kill switch, `DELETE /v2/instances/{id}` until GET returns "
-        "404. That needs Vultr.",
+        "Not in these numbers: the control-plane half of the kill switch, `DELETE /v2/instances/{id}` until GET "
+        "returns 404. That needs Vultr.",
         "",
         "Reproduce: `scripts/wsl-evidence.sh kill_timing --out <dir> --runs 30`",
         "",

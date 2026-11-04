@@ -86,7 +86,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
             await app.state.deps.aclose()
 
     app = FastAPI(
-        title="Blast Radius Zero control plane",
+        title="Ashproof control plane",
         version=__version__,
         description=(
             "Containment-first agent execution on Vultr: one throwaway VM per task, verified, receipted, destroyed."

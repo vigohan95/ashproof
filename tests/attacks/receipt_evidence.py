@@ -248,7 +248,8 @@ def main() -> int:
     lines += [
         "",
         f"Sweep: every one of the {sweep['bytes_in_file']} bytes of the file was flipped in turn (XOR 0x01). "
-        f"{sweep['flips_undetected']} flips went undetected, and {sweep['undetected_flips_that_changed_a_parsed_value']} "
+        f"{sweep['flips_undetected']} flips went undetected, and "
+        f"{sweep['undetected_flips_that_changed_a_parsed_value']} "
         "of those changed any parsed value. An undetected flip that changes no value is a last digit of a long float "
         "that rounds to the same double: the hashes cover values, not the file's bytes. "
         f"Undetected contexts: `{sweep['undetected_contexts']}`.",

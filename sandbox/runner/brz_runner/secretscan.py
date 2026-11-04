@@ -6,7 +6,7 @@ receipt: *did any credential exist in this VM?* It scans the process environment
 for suspiciously named environment variables. Findings are redacted before they leave
 the VM (first 4 + last 2 characters only).
 
-The expected result on a Blast Radius Zero sandbox is CLEAN, because the control plane
+The expected result on a Ashproof sandbox is CLEAN, because the control plane
 never ships a credential into the VM. The scan exists to *prove* that, not to hope it.
 
 It also looks one level inside base64 and hex blobs, reads binary files and every directory
