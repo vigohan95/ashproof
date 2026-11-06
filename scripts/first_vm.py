@@ -42,6 +42,16 @@ print(json.dumps(out, sort_keys=True))
 open("/work/out/probe.json", "w").write(json.dumps(out, sort_keys=True))
 """
 
+PYFETCH = """
+import ssl, sys, os
+print(sys.version)
+print(ssl.OPENSSL_VERSION, ssl.get_default_verify_paths())
+for f in ("/etc/ssl/certs/ca-certificates.crt", "/usr/lib/ssl/cert.pem", "/usr/lib/ssl/certs", "/etc/ssl/openssl.cnf"):
+    print(f, os.path.exists(f))
+import urllib.request
+print(urllib.request.urlopen("https://example.com", timeout=15).status)
+"""
+
 CURL = 'curl -sS -m {t} -o /dev/null -w "%{{http_code}}\\n" {url}; echo "exit=$?"'
 EGRESS = "\n".join(
     [
@@ -138,6 +148,11 @@ async def main() -> int:
         )
         log["step_egress"] = r2.model_dump(exclude={"files"})
         print("egress", r2.exit_code, r2.stdout, r2.stderr[:800], json.dumps(r2.egress_attempts)[:1500], flush=True)
+        r3 = await client.run_step(
+            PlanStep(id="pyfetch", title="pyfetch", kind="python", code=PYFETCH, needs_network=True, timeout_s=60)
+        )
+        log["step_pyfetch"] = r3.model_dump(exclude={"files"})
+        print("pyfetch", r3.exit_code, r3.stdout[:1500], r3.stderr[:2500], flush=True)
         await asyncio.sleep(2)
         log["egress_all"] = await client.egress()
         print("egress_all", len(log["egress_all"]), flush=True)

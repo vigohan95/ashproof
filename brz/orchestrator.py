@@ -114,6 +114,7 @@ class TaskState:
     receipt: Receipt | None = None
     error: str = ""
     outputs: dict[str, bytes] = field(default_factory=dict)  # final output files (primary run)
+    step_logs: dict[str, dict[str, str]] = field(default_factory=dict)  # last attempt, redacted by the runner
     _clients: dict[str, RunnerClient] = field(default_factory=dict)
     _destroy_locks: dict[str, asyncio.Lock] = field(default_factory=dict)
 
@@ -159,7 +160,7 @@ class TaskState:
                 }
                 for h in self.sandboxes
             ],
-            "steps": [s.model_dump() for s in self.step_receipts],
+            "steps": [s.model_dump() | {"log": self.step_logs.get(s.step_id, {})} for s in self.step_receipts],
             "verdict": self.verdict.model_dump() if self.verdict else None,
             "egress": {
                 "attempts": len(self.egress_attempts),
@@ -287,6 +288,9 @@ class Orchestrator:
         )
         state.pending_domains = res.unapproved_domains
         self._check_kill(state)
+        if res.plan.refused_reason:  # no VM, and never "verified": nothing was done
+            state.audit.append("plan.refused", {"reason": res.plan.refused_reason})
+            raise TaskFailed(f"refused by the planner: {res.plan.refused_reason}")
 
     async def _approval_gate(self, state: TaskState) -> None:
         if not state.pending_domains:
@@ -488,6 +492,7 @@ class Orchestrator:
             },
         )
         if record:
+            state.step_logs[step.id] = {"stdout": result.stdout[-2000:], "stderr": result.stderr[-2000:]}
             state.step_receipts = [s for s in state.step_receipts if s.step_id != step.id]
             state.step_receipts.append(
                 StepReceipt(

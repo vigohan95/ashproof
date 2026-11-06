@@ -10,6 +10,7 @@
 </div>
 <p id="task-text" class="muted"></p>
 
+<div id="task-error" class="panel bad" style="display:none"></div>
 <div id="approval" class="panel" style="display:none; border-color:var(--warn)">
   <strong class="warn">Approval required.</strong> The planner asked for egress to domains that are not pre-approved.
   No VM exists yet; nothing runs until you decide.
@@ -35,7 +36,8 @@
 <div class="panel"><table><thead><tr><th>Role</th><th>Instance</th><th>Plan / region</th><th>Created</th><th>Active</th><th>Destroyed</th><th>Proof of destruction</th></tr></thead><tbody id="vms"><tr><td colspan="7" class="muted">none yet</td></tr></tbody></table></div>
 
 <h2>Steps</h2>
-<div class="panel"><table><thead><tr><th>Step</th><th>Kind</th><th>Exit</th><th>Duration</th><th>Attempts</th><th>stdout sha256</th><th>Output files</th><th>Executor</th></tr></thead><tbody id="steps"><tr><td colspan="8" class="muted">none yet</td></tr></tbody></table></div>
+<div class="panel"><table><thead><tr><th>Step</th><th>Kind</th><th>Exit</th><th>Duration</th><th>Attempts</th><th>stdout sha256</th><th>Output files</th><th>Executor</th></tr></thead><tbody id="steps"><tr><td colspan="8" class="muted">none yet</td></tr></tbody></table>
+    <div id="step-logs"></div></div>
 
 <h2>Verification</h2>
 <div class="panel" id="verdict"><span class="muted">pending</span></div>
@@ -64,6 +66,7 @@ function money(x) { return "$" + (x ?? 0).toFixed(4); }
 function render(d) {
   const st = document.getElementById("status"); st.textContent = d.status; st.className = "badge " + d.status;
   document.getElementById("task-text").textContent = d.task;
+  const er = document.getElementById("task-error"); er.textContent = d.error || ""; er.style.display = d.error ? "" : "none";
   document.getElementById("stat-cost").firstChild.textContent = money(d.cost.total_usd);
   const destroyed = d.sandboxes.filter(s => s.destroyed).length;
   document.getElementById("stat-vms").firstChild.textContent = d.sandboxes.length + " / " + destroyed;
@@ -90,6 +93,11 @@ function render(d) {
 
   const steps = document.getElementById("steps");
   if (d.steps.length) steps.innerHTML = d.steps.map(s => `<tr><td>${esc(s.step_id)} ${esc(s.title)}${s.repaired ? ' <span class="warn">(repaired)</span>' : ""}</td><td>${esc(s.kind)}</td><td class="${s.exit_code === 0 ? "ok" : "bad"}">${s.exit_code}</td><td>${s.duration_s.toFixed(2)}s</td><td>${s.attempts}</td><td><code>${esc(s.stdout_sha256.slice(0, 12))}</code></td><td>${Object.entries(s.output_files).map(([n, h]) => `<a href="/tasks/${TASK_ID}/outputs/${encodeURIComponent(n)}">${esc(n)}</a> <code>${esc(h.slice(0, 10))}</code>`).join("<br>")}</td><td>${esc(s.executor)}</td></tr>`).join("");
+
+  const logs = d.steps.filter(s => s.log && (s.log.stdout || s.log.stderr));
+  document.getElementById("step-logs").innerHTML = logs.map(s => `<details ${s.exit_code === 0 ? "" : "open"}><summary>${esc(s.step_id)} output (redacted in the VM)</summary><pre style="white-space:pre-wrap;font-size:12px">${esc(s.log.stdout)}${s.log.stderr ? "
+--- stderr ---
+" + esc(s.log.stderr) : ""}</pre></details>`).join("");
 
   if (d.verdict) {
     const v = d.verdict;

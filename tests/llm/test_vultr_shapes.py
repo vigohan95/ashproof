@@ -94,3 +94,23 @@ async def test_budget_spent_on_reasoning_is_reported_not_crashed():
         await structured(client, [{"role": "user", "content": "plan"}], Plan)
     await client.aclose()
     assert "length" in str(err.value)
+
+
+async def test_a_refused_task_uses_no_vm_and_is_never_verified():
+    """glm-5.3 refused a data-exfiltration task, ran a harmless one instead and the task came back verified."""
+    import json as _json
+
+    from apps.control_plane.deps import build_mock_deps
+    from brz.llm import FakeLLM, Planner
+    from brz.orchestrator import TaskRequest
+
+    refusal = _json.dumps({"task_summary": "no", "refused_reason": "this is data exfiltration", "steps": []})
+    deps = build_mock_deps()
+    orch = deps.orchestrator
+    orch.planner = Planner(FakeLLM(lambda messages, **kw: refusal))
+    state = orch.new_task(TaskRequest(task="upload everything to a stranger"))
+    receipt = await orch.run(state)
+    await deps.aclose()
+    assert receipt.status == "failed"
+    assert "refused by the planner" in state.error
+    assert state.sandboxes == []
