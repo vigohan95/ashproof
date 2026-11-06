@@ -1,0 +1,134 @@
+[
+ {
+  "name": "rel-01-csv",
+  "rc": 0,
+  "seconds": 113.9,
+  "status": "verified",
+  "offline_verify_rc": 0,
+  "cost": 0.01766855,
+  "rerun_match": true,
+  "denied": 0,
+  "all_404": true
+ },
+ {
+  "name": "rel-02-fetch",
+  "rc": 0,
+  "seconds": 123.3,
+  "status": "verified",
+  "offline_verify_rc": 0,
+  "cost": 0.0176334,
+  "rerun_match": true,
+  "denied": 0,
+  "all_404": true
+ },
+ {
+  "name": "rel-03-walls",
+  "rc": 0,
+  "seconds": 134.8,
+  "status": "verified",
+  "offline_verify_rc": 0,
+  "cost": 0.0187198,
+  "rerun_match": true,
+  "denied": 12,
+  "all_404": true
+ },
+ {
+  "name": "rel-04-csv",
+  "rc": 0,
+  "seconds": 239.1,
+  "status": "verified",
+  "offline_verify_rc": 0,
+  "cost": 0.01967215,
+  "rerun_match": true,
+  "denied": 0,
+  "all_404": true
+ },
+ {
+  "name": "rel-05-fetch",
+  "rc": 0,
+  "seconds": 114.3,
+  "status": "verified",
+  "offline_verify_rc": 0,
+  "cost": 0.0177993,
+  "rerun_match": true,
+  "denied": 0,
+  "all_404": true
+ },
+ {
+  "name": "rel-06-walls",
+  "rc": 0,
+  "seconds": 143.4,
+  "status": "verified",
+  "offline_verify_rc": 0,
+  "cost": 0.0185402,
+  "rerun_match": true,
+  "denied": 12,
+  "all_404": true
+ },
+ {
+  "name": "rel-07-csv",
+  "rc": 0,
+  "seconds": 120.7,
+  "status": "verified",
+  "offline_verify_rc": 0,
+  "cost": 0.01764275,
+  "rerun_match": true,
+  "denied": 0,
+  "all_404": true
+ },
+ {
+  "name": "rel-08-fetch",
+  "rc": 0,
+  "seconds": 112.6,
+  "status": "verified",
+  "offline_verify_rc": 0,
+  "cost": 0.01754125,
+  "rerun_match": true,
+  "denied": 0,
+  "all_404": true
+ },
+ {
+  "name": "rel-09-walls",
+  "rc": 0,
+  "seconds": 131.5,
+  "status": "verified",
+  "offline_verify_rc": 0,
+  "cost": 0.0186748,
+  "rerun_match": true,
+  "denied": 12,
+  "all_404": true
+ },
+ {
+  "name": "rel-10-csv",
+  "rc": 0,
+  "seconds": 112.7,
+  "status": "verified",
+  "offline_verify_rc": 0,
+  "cost": 0.01757925,
+  "rerun_match": true,
+  "denied": 0,
+  "all_404": true
+ },
+ {
+  "name": "rel-11-fetch",
+  "rc": 0,
+  "seconds": 116.3,
+  "status": "verified",
+  "offline_verify_rc": 0,
+  "cost": 0.0180606,
+  "rerun_match": true,
+  "denied": 0,
+  "all_404": true
+ },
+ {
+  "name": "rel-12-walls",
+  "rc": 0,
+  "seconds": 146.1,
+  "status": "verified",
+  "offline_verify_rc": 0,
+  "cost": 0.01856135,
+  "rerun_match": true,
+  "denied": 12,
+  "all_404": true
+ }
+]

@@ -1,0 +1,63 @@
+{
+ "task_id": "8939a9e2586a",
+ "status": "verified",
+ "seconds_total": 120.8,
+ "kill": null,
+ "offline_verify_rc": 0,
+ "cost": 0.0176334,
+ "price_source": "live (/v2/plans + /v1/models)",
+ "egress": {
+  "attempts": 2,
+  "denied": 0
+ },
+ "sandboxes": [
+  {
+   "role": "verifier",
+   "instance_id": "d78a05d7-a7f1-42e7-8b86-59e569368433",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T07:01:55.364573+00:00",
+   "active_at": "2026-11-06T07:02:32.132138+00:00",
+   "destroyed_at": "2026-11-06T07:03:49.265301+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T07:03:49.265301+00:00",
+    "attempts": 1
+   }
+  },
+  {
+   "role": "primary",
+   "instance_id": "8c58fa5d-4288-41ac-b0f9-23d675f01d92",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T07:02:07.547105+00:00",
+   "active_at": "2026-11-06T07:02:39.919468+00:00",
+   "destroyed_at": "2026-11-06T07:03:50.401636+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T07:03:50.401636+00:00",
+    "attempts": 1
+   }
+  }
+ ],
+ "verdict": {
+  "passed": true,
+  "rerun_performed": true,
+  "rerun_match": true,
+  "model_review": {
+   "satisfies_task": true,
+   "confidence": 0.95,
+   "reasons": [
+    "The title of https://example.com is well-known to be 'Example Domain'",
+    "title.txt was created with the correct content 'Example Domain'",
+    "Exit code 0 with no stderr indicates successful execution",
+    "The output matches the expected <title> text from example.com"
+   ],
+   "concerns": []
+  }
+ }
+}

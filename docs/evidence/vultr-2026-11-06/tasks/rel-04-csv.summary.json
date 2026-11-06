@@ -1,0 +1,62 @@
+{
+ "task_id": "18eb27122cea",
+ "status": "verified",
+ "seconds_total": 236.5,
+ "kill": null,
+ "offline_verify_rc": 0,
+ "cost": 0.01967215,
+ "price_source": "live (/v2/plans + /v1/models)",
+ "egress": {
+  "attempts": 0,
+  "denied": 0
+ },
+ "sandboxes": [
+  {
+   "role": "primary",
+   "instance_id": "64db5330-73ea-4d1a-a4c3-5899aeb9662e",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T07:06:12.574268+00:00",
+   "active_at": "2026-11-06T07:07:35.550598+00:00",
+   "destroyed_at": "2026-11-06T07:10:03.781664+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T07:10:03.781664+00:00",
+    "attempts": 1
+   }
+  },
+  {
+   "role": "verifier",
+   "instance_id": "ce3b14c8-b8e2-4cef-a491-983dd7019ad4",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T07:06:13.490367+00:00",
+   "active_at": "2026-11-06T07:07:26.262536+00:00",
+   "destroyed_at": "2026-11-06T07:10:02.230570+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T07:10:02.230570+00:00",
+    "attempts": 1
+   }
+  }
+ ],
+ "verdict": {
+  "passed": true,
+  "rerun_performed": true,
+  "rerun_match": true,
+  "model_review": {
+   "satisfies_task": true,
+   "confidence": 0.99,
+   "reasons": [
+    "Recomputed from input: north=10+5=15, south=20, west=2.5, grand_total=37.5",
+    "Output summary.json matches expected values exactly",
+    "File was written to the expected location with correct structure"
+   ],
+   "concerns": []
+  }
+ }
+}

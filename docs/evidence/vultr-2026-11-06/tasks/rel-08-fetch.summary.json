@@ -1,0 +1,62 @@
+{
+ "task_id": "8f82054b04a7",
+ "status": "verified",
+ "seconds_total": 110.2,
+ "kill": null,
+ "offline_verify_rc": 0,
+ "cost": 0.01754125,
+ "price_source": "live (/v2/plans + /v1/models)",
+ "egress": {
+  "attempts": 2,
+  "denied": 0
+ },
+ "sandboxes": [
+  {
+   "role": "verifier",
+   "instance_id": "e0b44128-7d59-4c16-a24d-85cbd9e2d488",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T07:16:29.903629+00:00",
+   "active_at": "2026-11-06T07:17:01.202794+00:00",
+   "destroyed_at": "2026-11-06T07:18:14.297413+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T07:18:14.297413+00:00",
+    "attempts": 1
+   }
+  },
+  {
+   "role": "primary",
+   "instance_id": "cdf38e70-92ec-4447-b016-cd8b43be8bca",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T07:16:34.314652+00:00",
+   "active_at": "2026-11-06T07:17:05.295161+00:00",
+   "destroyed_at": "2026-11-06T07:18:15.517901+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T07:18:15.517901+00:00",
+    "attempts": 1
+   }
+  }
+ ],
+ "verdict": {
+  "passed": true,
+  "rerun_performed": true,
+  "rerun_match": true,
+  "model_review": {
+   "satisfies_task": true,
+   "confidence": 0.95,
+   "reasons": [
+    "The file title.txt contains 'Example Domain\\n', which is the correct <title> text of https://example.com.",
+    "Exit code 0 indicates the fetch/write step succeeded.",
+    "The input_files (sales.csv) are irrelevant to this task and do not affect the outcome."
+   ],
+   "concerns": []
+  }
+ }
+}

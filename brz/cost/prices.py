@@ -2,7 +2,9 @@
 
 ``LivePriceTable`` is what the control plane uses on Vultr. Both sources were checked on 2026-11-06:
 
-* ``GET /v2/plans`` carries ``hourly_cost`` per plan.
+* ``GET /v2/plans`` carries ``hourly_cost``, but on plans with ``invoice_type: monthly`` that is a rounded display
+  value. Pending charges bill those plans at ``monthly_cost / 672`` (vhp-1c-1gb-amd: 0.008929, not 0.008), so that is
+  what we use. Plans with ``invoice_type: hourly`` (VX1) do bill at ``hourly_cost``.
 * ``GET /v1/models`` called with an inference key carries ``cost_usd`` per token, under
   ``input_modalities[].pricing[type=prompt]`` and ``output_modalities[].pricing[type=completion]``.
 
@@ -47,9 +49,9 @@ STATIC_VM_HOURLY: dict[str, float] = {
     "vx1-g-4c-16g": 0.120,
     "vx1-g-4c-16g-240s": 0.120,
     "vx1-m-2c-16g": 0.080,
-    "vc2-1c-1gb": 0.007,
-    "vhf-1c-1gb": 0.008,
-    "vhp-1c-1gb-amd": 0.008,
+    "vc2-1c-1gb": round(5.0 / HOURS_PER_MONTH, 6),
+    "vhf-1c-1gb": round(6.0 / HOURS_PER_MONTH, 6),
+    "vhp-1c-1gb-amd": round(6.0 / HOURS_PER_MONTH, 6),
     "vhp-2c-2gb-amd": round(18.0 / HOURS_PER_MONTH, 6),
 }
 FALLBACK_VM_HOURLY = 0.060  # assume a VX1 2c/8g when unknown (conservative)
@@ -94,7 +96,7 @@ class LivePriceTable(StaticPriceTable):
             pid = p.get("id")
             if not pid:
                 continue
-            if p.get("hourly_cost") is not None:
+            if p.get("hourly_cost") is not None and p.get("invoice_type") != "monthly":
                 vm[pid] = float(p["hourly_cost"])
             elif p.get("monthly_cost") is not None:
                 vm[pid] = round(float(p["monthly_cost"]) / HOURS_PER_MONTH, 6)

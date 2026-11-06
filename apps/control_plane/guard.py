@@ -35,7 +35,7 @@ class DemoPolicy:
     # One task is two VMs, and Vultr caps active instances per account, counting just-deleted ones for a while.
     max_running: int = 1
     tasks_per_day: int = 24
-    tasks_per_client_hour: int = 4
+    tasks_per_client_hour: int = 6
     total_usd: float = 10.0
     max_task_chars: int = 2000
     max_file_bytes: int = 256 * 1024
@@ -52,7 +52,7 @@ class DemoPolicy:
             allowed_domains=domains,
             max_running=_int("BRZ_DEMO_MAX_RUNNING", 1),
             tasks_per_day=_int("BRZ_DEMO_TASKS_PER_DAY", 24),
-            tasks_per_client_hour=_int("BRZ_DEMO_TASKS_PER_CLIENT_HOUR", 4),
+            tasks_per_client_hour=_int("BRZ_DEMO_TASKS_PER_CLIENT_HOUR", 6),
             total_usd=float(os.environ.get("BRZ_DEMO_TOTAL_USD") or 10.0),
         )
 

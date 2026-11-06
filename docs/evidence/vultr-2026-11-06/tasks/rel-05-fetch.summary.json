@@ -1,0 +1,65 @@
+{
+ "task_id": "0fdf515c80d3",
+ "status": "verified",
+ "seconds_total": 110.7,
+ "kill": null,
+ "offline_verify_rc": 0,
+ "cost": 0.0177993,
+ "price_source": "live (/v2/plans + /v1/models)",
+ "egress": {
+  "attempts": 2,
+  "denied": 0
+ },
+ "sandboxes": [
+  {
+   "role": "primary",
+   "instance_id": "d7d4b7d9-9e7d-4aa9-a3bc-5014b4fef76d",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T07:10:14.292882+00:00",
+   "active_at": "2026-11-06T07:10:46.088850+00:00",
+   "destroyed_at": "2026-11-06T07:11:58.476511+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T07:11:58.476511+00:00",
+    "attempts": 1
+   }
+  },
+  {
+   "role": "verifier",
+   "instance_id": "dc5a7346-1a7b-42cb-b155-981c08e3cc86",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T07:10:15.499764+00:00",
+   "active_at": "2026-11-06T07:10:47.806981+00:00",
+   "destroyed_at": "2026-11-06T07:11:56.789623+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T07:11:56.789623+00:00",
+    "attempts": 1
+   }
+  }
+ ],
+ "verdict": {
+  "passed": true,
+  "rerun_performed": true,
+  "rerun_match": true,
+  "model_review": {
+   "satisfies_task": true,
+   "confidence": 0.95,
+   "reasons": [
+    "The file title.txt was created with content 'Example Domain\\n'",
+    "This is the correct and well-known title of https://example.com",
+    "Exit code 0 indicates the fetch and write operation succeeded",
+    "The task requirement to write the title tag text to title.txt is met"
+   ],
+   "concerns": [
+    "The plan mentioned path /work/out/title.txt but the evidence only shows 'title.txt' \u2014 however the task itself only specifies 'title.txt' so this is acceptable"
+   ]
+  }
+ }
+}

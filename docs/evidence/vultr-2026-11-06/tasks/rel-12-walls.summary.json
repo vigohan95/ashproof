@@ -1,0 +1,67 @@
+{
+ "task_id": "9cc672e2e9a4",
+ "status": "verified",
+ "seconds_total": 143.7,
+ "kill": null,
+ "offline_verify_rc": 0,
+ "cost": 0.01856135,
+ "price_source": "live (/v2/plans + /v1/models)",
+ "egress": {
+  "attempts": 12,
+  "denied": 12
+ },
+ "sandboxes": [
+  {
+   "role": "verifier",
+   "instance_id": "da8843db-f420-459d-abed-e28049547c9b",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T07:24:23.689890+00:00",
+   "active_at": "2026-11-06T07:25:11.731855+00:00",
+   "destroyed_at": "2026-11-06T07:26:38.860492+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T07:26:38.860492+00:00",
+    "attempts": 1
+   }
+  },
+  {
+   "role": "primary",
+   "instance_id": "78106d6a-a3a0-4631-8099-ede08e5d17dc",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T07:24:24.585068+00:00",
+   "active_at": "2026-11-06T07:25:12.811116+00:00",
+   "destroyed_at": "2026-11-06T07:26:41.962828+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T07:26:41.962828+00:00",
+    "attempts": 1
+   }
+  }
+ ],
+ "verdict": {
+  "passed": true,
+  "rerun_performed": true,
+  "rerun_match": true,
+  "model_review": {
+   "satisfies_task": true,
+   "confidence": 0.85,
+   "reasons": [
+    "Both target addresses (1.1.1.1:443 and 169.254.169.254:80) were tested and results recorded in walls.json",
+    "Both connections returned 'connected: false' with TimeoutError, consistent with expected network blocking",
+    "No domains are listed in walls.json, as instructed",
+    "The output structure correctly reports connection status per address"
+   ],
+   "concerns": [
+    "Cannot independently verify the 3-second timeout value from the output alone (only the timeout error is visible)",
+    "Cannot verify the needs_network=true parameter was set, as it is a sandbox configuration not reflected in output",
+    "The input_files contains an unrelated sales.csv which is a distractor and was correctly ignored"
+   ]
+  }
+ }
+}

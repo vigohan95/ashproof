@@ -114,3 +114,15 @@ async def test_a_refused_task_uses_no_vm_and_is_never_verified():
     assert receipt.status == "failed"
     assert "refused by the planner" in state.error
     assert state.sandboxes == []
+
+
+def test_monthly_invoiced_plans_use_the_billed_rate_not_the_rounded_field():
+    """Pending charges billed vhp-1c-1gb-amd at 0.0089285714 while /v2/plans says hourly_cost 0.008."""
+    table = LivePriceTable.from_payloads(
+        [
+            {"id": "vhp-1c-1gb-amd", "monthly_cost": 6, "hourly_cost": 0.008, "invoice_type": "monthly"},
+            {"id": "vx1-g-2c-8g", "monthly_cost": 43.8, "hourly_cost": 0.06, "invoice_type": "hourly"},
+        ]
+    )
+    assert table.vm_hourly("vhp-1c-1gb-amd") == pytest.approx(0.0089285714, rel=1e-4)
+    assert table.vm_hourly("vx1-g-2c-8g") == pytest.approx(0.06)

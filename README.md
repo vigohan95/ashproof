@@ -9,6 +9,9 @@ is part of the receipt.
 > Built for the Vultr "Agent Rush" hackathon (lablab.ai), Challenge 1 *Blast Radius Zero*: a system that
 > **plans, dispatches and verifies real executed work** inside a sandbox. MIT licensed.
 
+**Live demo:** https://66-135-3-140.sslip.io/ (real Vultr VMs and real models; one task at a time, limits on the page).
+**A real receipt:** [`RECEIPT_MD`](RECEIPT_MD).
+
 ## The problem
 
 Letting an AI agent run real code or browse real sites is the fastest way to get work done and the
@@ -29,10 +32,10 @@ OWASP's Agentic Top 10 (ASI05) says is not enough.
 |  Planner  glm-5.3 (Vultr Serverless Inference, json_schema)  -> Plan{steps, required_domains, est_cost}      |
 |  Approval gate: new egress domains need a human click                                                        |
 |  Budget breaker: projected $ > budget -> refuse before any VM                                                 |
-|  Sandbox broker: POST /v2/instances (cloud-init) -> wait active -> runner ready                               |
+|  Sandbox broker: POST /v2/instances (cloud-init) -> wait active -> runner ready, both VMs booting at once     |
 |  Dispatcher: one single-use HMAC capability token per step  ------------------------------+                   |
 |  Verifier qwen3.8-27b (different model family) + deterministic checks + fresh-VM re-run   |                   |
-|  Audit: every event sha256-chained  -> receipt (JSON + Markdown) -> Object Storage        |                   |
+|  Audit: every event sha256-chained  -> receipt (JSON + Markdown), kept on disk            |                   |
 |  Cost meter: VM hours x /v2/plans price + tokens x /v1/models price, live per task        |                   |
 |  Kill switch: revoke tokens + DELETE /v2/instances/{id} + confirm 404                     |                   |
 +-------------------------------------------------------------------------------------------|-------------------+
@@ -41,7 +44,7 @@ OWASP's Agentic Top 10 (ASI05) says is not enough.
 | tags: brz-sandbox, task-<id>   TTL watchdog: poweroff @20m |   | same image, same steps, nothing shared        |
 | nftables: OUTPUT policy drop; allowlist resolved at boot   |   |                                               |
 | runner (stdlib) : /steps /scan /egress /revoke             |   |  -> output hashes must be byte-identical      |
-|   each step in gVisor runsc --platform=systrap, uid 1000   |   |                                               |
+|   each step in gVisor runsc --platform=systrap, uid 10001  |   |                                               |
 | secrets present: 0 (scanned and receipted)                 |   |                                               |
 +------------------------------------------------------------+   +-----------------------------------------------+
             ... task ends -> DELETE -> GET returns 404 (in the receipt) ...
@@ -54,11 +57,10 @@ step. Both go to zero when the task ends.
 
 | Service | Role |
 |---|---|
-| **Cloud Compute** | the control plane VM, and one *throwaway* instance per task (plus one per verification), created and deleted through the API |
-| **Serverless Inference** (`https://api.vultrinference.com/v1`) | planner `glm-5.3`, independent verifier `qwen3.8-27b` (different model family), both via OpenAI-compatible `chat/completions` with `response_format: json_schema` |
-| **Vultr API v2** | `POST/GET/DELETE /v2/instances`, `GET /v2/plans` (live prices), `/v2/firewalls` (inbound-only group for the runner port), `/v2/snapshots` (pre-baked sandbox image) |
-| **Object Storage** (S3-compatible) | receipt + audit bundle export with pre-signed links *(event-day wiring)* |
-| **Firewall** | inbound: only the control plane reaches the runner port; outbound default-deny is nftables inside the VM |
+| **Cloud Compute** | the control plane (`vc2-1c-1gb`, about $0.17 a day) and two *throwaway* instances per task (`vhp-1c-1gb-amd`), created and deleted through the API |
+| **Serverless Inference** (`https://api.vultrinference.com/v1`) | planner `glm-5.3` and independent verifier `qwen3.8-27b` (a different model family), both through `chat/completions` with `response_format: json_schema` and `reasoning_effort: low` |
+| **Vultr API v2** | `POST/GET/DELETE /v2/instances`, `GET /v2/plans` for live VM prices. With an inference key, `GET /v1/models` gives live token prices |
+| **Firewall groups** | only the control plane can reach a sandbox's runner port. Vultr groups are inbound only, so outbound default-deny is nftables inside the VM |
 
 ## 5-minute quickstart
 
@@ -66,7 +68,7 @@ step. Both go to zero when the task ends.
 git clone <repo> ashproof && cd ashproof
 python -m venv .venv && . .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
-python -m pytest -q                                   # 148 tests, no credentials, no cloud
+python -m pytest -q                                   # TEST_COUNT tests, no credentials, no cloud
 
 # Offline demo (mock Vultr + local runner + demo planner): zero credentials
 BRZ_MODE=mock uvicorn apps.control_plane.app:app --port 8000
@@ -80,70 +82,108 @@ curl -s -X POST localhost:8000/tasks -H 'content-type: application/json' -d '{
 curl -s localhost:8000/tasks/<id>            # timeline: plan, VMs, steps, verdict, egress, cost, audit chain
 curl -s localhost:8000/tasks/<id>/receipt.md # the receipt, including the GET 404 proof of destruction
 
-# Live on Vultr
+# Live on Vultr: run this on a Vultr VM, because the runner port accepts the control plane's address only
 export VULTR_API_KEY=...  INFERENCE_API_KEY=...
 export VULTR_REGION=ewr VULTR_PLAN=vhp-1c-1gb-amd BRZ_CONTROL_PLANE_CIDR=<control plane ip>/32
-uvicorn apps.control_plane.app:app --host 0.0.0.0 --port 8000
+export VULTR_FIREWALL_GROUP_ID=<group that allows tcp 8700 from the control plane only>
+uvicorn apps.control_plane.app:app --host 127.0.0.1 --port 8000
 ```
 
-Environment variables are listed in `apps/control_plane/deps.py`.
+Environment variables are listed in `apps/control_plane/deps.py` and `apps/control_plane/guard.py`.
+`scripts/deploy_cp.py` deploys to a VM: systemd service as an unprivileged user, Caddy for HTTPS on `<ip>.sslip.io`, keys
+sent over ssh stdin into a 0640 file. The Vultr API key's access control list must include the control plane's address.
 
 ## Security model
 
 | Control | What it means here | Where |
 |---|---|---|
-| **Two blast-radius layers** | outer: one throwaway Vultr VM per task, tagged, TTL watchdog, deleted at the end; inner: each step in gVisor `runsc --platform=systrap` (user-space kernel, no KVM needed), uid 1000, no capabilities, root filesystem is a skeleton with `/usr` read-only (the rest of the machine is not visible), `/work` and a 256 MiB `/tmp` the only writable paths, memory capped without swap, 256 pids, 2 GiB polled quota on `/work` | `brz/sandbox/backends.py`, `sandbox/runner/brz_runner/executor.py`, cloud-init template |
+| **Two blast-radius layers** | outer: one throwaway Vultr VM per task, tagged, TTL watchdog, deleted at the end; inner: each step in gVisor `runsc --platform=systrap` (user-space kernel, no KVM needed), uid 10001 with no groups, no capabilities, root filesystem is a skeleton with `/usr` read-only (the rest of the machine is not visible), `/work` and a 256 MiB `/tmp` the only writable paths, memory capped at 60 percent of the VM's RAM with no swap, 256 pids, 2 GiB polled quota on `/work` | `brz/sandbox/backends.py`, `sandbox/runner/brz_runner/executor.py`, cloud-init template |
 | **Egress default-deny** | steps without `needs_network` have no interface at all. Others go through nftables `OUTPUT policy drop`: only the approved domains' IPv4s (resolved once at boot) on 80/443. Port 53 is closed after boot, because a resolver is a tunnel; approved names are pinned in the step's `/etc/hosts`. Denied packets are logged (`BRZ-EGRESS-DENY`) for the receipt | `brz_runner/egress.py`, `brz_runner/netlog.py` |
 | **Zero secrets in the sandbox** | the VM never receives a cloud or inference key; the only secret is a per-task HMAC key that authenticates the control plane to that one runner. Capability tokens are single-use, scoped (`exec`/`scan`/`egress`/`revoke`), expire in 60 s and pin the exact step body; replies carry an HMAC, so the plain-HTTP control link is authenticated both ways. Step env is allow-listed. stdout and stderr are scanned and redacted in the runner before they reach any model prompt; a final scan covers env and the work tree. A dirty scan fails the task | `brz_runner/tokens.py`, `brz_runner/secretscan.py`, `brz_runner/server.py` |
-| **Independent verifier** | deterministic checks (exit codes, expected outputs, plan assertions) + the whole plan re-run in a **second clean VM** with byte-identical output hashes required + a review by a *different model family*; the model can only lower a verdict, never rescue a failed check. A repair may change a step's code, never widen it: turning on the network, raising the timeout or dropping expected outputs fails the task | `brz/llm/verifier.py`, `brz/orchestrator.py` |
+| **Independent verifier** | deterministic checks (exit codes, expected outputs, plan assertions) + the whole plan re-run in a **second clean VM** with byte-identical output hashes required + a review by a *different model family*, which sees input previews and recomputes what it can; the model can only lower a verdict, never rescue a failed check. A repair may change a step's code, never widen it: turning on the network, raising the timeout or dropping expected outputs fails the task | `brz/llm/verifier.py`, `brz/orchestrator.py` |
 | **Hash-chained receipts** | every event is `sha256(prev_hash + canonical_json(event))`; the receipt pins the head hash and its own `receipt_sha256`; anyone can re-verify with `python brz/audit/offline_verify.py receipt.json`, which needs nothing but Python. Modified, dropped or reordered events are pinpointed, and the readable fields are checked against the chain. A chain has no key: a forger who recomputes every hash is only caught by a head hash kept elsewhere (`--expect-head`), and the tool says so | `brz/audit/` |
-| **Kill switch** | `POST /tasks/{id}/kill`: revoke all runner tokens (kills the running step), `DELETE` every VM, confirm 404, write it all into the chain; works in any state including "awaiting approval" | `Orchestrator.kill` |
-| **Cost meter** | per-started-hour VM cost x plan price + tokens x per-model price, per task, live; budget preflight refuses before the first VM; mid-task breaker | `brz/cost/` |
-| **Approval gate** | the planner declares the domains it needs; anything outside the pre-approved list parks the task in `awaiting_approval` until a human approves or rejects - no VM exists until then | `Orchestrator._approval_gate` |
+| **Kill switch** | `POST /tasks/{id}/kill`: revoke all runner tokens (kills the running step), `DELETE` every VM at once, confirm 404, write it all into the chain; works in any state, including during boot and "awaiting approval" | `Orchestrator.kill` |
+| **Cost meter** | per-started-hour VM cost x plan price + tokens x per-model price, per task, from live Vultr prices; budget preflight refuses before the first VM; mid-task breaker | `brz/cost/` |
+| **Approval gate** | the planner declares the domains it needs; anything outside the pre-approved list parks the task in `awaiting_approval` until a human approves or rejects - no VM exists until then. A task the planner refuses never gets a VM and is never `verified` | `Orchestrator._approval_gate` |
+| **Public demo limits** | on a public URL the human at the gate is a stranger, so domains come from a fixed list, the gate cannot be waived, and tasks are capped per day, per address and in total dollars. Finished tasks survive a restart. An orphan sweep runs every 5 minutes | `apps/control_plane/guard.py`, `archive.py`, `app.py` |
 
 Known limitations:
 
-- Egress allow-listing is by IPv4 resolved **once at boot**. A CDN that retires an address mid-task can break
-  an approved domain, a wildcard only pins its apex, and other hostnames sharing an approved IP are reachable.
-- The secret scan is a tripwire, not data-loss prevention. Encrypted data passes it (attack A24, the one attack
-  that still succeeds). The guarantee is that the sandbox holds no secret and has no route out.
-- The `/work` quota is polled every 50 ms, so it overshoots: the last run stopped at 2201 MiB against 2048.
-- A fork bomb ends the whole step: the sandbox dies with exit 2 at about 100 forks, not with a clean `EAGAIN`.
-- The control link is authenticated but not encrypted, so step code and output are readable on the wire. The
-  Vultr firewall group limits who is on that path; no secret crosses it.
+- **An approved domain opens its whole IP.** Egress is allow-listed by IPv4 resolved once at boot, so other sites on that
+  address are reachable. Measured: with only `example.com` approved, a step reached `www.cloudflare.com` on the same
+  Cloudflare address and got HTTP 200. A CDN domain is a wide opening. A CDN that retires an address can also break an
+  approved domain, and a wildcard only pins its apex.
+- **Kill during boot is slow.** Mid-step the kill takes about half a second, but Vultr refuses `DELETE` while a VM installs,
+  so during boot it took 20 to 77 seconds.
+- **Tasks are slow next to a microVM.** A task usually takes about 2 minutes, nearly all of it VM boot. The slowest verified
+  task took 240 seconds. Vultr VMs can also get stuck: one of about 40 stayed `installingbooting` for good. It is deleted
+  after 150 seconds and replaced.
+- **One task at a time on the demo.** The account limits active instances, and deleted ones seem to count for a short time.
+- **The secret scan is a tripwire, not data-loss prevention.** Encrypted data passes it (attack A24, the one attack that still
+  succeeds). The guarantee is that the sandbox holds no secret and has no route out, which with an approved domain means
+  no route other than that IP.
+- **A chain has no key.** A control plane that is itself compromised could rewrite a whole receipt. Only a head hash kept
+  elsewhere catches that, and the verifier says so.
+- **The first 4000 bytes of each input go to the verifier model**, so that it can recompute results. The planner sees only
+  file names.
+- **Boot has an open window.** Packages and gVisor are fetched before lock-down. No step exists yet, and the runner has not
+  started. A snapshot image would remove it; that is not built.
+- The `/work` quota is polled every 50 ms, so it overshoots: the last run stopped at 2053 MiB against 2048.
+- A fork bomb ends the whole step: the sandbox dies at about 75 to 100 forks, not with a clean `EAGAIN`.
+- The control link is authenticated but not encrypted, so step code and output are readable on the wire. The Vultr firewall
+  group limits who is on that path; no secret crosses it.
 
-## Status: what was measured, and what still needs Vultr
+## Status: what ran on Vultr
 
-Everything below ran on one workstation: WSL2 Ubuntu 24.04, kernel 6.18, runsc release-20261026.0, platform
-systrap, 2026-11-04. **Nothing here has run on a Vultr VM yet.** No Vultr API call, no Serverless Inference
-call and no VM boot has happened.
+All of this ran on real Vultr VMs in `ewr` on 2026-11-06, with real models. Evidence is in
+[`docs/evidence/vultr-2026-11-06/`](docs/evidence/vultr-2026-11-06/).
 
-| Measured | Result | Evidence |
+| What ran | Result | Evidence |
 |---|---|---|
-| Attack suite, real runner, real gVisor, real HTTP and tokens | 31 attacks plus a negative control. **First run: 15 attacks worked** (among them reading the runner's HMAC key through a symlink in `/work/out`, writing outside `/work` as root, a 5.3 GiB memory bomb against a 1.4 GiB limit, swapped code under a valid token, a DNS tunnel). **After fixes: 30 of 31 contained, the control passes**; A24 (encrypted data past the scanner) still works and is an accepted limitation | [`report`](docs/evidence/attacks-2026-11-04/report.md), [`first run`](docs/evidence/attacks-2026-11-04/baseline/report.md) |
-| Egress ruleset against real packets | the repo's generated nftables ruleset in a network namespace, step in `runsc --network=host`: allowlisted IP on 443 connects, same IP on 8080, another IP, 169.254.169.254 and a tunnelled DNS query all fail and the listeners receive nothing; the runner port answers only the control-plane address | A19, A20 in the report |
-| Receipt tamper detection | flip, delete and reorder all detected on a real receipt by the offline verifier run as `python -I -S`; of 23,632 single-byte flips, one went undetected, and it changes no parsed value (last digit of a long float). A full rewrite passes without a pin and fails with one | [`tamper report`](docs/evidence/receipts-2026-11-04/tamper-report.md) |
-| Kill switch, in-VM half | `POST /revoke` against 5 processes ignoring SIGTERM, 30 runs: all host processes gone in **p50 9.5 ms, max 10.6 ms**. An earlier batch of 30 gave p50 13.2 ms, max 21.6 ms. Nothing left in any run | [`kill timing`](docs/evidence/kill-timing-2026-11-04/report.md) |
-| Task through the real orchestrator | two steps, both sandboxes in gVisor, output hashes identical across the two, status `verified`. Scripted models; sandboxes were runner processes, not VMs | [`receipt`](docs/evidence/receipts-2026-11-04/receipt.md) |
-| Prompt injection in step output | a scripted model that obeys everything it reads could not widen a step or pass bad work. This is the worst case by construction; no real model was tested | A29, A30 in the report |
-| cloud-init | `cloud-init schema` valid (26.1), ~106 KB rendered. Never booted | re-run 2026-11-04 |
-| LLM client | live smoke test against local Ollama `gemma3:4b` on 2026-11-01 (json_schema accepted, valid plan) | `tests/llm/test_live_ollama.py` |
-| Test suite | `python -m pytest -q`: 148 tests. On Windows 144 pass, 4 skip (symlinks, root + runsc); in WSL as root 147 pass, 1 skip (no local model server) | CI runs ruff + pytest |
+| Task from the public HTTPS API to receipt | two VMs, step in gVisor, hashes identical across both, verifier recomputed the totals, both VMs 404, offline verifier OK. 110 s, $0.018 | [`tasks/`](docs/evidence/vultr-2026-11-06/tasks/) |
+| Reliability on the final code | RELIABILITY_ROW | [`reliability.json`](docs/evidence/vultr-2026-11-06/reliability.json) |
+| An earlier reliability run, on the code before it | stopped at task 5 of 12: one stuck VM and false egress attribution, both fixed. Kept as found | [`reliability-run1/`](docs/evidence/vultr-2026-11-06/reliability-run1/) |
+| Boot, API call to ready runner | 77 to 82 s in three direct measurements (37 to 40 s to `active`). 109 KB of `user_data` accepted | `first-vm-*.json` |
+| gVisor step | `4.19.0-gvisor`, uid 10001, only `lo` without `needs_network`, root is a skeleton, env has no secrets. runsc release-20261102.0, systrap. `/dev/kvm` absent on `vc2` and `vhp`, which systrap does not need | `first-vm-*.json` |
+| Egress in the kernel log | not on the list: no DNS. 1.1.1.1:443, the metadata service and an allowed IP on 8080: `BRZ-EGRESS-DENY`. Allowed name: 200 and `BRZ-EGRESS-ALLOW`. Lines reach the receipt | `first-vm-*.json`, `tasks/walls.*` |
+| Attack suite on a real VM | same plan and cloud-init as production: **30 of 31 attacks contained, the negative control passes**. A24 is the accepted limitation | [`attacks-vm/report.md`](docs/evidence/vultr-2026-11-06/attacks-vm/report.md) |
+| Memory bomb before and after the fix | before: `global_oom`, host `systemd` and the harness killed. After: `CONSTRAINT_MEMCG`, step stopped at 512 MiB, runner up | `attacks-memory-baseline/run.json`, `attacks-vm/run.json` |
+| Kill switch, mid-step, 5 runs | button to both VMs 404: median 0.52 s, max 1.11 s. Tokens revoked in 10 to 14 ms. The running step was killed each time | [`kill-switch.md`](docs/evidence/vultr-2026-11-06/kill-switch.md) |
+| Kill switch, during boot, 3 runs | 20 to 77 s, because of Vultr's 409. All VMs 404 | [`kill-switch.md`](docs/evidence/vultr-2026-11-06/kill-switch.md) |
+| Task the planner refuses | data theft request: refused in 3.2 s, $0.0011, no VM, status `failed` | `tasks/exfil-refused.*` |
+| Serverless Inference | `json_schema` accepted by both models. Alone, `glm-5.3` takes about 4 s and `qwen3.8-27b` about 3 s. Verifier passed good work and rejected wrong numbers, empty output and an injection | `llm-*.json` |
+| Orphan sweep | ORPHAN_ROW | - |
+| Prices | live from `/v2/plans` and `/v1/models`; each receipt names its price source | any `tasks/*.timeline.json` |
 
-| Tested only against a mock, or not started | State |
-|---|---|
-| Vultr API v2 client | tested against an in-process mock (shapes from govultr), first live call pending |
-| Web UI, control plane API | real code, exercised in mock mode with FakeLLM |
-| Cost meter | static price table; live prices need the Vultr pricing source |
+Measured earlier on a workstation (WSL2, gVisor release-20261026.0), and not repeated on Vultr:
 
-| Still needs Vultr | Why it matters |
-|---|---|
-| A real throwaway VM: create, cloud-init boot, runner ready, `DELETE`, `GET` -> 404 | the outer blast radius and the proof of destruction are not demonstrated yet |
-| Serverless Inference with `glm-5.3` and `qwen3.8-27b` | no real planner or verifier run yet; `json_schema` support unconfirmed |
-| `BRZ-EGRESS-*` log lines read into a receipt | the ruleset's verdicts are proven by listeners, but its log lines were not observed: netfilter does not log from a non-init namespace by default, and we left that system setting alone |
-| Control-plane half of the kill switch | time from button to `GET` 404 |
-| Two real VMs producing identical hashes, 20 consecutive tasks, public demo | none of this exists yet |
-| Object Storage export, snapshot image, pre-warm pool, Pattern B | not started; see `docs/EVENT-DAY-TODO.md` |
+| What ran | Result | Evidence |
+|---|---|---|
+| Receipt tamper detection | flip, delete and reorder all detected by the offline verifier run as `python -I -S`; of 23,632 single-byte flips, one went undetected, and it changes no parsed value. A full rewrite passes without a pinned head and fails with one | [`tamper report`](docs/evidence/receipts-2026-11-04/tamper-report.md) |
+| Kill switch, in-VM half | 5 processes ignoring SIGTERM, 30 runs: all gone in p50 9.5 ms, max 10.6 ms | [`kill timing`](docs/evidence/kill-timing-2026-11-04/report.md) |
+| First attack run, before any fixes | 15 of 31 attacks worked | [`first run`](docs/evidence/attacks-2026-11-04/baseline/report.md) |
+
+Not built: Object Storage export, snapshot image and warm pool, browser tasks. The web UI's script was run against real
+timelines with a stub DOM, and its pages were fetched over HTTPS; a real browser session is the video recording.
+
+## What real VMs found
+
+The workstation runs passed before any of this was seen.
+
+| What happened | How it surfaced | Fix |
+|---|---|---|
+| Steps ran as uid 1000, which on Vultr's image is `linuxuser`, in `sudo` and `lxd`. A gVisor escape would have landed on a privileged account | `cloud-init status: error` on the first boot, although the task had worked | uid 10001 with no groups; `linuxuser` removed at boot |
+| The 1.5 GB memory limit was above the VM's 955 MB of RAM. A memory bomb ran the whole VM out of memory and killed host `systemd` | Attack A10 on a real VM | limit is 60 percent of RAM |
+| The account limits active instances. `POST /v2/instances` returned 400 and a task failed | two tasks at once, then a direct test of five parallel creates | client waits for capacity; demo runs one task at a time |
+| `DELETE` returns 409 while a VM installs, so a kill during boot lost its first attempt | pressing the kill switch during boot | retried until accepted; VMs are registered the moment they exist |
+| A timed-out create was retried, which could make a second billing VM. No duplicate happened; found while reviewing a 71 s create | code review after a real slow call | a create is sent once; after a timeout the VM is looked up by label |
+| Quiet steps were charged with host DNS packets from boot, because `journalctl` exits 1 on "no entries" and the reader fell back to the whole log | a CSV task with no network showing 4 denied packets | exit 1 means nothing happened; the fallback keeps the step's time window |
+| A VM stayed `installingbooting` for good and the task waited 300 s | reliability run | gives up at 150 s, deletes it, retries once |
+| gVisor `latest` had moved since our tests | `runsc --version` on the first boot | pinned to release 20261102.0 |
+| The planner refused a data theft task, ran something harmless, and the receipt said `verified` | running that task with real models | a refusal is a field on the plan: no VM, status `failed` |
+| The verifier never saw the input files, so it could not catch wrong totals | noticing that our first live test had pasted the data into the task text | it gets input previews and recomputes |
+| At default reasoning effort `qwen3.8-27b` spent all 8,000 tokens thinking and returned no JSON | a matrix across three models | `reasoning_effort` is `low` |
+| A syntax error from our own edit left the task page dead while the server answered 200 | running the page's script against a real timeline | a test parses every page's inline script |
 
 ## Repository layout
 
@@ -152,15 +192,15 @@ brz/              library: vultr/ (API client + mock) · llm/ (client, structure
                   audit/ (hash chain, receipt) · cost/ (meter, prices) · sandbox/ (cloud-init, runner client, backends)
                   orchestrator.py
 sandbox/runner/   brz_runner: the stdlib-only program that runs inside the throwaway VM
-apps/control_plane/  FastAPI app + server-rendered UI (ui.py, templates/), dependency wiring (mock | live), demo planner
-tests/            148 tests; tests/attacks/ is the attack suite, tests/llm/test_live_ollama.py the optional live smoke test
-scripts/          wsl-attacks.sh and wsl-evidence.sh reproduce everything in docs/evidence/
-docs/             EVENT-DAY-TODO · VIDEO-SCRIPT · SLIDES-OUTLINE · COMPETITORS · evidence/
+apps/control_plane/  FastAPI app + server-rendered UI, wiring (mock | live), public demo limits, task archive
+tests/            TEST_COUNT tests; tests/attacks/ is the attack suite
+scripts/          deploy, live runs and evidence: deploy_cp.py, first_vm.py, live_task.py, attack_vm.py, reliability.py
+docs/             SUBMISSION · VIDEO-SCRIPT · SLIDES-OUTLINE · COMPETITORS · evidence/
 ```
 
 ## Reproduce the evidence
 
-Needs Linux (or WSL) as root, with `runsc` in `/usr/local/bin`.
+Workstation, as root in Linux or WSL with `runsc` in `/usr/local/bin`:
 
 ```bash
 scripts/wsl-attacks.sh  docs/evidence/attacks-<date> --baseline docs/evidence/attacks-2026-11-04/baseline/results.json
@@ -168,12 +208,21 @@ scripts/wsl-evidence.sh receipt_evidence --out docs/evidence/receipts-<date>
 scripts/wsl-evidence.sh kill_timing --out docs/evidence/kill-timing-<date> --runs 30
 ```
 
+On Vultr, with `VULTR_API_KEY`, `INFERENCE_API_KEY` and `BRZ_OPERATOR_IP` in `.env`:
+
+```bash
+python scripts/first_vm.py <out dir> <firewall group id>            # one VM: boot, step, egress, 404
+python scripts/live_task.py <base url> <out dir> <name> "<task>"    # one task through the public API, verified offline
+python scripts/attack_vm.py <out dir> <firewall id> <ssh key id> <control plane ssh alias>
+python scripts/reliability.py <base url> <out dir> 12
+```
+
 ## Docs
 
 - [`docs/COMPETITORS.md`](docs/COMPETITORS.md) - what existing sandboxes do and do not do, feature by feature
-- [`docs/VIDEO-SCRIPT.md`](docs/VIDEO-SCRIPT.md) - 3-minute storyboard with the containment moments
-- [`docs/SLIDES-OUTLINE.md`](docs/SLIDES-OUTLINE.md) - deck outline: problem, solution, demo, market, pricing, roadmap
-- [`docs/EVENT-DAY-TODO.md`](docs/EVENT-DAY-TODO.md) - exactly what happens once real Vultr credentials exist
+- [`docs/VIDEO-SCRIPT.md`](docs/VIDEO-SCRIPT.md) - the demo video, shot by shot
+- [`docs/SLIDES-OUTLINE.md`](docs/SLIDES-OUTLINE.md) - the deck: problem, demo, findings, market, pricing, limits
+- [`docs/SUBMISSION.md`](docs/SUBMISSION.md) - lablab form text
 
 ## License
 

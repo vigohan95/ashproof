@@ -1,0 +1,62 @@
+{
+ "task_id": "0b41ab02c93f",
+ "status": "verified",
+ "seconds_total": 118.0,
+ "kill": null,
+ "offline_verify_rc": 0,
+ "cost": 0.01764275,
+ "price_source": "live (/v2/plans + /v1/models)",
+ "egress": {
+  "attempts": 0,
+  "denied": 0
+ },
+ "sandboxes": [
+  {
+   "role": "primary",
+   "instance_id": "82a6d914-614d-42b6-a504-4ff24f1e4949",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T07:14:29.068357+00:00",
+   "active_at": "2026-11-06T07:15:00.811827+00:00",
+   "destroyed_at": "2026-11-06T07:16:23.031861+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T07:16:23.031861+00:00",
+    "attempts": 1
+   }
+  },
+  {
+   "role": "verifier",
+   "instance_id": "e999f11e-3ea4-4356-8490-f5fb34fc6e75",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T07:14:30.342923+00:00",
+   "active_at": "2026-11-06T07:15:13.301789+00:00",
+   "destroyed_at": "2026-11-06T07:16:21.894538+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T07:16:21.894538+00:00",
+    "attempts": 1
+   }
+  }
+ ],
+ "verdict": {
+  "passed": true,
+  "rerun_performed": true,
+  "rerun_match": true,
+  "model_review": {
+   "satisfies_task": true,
+   "confidence": 1.0,
+   "reasons": [
+    "Expected totals: north=15, south=20, west=2.5",
+    "Output summary.json contains exactly {\"north\": 15.0, \"south\": 20.0, \"west\": 2.5}",
+    "All values match the recomputation from the input CSV"
+   ],
+   "concerns": []
+  }
+ }
+}
