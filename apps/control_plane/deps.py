@@ -8,18 +8,21 @@ the whole product runs on a laptop with zero credentials.
 Environment variables (live mode):
     VULTR_API_KEY, VULTR_REGION, VULTR_PLAN, VULTR_OS_ID, VULTR_SNAPSHOT_ID, VULTR_FIREWALL_GROUP_ID,
     BRZ_CONTROL_PLANE_CIDR, BRZ_RUNNER_PORT, BRZ_SANDBOX_TTL_MINUTES, BRZ_INNER_ISOLATION (gvisor|none),
-    INFERENCE_API_KEY, INFERENCE_BASE_URL, BRZ_PLANNER_MODEL, BRZ_VERIFIER_MODEL, BRZ_VERIFY_FRESH_SANDBOX (1|0)
+    INFERENCE_API_KEY, INFERENCE_BASE_URL, BRZ_PLANNER_MODEL, BRZ_VERIFIER_MODEL, BRZ_VERIFY_FRESH_SANDBOX (1|0),
+    BRZ_REASONING_EFFORT (default low; the default of the models themselves is too slow and can return nothing)
 """
 
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass
 
 import httpx
 
-from brz.cost import StaticPriceTable
+from brz.cost import LivePriceTable, StaticPriceTable
 from brz.llm import VULTR_INFERENCE_BASE_URL, ChatClient, FakeLLM, Planner, Verifier
+from brz.llm.client import DEFAULT_REASONING_EFFORT
 from brz.orchestrator import Orchestrator, OrchestratorConfig
 from brz.sandbox.backends import LocalRunnerVultrBackend, SandboxBackend, VultrSandboxBackend, VultrSandboxConfig
 from brz.vultr import VultrClient
@@ -35,6 +38,24 @@ class Deps:
     mode: str
     mock_state: MockVultrState | None = None
     llm_clients: list[ChatClient] | None = None
+
+    async def refresh_prices(self) -> str:
+        """Live mode: load real prices. On failure keep the static table, and the receipt will say so."""
+        if self.mode != "live":
+            return self.orchestrator.prices.source
+        try:
+            plans = await self.backend.client.list_plans()  # type: ignore[attr-defined]
+            async with httpx.AsyncClient(timeout=30) as http:
+                base = os.environ.get("INFERENCE_BASE_URL", VULTR_INFERENCE_BASE_URL).rstrip("/")
+                key = os.environ.get("INFERENCE_API_KEY", "")
+                resp = await http.get(f"{base}/models", headers={"Authorization": f"Bearer {key}"})
+                resp.raise_for_status()
+            self.orchestrator.prices = LivePriceTable.from_payloads(
+                [p.model_dump() for p in plans], resp.json().get("data", [])
+            )
+        except Exception as exc:  # noqa: BLE001 - never block start-up on a price feed
+            logging.getLogger("brz").warning("live prices unavailable: %s", type(exc).__name__)
+        return self.orchestrator.prices.source
 
     async def aclose(self) -> None:
         await self.backend.aclose()
@@ -88,14 +109,15 @@ def build_live_deps() -> Deps:
     base_url = os.environ.get("INFERENCE_BASE_URL", VULTR_INFERENCE_BASE_URL)
     planner_model = os.environ.get("BRZ_PLANNER_MODEL", "glm-5.3")
     verifier_model = os.environ.get("BRZ_VERIFIER_MODEL", "qwen3.8-27b")
-    planner_llm = ChatClient(base_url, inference_key, planner_model)
-    verifier_llm = ChatClient(base_url, inference_key, verifier_model)
+    effort = os.environ.get("BRZ_REASONING_EFFORT", DEFAULT_REASONING_EFFORT) or None
+    planner_llm = ChatClient(base_url, inference_key, planner_model, reasoning_effort=effort)
+    verifier_llm = ChatClient(base_url, inference_key, verifier_model, reasoning_effort=effort)
     backend = VultrSandboxBackend(VultrClient(api_key), sandbox_config_from_env())
     orch = Orchestrator(
         planner=Planner(planner_llm),
         verifier=Verifier(verifier_llm),
         backend=backend,
-        prices=StaticPriceTable(),  # EVENT-DAY: swap for LivePriceTable.from_payloads(plans, models)
+        prices=StaticPriceTable(),  # replaced by Deps.refresh_prices() when the app starts
         config=OrchestratorConfig(
             verify_in_fresh_sandbox=_env_bool("BRZ_VERIFY_FRESH_SANDBOX", True),
             planner_model_label=planner_model,

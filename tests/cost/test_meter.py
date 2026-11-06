@@ -16,10 +16,10 @@ def test_vm_billed_per_started_hour():
     m = CostMeter()
     line = m.add_vm("vhp-1c-1gb-amd", seconds=10 * 60)  # 10 minutes -> 1 billed hour
     assert line.detail["billed_hours"] == 1.0
-    assert line.usd == pytest.approx(6.0 / 672, rel=1e-3)  # under one cent
+    assert line.usd == pytest.approx(0.008, rel=1e-3)  # under one cent
     m.add_vm("vx1-g-2c-8g", seconds=3601)  # just over an hour -> 2 hours
     assert m.lines[-1].detail["billed_hours"] == 2.0 and m.lines[-1].usd == pytest.approx(0.12)
-    assert m.vm_usd == pytest.approx(6.0 / 672 + 0.12, rel=1e-3)
+    assert m.vm_usd == pytest.approx(0.008 + 0.12, rel=1e-3)
 
 
 def test_vm_exact_billing_option_and_zero_seconds():

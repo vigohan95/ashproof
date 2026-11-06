@@ -8,12 +8,17 @@ usage accounting. No SDK dependency; httpx only.
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any, Protocol, runtime_checkable
 
 import httpx
 from pydantic import BaseModel, Field
 
 VULTR_INFERENCE_BASE_URL = "https://api.vultrinference.com/v1"
+# Measured 2026-11-06: at the default effort qwen3.8-27b spent all 8000 tokens reasoning and returned no JSON;
+# at "low" both models return a valid plan in about 4 s. See docs/evidence/vultr-2026-11-06/.
+DEFAULT_REASONING_EFFORT = "low"
+RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
 
 
 class Usage(BaseModel):
@@ -27,6 +32,7 @@ class Usage(BaseModel):
 
 class ChatResult(BaseModel):
     content: str
+    reasoning: str = ""  # reasoning_content / reasoning, kept apart from the answer
     model: str = ""
     usage: Usage = Field(default_factory=Usage)
     finish_reason: str = ""
@@ -69,11 +75,17 @@ class ChatClient:
         api_key: str,
         model: str,
         *,
-        timeout: float = 120.0,
+        timeout: float = 180.0,
         transport: httpx.AsyncBaseTransport | None = None,
         extra_headers: dict[str, str] | None = None,
+        reasoning_effort: str | None = None,
+        max_retries: int = 2,
+        backoff_base: float = 1.0,
     ):
         self.model = model
+        self.reasoning_effort = reasoning_effort
+        self.max_retries = max_retries
+        self.backoff_base = backoff_base
         self.base_url = base_url.rstrip("/")
         headers = {"Content-Type": "application/json"}
         if api_key:
@@ -111,16 +123,30 @@ class ChatClient:
             body["tools"] = tools
         if max_tokens is not None:
             body["max_tokens"] = max_tokens
-        try:
-            resp = await self._http.post("/chat/completions", json=body)
-        except httpx.TransportError as exc:
-            raise LLMError(f"chat transport error: {exc!r}") from exc
+        if self.reasoning_effort:
+            body["reasoning_effort"] = self.reasoning_effort
+        resp = await self._post(body)
         if resp.status_code in (400, 422) and response_format is not None:
             raise UnsupportedResponseFormat(f"server rejected response_format: {resp.text[:300]}", resp.status_code)
         if resp.status_code >= 400:
             raise LLMError(f"chat HTTP {resp.status_code}: {resp.text[:300]}", resp.status_code, resp.text)
         data = resp.json()
         return parse_chat_response(data, default_model=self.model)
+
+
+    async def _post(self, body: dict[str, Any]) -> httpx.Response:
+        attempt = 0
+        while True:
+            try:
+                resp = await self._http.post("/chat/completions", json=body)
+            except httpx.TransportError as exc:
+                if attempt >= self.max_retries:
+                    raise LLMError(f"chat transport error: {exc!r}") from exc
+            else:
+                if resp.status_code not in RETRY_STATUSES or attempt >= self.max_retries:
+                    return resp
+            attempt += 1
+            await asyncio.sleep(self.backoff_base * (2 ** (attempt - 1)))
 
 
 def parse_chat_response(data: dict[str, Any], default_model: str = "") -> ChatResult:
@@ -134,6 +160,7 @@ def parse_chat_response(data: dict[str, Any], default_model: str = "") -> ChatRe
     usage = data.get("usage") or {}
     return ChatResult(
         content=content,
+        reasoning=msg.get("reasoning_content") or msg.get("reasoning") or "",
         model=data.get("model") or default_model,
         usage=Usage(
             prompt_tokens=int(usage.get("prompt_tokens") or 0),

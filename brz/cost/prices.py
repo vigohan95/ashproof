@@ -1,15 +1,13 @@
 """Price tables.
 
-Static numbers come from RESEARCH.md section 4 (2026-10-30):
+``LivePriceTable`` is what the control plane uses on Vultr. Both sources were checked on 2026-11-06:
 
-* Serverless Inference ``GET /v1/models`` per-model pricing ($ per 1M tokens).
-* Cloud Compute hourly rates: VX1 from third-party snapshots (2c/8g $0.060/h, 4c/16g
-  $0.12/h, m-2c/16g $0.08/h); regular/HF/HP from the monthly price / 672 h.
+* ``GET /v2/plans`` carries ``hourly_cost`` per plan.
+* ``GET /v1/models`` called with an inference key carries ``cost_usd`` per token, under
+  ``input_modalities[].pricing[type=prompt]`` and ``output_modalities[].pricing[type=completion]``.
 
-``LivePriceTable`` is the event-day replacement: it is fed by ``GET /v2/plans`` (which carries
-``monthly_cost`` and, on newer payloads, ``hourly_cost``) and ``GET /v1/models`` (pricing shape
-to be confirmed against the live JSON - see docs/EVENT-DAY-TODO.md). Both implement the same
-protocol so the meter does not care which one it gets.
+``StaticPriceTable`` holds the same numbers as of that date. It serves offline mode, and live mode
+when a source is unreachable; the receipt names which one priced the task.
 """
 
 from __future__ import annotations
@@ -49,9 +47,9 @@ STATIC_VM_HOURLY: dict[str, float] = {
     "vx1-g-4c-16g": 0.120,
     "vx1-g-4c-16g-240s": 0.120,
     "vx1-m-2c-16g": 0.080,
-    "vc2-1c-1gb": round(5.0 / HOURS_PER_MONTH, 6),  # $5/mo regular
-    "vhf-1c-1gb": round(6.0 / HOURS_PER_MONTH, 6),  # $6/mo high frequency
-    "vhp-1c-1gb-amd": round(6.0 / HOURS_PER_MONTH, 6),  # $6/mo high performance
+    "vc2-1c-1gb": 0.007,
+    "vhf-1c-1gb": 0.008,
+    "vhp-1c-1gb-amd": 0.008,
     "vhp-2c-2gb-amd": round(18.0 / HOURS_PER_MONTH, 6),
 }
 FALLBACK_VM_HOURLY = 0.060  # assume a VX1 2c/8g when unknown (conservative)
@@ -67,7 +65,7 @@ class PriceTable(Protocol):
 
 
 class StaticPriceTable:
-    source = "static (RESEARCH.md 2026-10-30)"
+    source = "static (checked against Vultr 2026-11-06)"
 
     def __init__(
         self,
@@ -103,11 +101,19 @@ class LivePriceTable(StaticPriceTable):
         tok: dict[str, TokenPrice] = dict(STATIC_TOKEN_PRICES)
         for m in models or []:
             mid = m.get("id")
-            pricing = m.get("pricing") or {}
-            # EVENT-DAY: confirm the exact keys in https://api.vultrinference.com/v1/models
-            if mid and pricing:
-                tok[mid] = TokenPrice(
-                    float(pricing.get("input", pricing.get("prompt", 0.0)) or 0.0),
-                    float(pricing.get("output", pricing.get("completion", 0.0)) or 0.0),
-                )
+            cin = _per_token(m.get("input_modalities"), "prompt")
+            cout = _per_token(m.get("output_modalities"), "completion")
+            if mid and (cin is not None or cout is not None):
+                tok[mid] = TokenPrice(round((cin or 0.0) * 1_000_000, 6), round((cout or 0.0) * 1_000_000, 6))
         return cls(vm, tok)
+
+
+def _per_token(modalities: list[dict] | None, kind: str) -> float | None:
+    """cost_usd per token for the text modality of a /v1/models entry."""
+    for mod in modalities or []:
+        if mod.get("type") != "text":
+            continue
+        for price in mod.get("pricing") or []:
+            if price.get("type") == kind and price.get("unit") == "token":
+                return float(price["cost_usd"])
+    return None

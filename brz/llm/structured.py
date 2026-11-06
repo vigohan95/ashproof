@@ -145,6 +145,9 @@ async def structured(
     last_error = ""
     for repair in range(max_repairs + 1):
         try:
+            if not result.content.strip():
+                # reasoning models can spend the whole budget thinking and return nothing
+                raise ValueError(f"model returned no answer (finish_reason={result.finish_reason!r})")
             data = extract_json(result.content)
             value = model.model_validate(data)
             return StructuredResult[model](  # type: ignore[valid-type]

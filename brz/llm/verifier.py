@@ -137,8 +137,16 @@ def run_deterministic_checks(
 
 
 class Verifier:
-    def __init__(self, llm: LLM | None = None, *, prefer_schema: bool = True, require_rerun_match: bool = True):
+    def __init__(
+        self,
+        llm: LLM | None = None,
+        *,
+        prefer_schema: bool = True,
+        require_rerun_match: bool = True,
+        max_tokens: int = 8000,
+    ):
         self.llm = llm
+        self.max_tokens = max_tokens
         self.prefer_schema = prefer_schema
         self.require_rerun_match = require_rerun_match
 
@@ -202,5 +210,12 @@ class Verifier:
                 ),
             },
         ]
-        res = await structured(self.llm, messages, ModelReview, name="model_review", prefer_schema=self.prefer_schema)
+        res = await structured(
+            self.llm,
+            messages,
+            ModelReview,
+            name="model_review",
+            prefer_schema=self.prefer_schema,
+            max_tokens=self.max_tokens,
+        )
         return res.value, res.usage

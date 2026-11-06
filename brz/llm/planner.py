@@ -116,10 +116,11 @@ class RepairedStep(BaseModel):
 
 
 class Planner:
-    def __init__(self, llm: LLM, *, prefer_schema: bool = True, max_steps: int = 6):
+    def __init__(self, llm: LLM, *, prefer_schema: bool = True, max_steps: int = 6, max_tokens: int = 8000):
         self.llm = llm
         self.prefer_schema = prefer_schema
         self.max_steps = max_steps
+        self.max_tokens = max_tokens  # reasoning counts against this, so it has to be generous
 
     def _system(self) -> str:
         return SANDBOX_CONTRACT.format(max_steps=self.max_steps)
@@ -146,7 +147,9 @@ class Planner:
             {"role": "system", "content": self._system()},
             {"role": "user", "content": "Produce the plan for this task:\n" + json.dumps(user, ensure_ascii=False)},
         ]
-        res = await structured(self.llm, messages, Plan, name="plan", prefer_schema=self.prefer_schema)
+        res = await structured(
+            self.llm, messages, Plan, name="plan", prefer_schema=self.prefer_schema, max_tokens=self.max_tokens
+        )
         plan = res.value
         if len(plan.steps) > self.max_steps:
             raise ValueError(f"plan has {len(plan.steps)} steps, max is {self.max_steps}")
@@ -190,7 +193,14 @@ class Planner:
                 ),
             },
         ]
-        res = await structured(self.llm, messages, RepairedStep, name="repaired_step", prefer_schema=self.prefer_schema)
+        res = await structured(
+            self.llm,
+            messages,
+            RepairedStep,
+            name="repaired_step",
+            prefer_schema=self.prefer_schema,
+            max_tokens=self.max_tokens,
+        )
         fixed = res.value
         if fixed.step.id != failed_step.id:
             fixed.step.id = failed_step.id

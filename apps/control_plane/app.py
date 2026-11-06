@@ -77,6 +77,7 @@ def create_app(deps: Deps | None = None) -> FastAPI:
     async def lifespan(app: FastAPI):
         app.state.deps = deps or build_deps_from_env()
         app.state.store = store
+        await app.state.deps.refresh_prices()
         try:
             yield
         finally:
