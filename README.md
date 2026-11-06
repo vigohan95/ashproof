@@ -6,6 +6,9 @@ outbound network denied by default and zero secrets inside, is re-run by an inde
 second clean VM, leaves a hash-chained receipt - and then the VM is deleted. `GET /v2/instances/{id}` -> `404`
 is part of the receipt.
 
+**Who it is for:** the security reviewer who has to approve an AI agent before it works on finance data. The receipt
+is the review evidence: what ran, what was refused, and proof that the VM is gone.
+
 > Built for the Vultr "Agent Rush" hackathon (lablab.ai), Challenge 1 *Blast Radius Zero*: a system that
 > **plans, dispatches and verifies real executed work** inside a sandbox. MIT licensed.
 

@@ -38,7 +38,7 @@ import sys
 
 GENESIS_HASH = "0" * 64
 # The demo's receipt signing key, public half. The private half never leaves the control plane.
-PUBLISHED_PUBLIC_KEY = ""
+PUBLISHED_PUBLIC_KEY = "753ff09ddb997eef5e84bc265068bf57bcbbeda35dc4725f067521053c392df6"
 
 # --- Ed25519 verification, RFC 8032 section 5.1.7. Verification only, so no secret is handled here.
 _P = 2**255 - 19

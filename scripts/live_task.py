@@ -87,8 +87,19 @@ def main() -> int:
     rj = out / f"{a.name}.receipt.json"
     rj.write_text(rr.text, encoding="utf-8", newline="\n")
     (out / f"{a.name}.receipt.md").write_text(c.get(f"/tasks/{tid}/receipt.md").text, encoding="utf-8", newline="\n")
+    anchors = out / "anchors.jsonl"
+    anchors.write_text(c.get("/anchors.jsonl").text, encoding="utf-8", newline="\n")
     verify = subprocess.run(
-        [sys.executable, "-I", "-S", str(ROOT / "brz" / "audit" / "offline_verify.py"), str(rj)],
+        [
+            sys.executable,
+            "-I",
+            "-S",
+            str(ROOT / "brz" / "audit" / "offline_verify.py"),
+            str(rj),
+            "--require-signature",
+            "--anchors",
+            str(anchors),
+        ],
         capture_output=True,
         text=True,
         timeout=60,

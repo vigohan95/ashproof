@@ -42,8 +42,9 @@ that only the control plane can reach a sandbox.
 sites on the same address are reachable; we measured this on a Cloudflare address. The secret scanner does not stop encrypted data, which is why the guarantee rests
 on there being no secret to take and no route out.
 
-**Who it is for.** Teams that want agents to work on real data and need evidence for security or audit reviews. Each task
-reports its own cost, about two cents on the current plan, checked against Vultr's pending charges.
+**Who it is for.** The security reviewer who has to approve an AI agent before it works on finance data. The receipt is
+the review evidence: what ran, what was refused, and proof that the VM is gone. Each task reports its own cost, about two
+cents on the current plan, checked against Vultr's pending charges.
 
 ## Technology and category tags
 

@@ -255,3 +255,8 @@ async def test_a_deployment_without_a_key_says_so(tmp_path):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://cp") as c:
             assert (await c.get("/pubkey")).status_code == 404
             assert (await c.get("/anchors.jsonl")).text == ""
+
+
+def test_the_published_key_in_the_verifier_matches_the_repository_copy():
+    published = (ROOT / "docs" / "keys" / "receipt-signing.pub").read_text(encoding="ascii").strip()
+    assert ov.PUBLISHED_PUBLIC_KEY == published and len(bytes.fromhex(published)) == 32
