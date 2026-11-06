@@ -24,7 +24,8 @@ async def test_inline_scripts_parse(tmp_path):
             tid = (await c.post("/tasks", json=TASK)).json()["id"]
             await app.state.store.wait(tid)
             pages = [
-                (await c.get(p)).text for p in ("/ui", "/ui/new", f"/ui/tasks/{tid}", f"/ui/tasks/{tid}/receipt")
+                (await c.get(p)).text
+                for p in ("/", "/ui/tasks", "/ui/evidence", "/ui/new", f"/ui/tasks/{tid}", f"/ui/tasks/{tid}/receipt")
             ]
     scripts = [s for page in pages for s in re.findall(r"<script>([\s\S]*?)</script>", page)]
     assert scripts

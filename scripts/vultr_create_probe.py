@@ -1,6 +1,6 @@
 """How does POST /v2/instances behave when several creates overlap? Logs status, body and timing, deletes everything.
 
-    python scripts/vultr_create_probe.py <out.json> <concurrency>
+python scripts/vultr_create_probe.py <out.json> <concurrency>
 """
 
 from __future__ import annotations
@@ -28,9 +28,18 @@ HEADERS = {"Authorization": "Bearer " + os.environ["VULTR_API_KEY"]}
 
 
 async def create(c: httpx.AsyncClient, i: int, t0: float) -> dict:
-    ud = render_cloud_init(SandboxSpec(task_id=f"probe{i}", token_key=os.urandom(32), control_plane_cidr="192.0.2.1/32"))
-    body = InstanceCreate(region="ewr", plan="vhp-1c-1gb-amd", os_id=2284, label=f"brz-probe-{i}", hostname=f"brz-probe-{i}",
-                          tags=["brz-sandbox", "probe"], user_data=ud).to_api_body()
+    ud = render_cloud_init(
+        SandboxSpec(task_id=f"probe{i}", token_key=os.urandom(32), control_plane_cidr="192.0.2.1/32")
+    )
+    body = InstanceCreate(
+        region="ewr",
+        plan="vhp-1c-1gb-amd",
+        os_id=2284,
+        label=f"brz-probe-{i}",
+        hostname=f"brz-probe-{i}",
+        tags=["brz-sandbox", "probe"],
+        user_data=ud,
+    ).to_api_body()
     s = time.monotonic()
     r = await c.post(API + "/instances", json=body, headers=HEADERS)
     row = {
@@ -38,7 +47,11 @@ async def create(c: httpx.AsyncClient, i: int, t0: float) -> dict:
         "started_s": round(s - t0, 2),
         "seconds": round(time.monotonic() - s, 2),
         "status": r.status_code,
-        "headers": {k: v for k, v in r.headers.items() if k.lower() in ("retry-after", "x-ratelimit-limit", "x-ratelimit-remaining")},
+        "headers": {
+            k: v
+            for k, v in r.headers.items()
+            if k.lower() in ("retry-after", "x-ratelimit-limit", "x-ratelimit-remaining")
+        },
     }
     if r.status_code < 300:
         row["instance_id"] = r.json()["instance"]["id"]

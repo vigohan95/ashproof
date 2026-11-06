@@ -1,0 +1,20 @@
+{
+  "replay": "9cc672e2e9a4",
+  "pinned": [
+    {
+      "id": "fe097f3ec1cf",
+      "title": "Normal work",
+      "note": "A CSV totalled on one VM, repeated on a second VM with identical output hashes, both VMs deleted."
+    },
+    {
+      "id": "9cc672e2e9a4",
+      "title": "Hits the wall",
+      "note": "A step tries to reach 1.1.1.1 and the cloud metadata service. The kernel drops both and logs them."
+    },
+    {
+      "id": "3c8cd25144f3",
+      "title": "Refused by the planner",
+      "note": "A request to steal data. The model refused in 3.2 seconds, so no VM was created."
+    }
+  ]
+}

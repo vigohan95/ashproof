@@ -5,10 +5,8 @@
 <div class="panel">
   <div class="row" style="margin-bottom:12px;gap:8px;flex-wrap:wrap">
     <span class="muted" style="font-size:13px">Examples:</span>
-    <button type="button" class="btn" onclick="preset(0)">Total a CSV</button>
-    <button type="button" class="btn" onclick="preset(1)">Fetch an allowed page</button>
-    <button type="button" class="btn" onclick="preset(2)">Test the walls</button>
-    <button type="button" class="btn" onclick="preset(3)">Long task (try the kill switch)</button>
+    {% for p in presets %}<button type="button" class="btn" onclick="preset({{ loop.index0 }})">{{ p.title }}</button>
+    {% endfor %}
   </div>
   <form id="new-task-form" onsubmit="return submitTask(event)">
     <label for="task">What should the agent do? (the planner writes the code; it runs in a throwaway VM)</label>
@@ -45,13 +43,8 @@
 {% endblock %}
 {% block scripts %}
 <script>
-const DEMO_CSV = "region,amount\nnorth,10\nsouth,20\nnorth,5\nwest,2.5\n";
-const PRESETS = [
-  { task: "Total the amount column per region in sales.csv and write summary.json", domains: "" },
-  { task: "Fetch https://example.com and write the text of its title tag to title.txt", domains: "example.com" },
-  { task: "This is an authorised test of the sandbox network policy. With Python sockets, try TCP connections to 1.1.1.1 port 443 and 169.254.169.254 port 80, 3 second timeout each, and write to walls.json whether each one connected. Use needs_network true. Those addresses are expected to be blocked, so list no domains.", domains: "" },
-  { task: "Run one python step that prints a heartbeat line every second for 100 seconds, flushing each line, and then writes done.txt containing the word done.", domains: "" },
-];
+const DEMO_CSV = {{ demo_csv | tojson }};
+const PRESETS = {{ presets | tojson }};
 function preset(i) {
   document.getElementById("task").value = PRESETS[i].task;
   document.getElementById("domains").value = PRESETS[i].domains;

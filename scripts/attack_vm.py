@@ -77,11 +77,35 @@ async def main() -> int:
 
         deps = ssh(a.cp, "tar -C /opt/ashproof/venv/lib/python3.12 -czf - site-packages", timeout=200)
         print("deps bytes", len(deps.stdout), flush=True)
-        print(text(ssh(target, "mkdir -p /opt/brz-deps && tar -xz -C /opt/brz-deps && echo deps-ok", stdin=deps.stdout, timeout=300))[-200:], flush=True)
-        repo = subprocess.run(["git", "archive", "--format=tar", "HEAD"], cwd=ROOT, capture_output=True, check=True).stdout
-        head = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True, text=True, check=True).stdout.strip()
+        print(
+            text(
+                ssh(
+                    target,
+                    "mkdir -p /opt/brz-deps && tar -xz -C /opt/brz-deps && echo deps-ok",
+                    stdin=deps.stdout,
+                    timeout=300,
+                )
+            )[-200:],
+            flush=True,
+        )
+        repo = subprocess.run(
+            ["git", "archive", "--format=tar", "HEAD"], cwd=ROOT, capture_output=True, check=True
+        ).stdout
+        head = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, capture_output=True, text=True, check=True
+        ).stdout.strip()
         log["git_head"] = head
-        print(text(ssh(target, "mkdir -p /root/ashproof && tar -x -C /root/ashproof && echo repo-ok", stdin=repo, timeout=120))[-200:], flush=True)
+        print(
+            text(
+                ssh(
+                    target,
+                    "mkdir -p /root/ashproof && tar -x -C /root/ashproof && echo repo-ok",
+                    stdin=repo,
+                    timeout=120,
+                )
+            )[-200:],
+            flush=True,
+        )
 
         only = f"--only {a.only}" if a.only else ""
         run = (
@@ -90,7 +114,7 @@ async def main() -> int:
             f"nohup timeout -k 10 {SUITE_LIMIT_S} python3 -m tests.attacks --out /root/out {only} "
             f"--heading '{a.heading}' > /root/suite.log 2>&1; echo finished $? > /root/suite.done"
         )
-        subprocess.Popen([*SSH, "-f", target, f"nohup sh -c \"{run}\" >/dev/null 2>&1 &"], stdin=subprocess.DEVNULL)
+        subprocess.Popen([*SSH, "-f", target, f'nohup sh -c "{run}" >/dev/null 2>&1 &'], stdin=subprocess.DEVNULL)
         t0 = time.monotonic()
         last = ""
         while time.monotonic() - t0 < SUITE_LIMIT_S + 60:
@@ -108,7 +132,9 @@ async def main() -> int:
                 break
         log["seconds"] = round(time.monotonic() - t0)
         log["suite_log_tail"] = text(ssh(target, "tail -n 40 /root/suite.log", timeout=40))
-        log["oom_lines"] = text(ssh(target, "dmesg | grep -i -E 'out of memory|oom-kill|Killed process' | tail -n 20", timeout=40))
+        log["oom_lines"] = text(
+            ssh(target, "dmesg | grep -i -E 'out of memory|oom-kill|Killed process' | tail -n 20", timeout=40)
+        )
         log["vm_memory"] = text(ssh(target, "free -m; uptime; df -h / | tail -1", timeout=40))
         tar = ssh(target, "tar -C /root/out -czf - .", timeout=120)
         (out / "out.tgz").write_bytes(tar.stdout)

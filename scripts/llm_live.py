@@ -92,7 +92,9 @@ async def main() -> None:
     async with VultrClient(os.environ["VULTR_API_KEY"]) as vc:
         plans = await vc.list_plans()
     async with httpx.AsyncClient(timeout=30) as http:
-        models = (await http.get(VULTR_INFERENCE_BASE_URL + "/models", headers={"Authorization": f"Bearer {key}"})).json()
+        models = (
+            await http.get(VULTR_INFERENCE_BASE_URL + "/models", headers={"Authorization": f"Bearer {key}"})
+        ).json()
     table = LivePriceTable.from_payloads([p.model_dump() for p in plans], models["data"])
     log["live_prices"] = {
         "source": table.source,

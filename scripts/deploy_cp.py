@@ -43,8 +43,14 @@ def main() -> None:
         "BRZ_APPROVAL_TIMEOUT_S": "180",
     }
     env.update(kv.split("=", 1) for kv in extra)
-    archive = subprocess.run(["git", "archive", "--format=tar", "HEAD"], cwd=ROOT, capture_output=True, check=True).stdout
-    ssh(host, "rm -rf /opt/ashproof/app && mkdir -p /opt/ashproof/app /etc/ashproof && tar -x -C /opt/ashproof/app", archive)
+    archive = subprocess.run(
+        ["git", "archive", "--format=tar", "HEAD"], cwd=ROOT, capture_output=True, check=True
+    ).stdout
+    ssh(
+        host,
+        "rm -rf /opt/ashproof/app && mkdir -p /opt/ashproof/app /etc/ashproof && tar -x -C /opt/ashproof/app",
+        archive,
+    )
     body = "".join(f"{k}={v}\n" for k, v in env.items()).encode()
     ssh(host, "umask 027 && cat > /etc/ashproof/env", body)
     ssh(host, f"bash /opt/ashproof/app/scripts/cp_provision.sh {public}")

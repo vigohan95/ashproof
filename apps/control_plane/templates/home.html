@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block title %}Ashproof{% endblock %}
+{% block body_attrs %} class="home"{% endblock %}
+{% block head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  body.home { --ash:#2f3133; --ash-2:#3a3d40; --ash-line:#55595d; --paper:#efeee7; --ink:#232323; --stamp:#a31d14; --ember:#f0a33c; --soft:#c9cbc8; background:var(--ash); color:#f1f1ee; }
+  body.home header { background:var(--ash); border-bottom-color:var(--ash-line); }
+  body.home header .brand span { color:var(--ember); }
+  body.home main { max-width:1240px; padding-top:0; }
+  .hero { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,31rem); gap:56px; min-height:calc(100vh - 56px); align-items:center; padding:20px 0; }
+  .hero h1 { font-family:"Bricolage Grotesque", -apple-system, "Segoe UI", sans-serif; font-weight:700; font-size:clamp(34px, 4.6vw, 60px); line-height:1.04; letter-spacing:-.015em; margin:0 0 22px; }
+  .hero .for { font-size:19px; line-height:1.5; color:var(--soft); max-width:33em; margin:0 0 30px; }
+  .hero .for strong { color:#f1f1ee; font-weight:600; }
+  .act { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+  button.run { background:var(--ember); color:#2a1a02; border:0; border-radius:3px; font-size:17px; font-weight:700; padding:14px 22px; }
+  button.run:hover { background:#f6b75e; }
+  button.run:disabled { background:var(--ash-2); color:var(--soft); }
+  button.alt { background:transparent; color:#f1f1ee; border:1px solid var(--ash-line); border-radius:3px; padding:13px 16px; font-size:15px; }
+  button.alt:hover { border-color:var(--ember); }
+  button:focus-visible, a:focus-visible { outline:2px solid var(--ember); outline-offset:2px; }
+  .state { margin:14px 0 0; color:var(--soft); font-size:14px; min-height:21px; max-width:40em; }
+  .state a { color:var(--ember); }
+
+  .till { position:relative; height:min(640px, calc(100vh - 96px)); display:flex; flex-direction:column; background:var(--paper); color:var(--ink); font-family:"IBM Plex Mono", ui-monospace, Consolas, monospace; font-size:13px; line-height:1.45; box-shadow:0 18px 40px rgba(0,0,0,.35); }
+  .till:after { content:""; position:absolute; left:0; right:0; bottom:-9px; height:10px; background:linear-gradient(-45deg, transparent 6px, var(--paper) 0) 0 0/12px 10px repeat-x, linear-gradient(45deg, transparent 6px, var(--paper) 0) 0 0/12px 10px repeat-x; }
+  .till .top { padding:14px 18px 10px; border-bottom:1px dashed #8d8c84; }
+  .till .rec { font-weight:600; color:var(--stamp); }
+  .till .top p { margin:3px 0 0; }
+  .till .roll { flex:1; overflow:auto; padding:10px 18px; scroll-behavior:smooth; }
+  .till .ln { display:grid; grid-template-columns:4.2em 1fr; gap:6px; padding:1px 0; }
+  .till .ln .t { color:#6a6a63; }
+  .till .ln.refused { color:var(--stamp); font-weight:600; }
+  .till .ln.gone { font-weight:600; }
+  .till .total { margin-top:8px; padding-top:8px; border-top:1px dashed #8d8c84; font-weight:600; }
+  .till .bottom { display:flex; justify-content:space-between; gap:10px; align-items:center; padding:10px 18px 14px; border-top:1px dashed #8d8c84; }
+  .till .bottom a { color:var(--ink); }
+  .till .bottom button { background:none; border:0; color:var(--ink); text-decoration:underline; font:inherit; padding:0; }
+  .till .clock { color:#6a6a63; }
+
+  .below { padding:18px 0 40px; border-top:1px solid var(--ash-line); }
+  .below h2 { font-family:"Bricolage Grotesque", -apple-system, "Segoe UI", sans-serif; text-transform:none; letter-spacing:0; color:#f1f1ee; font-size:24px; font-weight:700; margin:30px 0 12px; }
+  .pins { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:32px; }
+  .pins a { color:#f1f1ee; font-weight:600; font-size:17px; }
+  .pins p { color:var(--soft); margin:6px 0 0; max-width:30em; }
+  .facts { width:100%; max-width:62em; font-size:15px; }
+  .facts td { border-bottom:1px solid var(--ash-line); padding:8px 12px 8px 0; color:var(--soft); }
+  .facts td:first-child { color:#f1f1ee; white-space:nowrap; font-weight:600; }
+  .below a { color:var(--ember); }
+  .limits { color:var(--soft); max-width:46em; padding-left:18px; }
+  .limits li { margin:6px 0; }
+  @media (max-width: 900px) {
+    .hero { grid-template-columns:minmax(0,1fr); min-height:0; gap:28px; padding-top:28px; }
+    .till { height:68vh; }
+    .pins { grid-template-columns:minmax(0,1fr); gap:18px; }
+    .facts td:first-child { white-space:normal; }
+    body.home header .mode { display:none; }
+  }
+</style>
+{% endblock %}
+{% block notice %}{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <h1>An AI agent does its work on a Vultr VM that is deleted afterwards. You keep a receipt.</h1>
+    <p class="for">Ashproof is for <strong>the security reviewer who has to approve an AI agent before it works on finance data</strong>. The receipt shows what ran, what was refused and that the VM is gone, so the review rests on evidence and not on the agent's word.</p>
+    <div class="act">
+      <button class="run" id="run-live" type="button" onclick="runLive(0)">Run a live task</button>
+      <button class="alt" type="button" onclick="runLive(2)">Run a live wall test</button>
+    </div>
+    <p class="state" id="state">Creates two real VMs. Takes about 2 minutes. One task at a time.</p>
+  </div>
+
+  {% if replay_id %}
+  <div class="till" aria-label="Replay of a recorded task">
+    <div class="top">
+      <div class="rec">Recording, not live</div>
+      <p>Task {{ replay_id }}, run {{ replay_when }} on Vultr.</p>
+      <p id="till-scale">Real events in their real order, time compressed to about 15 seconds.</p>
+    </div>
+    <div class="roll" id="roll" aria-live="off"></div>
+    <div class="bottom">
+      <span class="clock" id="clock"></span>
+      <span><button type="button" onclick="play()">Play again</button> &nbsp; <a href="/ui/tasks/{{ replay_id }}/receipt">Open the receipt</a></span>
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<section class="below">
+  {% if pinned %}
+  <h2>Three finished tasks to open</h2>
+  <div class="pins">
+    {% for p in pinned %}
+    <div><a href="/ui/tasks/{{ p.id }}">{{ p.title }}</a><p>{{ p.note }}</p></div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <h2>Measured on Vultr</h2>
+  <table class="facts"><tbody>
+    <tr><td>Attack suite</td><td>{{ evidence.contained }} of {{ evidence.attack_total }} attacks contained on a real VM. One (A24, encrypted data past the scanner) still works. Before the fixes, {{ evidence.worked_before_fixes }} worked. <a href="/ui/evidence">All {{ evidence.attack_total }}</a></td></tr>
+    <tr><td>Kill switch</td><td>Button to both VMs gone: median {{ evidence.kill_step.median_s }} s while a step runs, 20 to 77 s during boot, because Vultr refuses a delete while a VM installs.</td></tr>
+    <tr><td>Cost</td><td>About $0.02 per task, checked against Vultr's pending charges.</td></tr>
+  </tbody></table>
+
+  <h2>What it does not do</h2>
+  <ul class="limits">
+    <li>Outbound rules work on IPv4 addresses, not names. An approved domain opens its whole IP: with only example.com approved, a step reached www.cloudflare.com on the same address.</li>
+    <li>The secret scan does not stop encrypted data (A24). The guarantee is that the VM holds no key and has no route out, which with an approved domain means no route other than that IP.</li>
+    <li>A task takes about 2 minutes, nearly all of it VM boot. A microVM starts far faster.</li>
+  </ul>
+  {% if demo and demo.enabled %}
+  <p class="limits" style="padding:0">Public demo. Tasks and receipts here are visible to everyone, so do not paste anything private. {{ demo.tasks_today }} of {{ demo.tasks_per_day }} tasks used today.</p>
+  {% endif %}
+</section>
+{% endblock %}
+{% block footer %}Ashproof, MIT licensed. Built for Vultr Agent Rush, Challenge 1.{% endblock %}
+{% block scripts %}
+<script>
+const REPLAY_ID = {{ replay_id | tojson }};
+const PRESETS = {{ presets | tojson }};
+const DEMO_CSV = {{ demo_csv | tojson }};
+const PLAY_SECONDS = 15;
+let timers = [];
+
+function short(id) { return String(id).slice(0, 8); }
+
+// One printed line per real event. Repeats of the same refused packet are folded into one line with a count.
+function toLines(d) {
+  const start = Date.parse(d.events[0].ts);
+  const out = [];
+  const add = (e, text, cls) => out.push({ at: (Date.parse(e.ts) - start) / 1000, text, cls: cls || "" });
+  for (const e of d.events) {
+    const x = e.data || {};
+    if (e.kind === "task.received") add(e, "Task received");
+    else if (e.kind === "plan.created") add(e, x.scripted ? "Scripted attack plan loaded, no model wrote it" : x.model + " wrote the plan, " + x.steps.length + " step(s)");
+    else if (e.kind === "plan.refused") add(e, "Planner refused: " + x.reason, "refused");
+    else if (e.kind === "vm.created") add(e, "Vultr created the " + x.role + " VM " + short(x.instance_id));
+    else if (e.kind === "vm.runner_ready") add(e, x.role + " VM ready, steps run in " + x.executor);
+    else if (e.kind === "egress.denied") {
+      const text = "Kernel refused " + x.proto + " to " + x.dst_ip + ":" + x.dst_port + " (" + x.role + ")";
+      const last = out[out.length - 1];
+      if (last && last.base === text) { last.count += 1; last.text = text + " x" + last.count; }
+      else { add(e, text, "refused"); out[out.length - 1].base = text; out[out.length - 1].count = 1; }
+    }
+    else if (e.kind === "egress.allowed") add(e, "Kernel allowed " + x.proto + " to " + x.dst_ip + ":" + x.dst_port);
+    else if (e.kind === "step.finished") add(e, "Step " + x.step_id + " finished on the " + x.role + " VM, exit " + x.exit_code);
+    else if (e.kind === "verify.verdict") {
+      add(e, x.rerun_match ? "Both VMs produced identical output hashes" : "Outputs differ between the VMs");
+      if (x.verifier_model) add(e, x.verifier_model + " reviewed the result: " + (x.passed ? "pass" : "fail"), x.passed ? "" : "refused");
+    }
+    else if (e.kind === "secret_scan.done") add(e, "Secret scan: " + (x.clean ? "clean" : x.findings_count + " finding(s)"));
+    else if (e.kind === "vm.destroyed") add(e, x.role + " VM deleted, GET returned " + x.http_status, "gone");
+  }
+  return out;
+}
+
+function printLine(roll, ln) {
+  const row = document.createElement("div");
+  row.className = "ln " + ln.cls;
+  const t = document.createElement("span"); t.className = "t"; t.textContent = "+" + Math.round(ln.at) + "s";
+  const m = document.createElement("span"); m.textContent = ln.text;
+  row.appendChild(t); row.appendChild(m); roll.appendChild(row);
+  roll.scrollTop = roll.scrollHeight;
+}
+
+function printTotal(roll, d) {
+  const denied = d.egress.denied;
+  const row = document.createElement("div");
+  row.className = "total";
+  row.textContent = "Status " + d.status + ". Refused packets " + denied + ". Cost $" + d.cost.total_usd.toFixed(4) + ".";
+  roll.appendChild(row);
+  roll.scrollTop = roll.scrollHeight;
+}
+
+let recording = null;
+function play() {
+  if (!recording) return;
+  timers.forEach(clearTimeout); timers = [];
+  const roll = document.getElementById("roll");
+  const clock = document.getElementById("clock");
+  roll.textContent = "";
+  const lines = toLines(recording);
+  const real = (Date.parse(recording.finished_at) - Date.parse(recording.created_at)) / 1000;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    lines.forEach(ln => printLine(roll, ln)); printTotal(roll, recording);
+    clock.textContent = Math.round(real) + " s of real time";
+    return;
+  }
+  // Long waits (VM boot) are shortened more than short ones; the +Ns column keeps the real time.
+  const weights = lines.map((ln, i) => 0.25 + Math.sqrt(Math.max(0, ln.at - (i ? lines[i - 1].at : 0))));
+  const scale = PLAY_SECONDS * 1000 / weights.reduce((a, b) => a + b, 0);
+  let when = 0;
+  lines.forEach((ln, i) => {
+    when += weights[i] * scale;
+    timers.push(setTimeout(() => {
+      printLine(roll, ln);
+      clock.textContent = Math.round(ln.at) + " s of " + Math.round(real) + " s real time";
+    }, when));
+  });
+  timers.push(setTimeout(() => printTotal(roll, recording), when + 300));
+}
+
+async function loadRecording() {
+  if (!REPLAY_ID) return;
+  const r = await fetch("/tasks/" + REPLAY_ID);
+  if (!r.ok) { document.getElementById("roll").textContent = "The recording could not be loaded (HTTP " + r.status + ")."; return; }
+  recording = await r.json();
+  play();
+}
+
+async function showState() {
+  const r = await fetch("/health");
+  if (!r.ok) return;
+  const h = await r.json();
+  const state = document.getElementById("state");
+  const btn = document.getElementById("run-live");
+  if (h.running_id) {
+    btn.disabled = true;
+    state.textContent = "";
+    const a = document.createElement("a");
+    a.href = "/ui/tasks/" + h.running_id;
+    a.textContent = "Watch it live";
+    state.append("A task is running now, and this demo runs one at a time. ", a, ".");
+    setTimeout(showState, 5000);
+  } else if (btn.disabled) {
+    btn.disabled = false;
+    state.textContent = "Creates two real VMs. Takes about 2 minutes. One task at a time.";
+  }
+}
+
+async function runLive(i) {
+  const p = PRESETS[i];
+  const state = document.getElementById("state");
+  state.textContent = "Starting...";
+  const body = {
+    task: p.task, budget_usd: 0.25,
+    allowed_domains: p.domains ? p.domains.split(",") : [],
+    files: [{ name: "sales.csv", content_b64: btoa(DEMO_CSV) }],
+  };
+  const r = await fetch("/tasks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  if (r.ok) { window.location.href = "/ui/tasks/" + (await r.json()).id; return; }
+  const d = await r.json().catch(() => ({}));
+  state.textContent = typeof d.detail === "string" ? d.detail : "The task did not start (HTTP " + r.status + ").";
+  showState();
+}
+
+loadRecording();
+showState();
+</script>
+{% endblock %}

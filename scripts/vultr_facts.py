@@ -1,4 +1,5 @@
 """D1 facts: what the live Vultr catalogue really says. Writes docs/evidence/vultr-<date>/facts.json. No secrets."""
+
 from __future__ import annotations
 
 import asyncio
@@ -35,10 +36,19 @@ async def main(out: Path) -> None:
         "ewr": next((r.model_dump() for r in regions if r.id == "ewr"), None),
         "plans_total": len(plans),
         "plan_keys": sorted(plans[0].model_dump().keys()) if plans else [],
-        "picked_plans": [{**p, "locations_has_ewr": "ewr" in p["locations"], "locations": len(p["locations"])} for p in picked],
+        "picked_plans": [
+            {**p, "locations_has_ewr": "ewr" in p["locations"], "locations": len(p["locations"])} for p in picked
+        ],
         "cheapest_ewr": [
-            {"id": p.id, "vcpu": p.vcpu_count, "ram": p.ram, "disk": p.disk, "monthly": p.monthly_cost,
-             "hourly_field": p.hourly_cost, "type": p.type}
+            {
+                "id": p.id,
+                "vcpu": p.vcpu_count,
+                "ram": p.ram,
+                "disk": p.disk,
+                "monthly": p.monthly_cost,
+                "hourly_field": p.hourly_cost,
+                "type": p.type,
+            }
             for p in cheapest
         ],
         "os_ubuntu": ubuntu,

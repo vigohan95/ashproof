@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Evidence · Ashproof{% endblock %}
+{% block notice %}{% endblock %}
+{% block content %}
+<h1>Evidence from real runs</h1>
+<p class="muted">These numbers are read from <code>{{ evidence.source }}</code> in the repository when the code is built. They are stored results, not a test running now.</p>
+
+<div class="grid">
+  <div class="panel"><div class="stat">{{ evidence.contained }} of {{ evidence.attack_total }}<small>attacks contained on a real Vultr VM. Before the fixes, {{ evidence.worked_before_fixes }} worked.</small></div></div>
+  <div class="panel"><div class="stat">{{ evidence.kill_step.median_s }} s<small>median, kill switch to both VMs gone, while a step runs ({{ evidence.kill_step.runs }} runs, max {{ evidence.kill_step.max_s }} s). During boot: {{ evidence.kill_boot.min_s }} to {{ evidence.kill_boot.max_s }} s ({{ evidence.kill_boot.runs }} runs).</small></div></div>
+  <div class="panel"><div class="stat">{{ evidence.reliability.verified }} of {{ evidence.reliability.total }}<small>tasks verified in a row. Median {{ evidence.reliability.median_s }} s, slowest {{ evidence.reliability.slowest_s }} s.</small></div></div>
+</div>
+
+<h2>The attack suite</h2>
+<div class="panel">
+<p class="muted" style="margin-top:0">Pass means the attack failed. All were written by us; nobody outside the project wrote any of them.</p>
+<table>
+  <thead><tr><th>ID</th><th>Attack</th><th>What it tried</th><th>Before fixes</th><th>On Vultr</th></tr></thead>
+  <tbody>
+  {% for a in evidence.attacks %}
+    <tr{% if a.result != 'PASS' %} class="deny"{% endif %}>
+      <td>{{ a.id }}</td>
+      <td>{{ a.title }}</td>
+      <td class="muted">{{ a.attempted }}{% if a.accepted_limitation %} <strong>Accepted limit:</strong> {{ a.accepted_limitation }}{% endif %}</td>
+      <td class="{{ 'bad' if a.before_fixes == 'FAIL' else 'muted' }}">{{ 'worked' if a.before_fixes == 'FAIL' else ('stopped' if a.before_fixes == 'PASS' else '-') }}</td>
+      <td class="{{ 'ok' if a.result == 'PASS' else 'bad' }}">{{ 'stopped' if a.result == 'PASS' else 'still works' }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

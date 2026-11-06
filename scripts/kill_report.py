@@ -44,12 +44,21 @@ def main() -> None:
     for prefix in prefixes:
         groups[prefix] = [r for r in map(one, sorted(Path(src).glob(f"{prefix}*.timeline.json"))) if r]
     lines = ["# Kill switch on real Vultr VMs", ""]
-    lines += ["Measured from the control plane's audit events: `kill.requested` to the last `vm.destroyed`, which is", ""]
-    lines += ["written after `GET /v2/instances/{id}` returned 404. Each task had two VMs. Vultr plan vhp-1c-1gb-amd, ewr.", ""]
+    lines += [
+        "Measured from the control plane's audit events: `kill.requested` to the last `vm.destroyed`, which is",
+        "",
+    ]
+    lines += [
+        "written after `GET /v2/instances/{id}` returned 404. Each task had two VMs. Vultr plan vhp-1c-1gb-amd, ewr.",
+        "",
+    ]
     for prefix, rows in groups.items():
         t = [r["seconds_to_last_404"] for r in rows]
         lines += [f"## {prefix}: {len(rows)} runs", ""]
-        lines += [f"Button to both VMs 404: median {statistics.median(t):.2f} s, min {min(t):.2f} s, max {max(t):.2f} s.", ""]
+        lines += [
+            f"Button to both VMs 404: median {statistics.median(t):.2f} s, min {min(t):.2f} s, max {max(t):.2f} s.",
+            "",
+        ]
         lines += ["| task | state at kill | final | step killed | tokens revoked (s) | both 404 (s) | VMs | all 404 |"]
         lines += ["|---|---|---|---|---|---|---|---|"]
         for r in rows:

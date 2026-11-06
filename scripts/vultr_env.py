@@ -1,4 +1,5 @@
 """Load repo .env into os.environ without ever printing a value. Used by every live script in scripts/."""
+
 from __future__ import annotations
 
 import os

@@ -1,4 +1,5 @@
 """Latency / shape matrix for Serverless Inference: model x reasoning effort x structured output. No secrets printed."""
+
 from __future__ import annotations
 
 import concurrent.futures as cf
@@ -21,14 +22,21 @@ from brz.llm.structured import _schema_instruction, json_schema_response_format 
 
 BASE = "https://api.vultrinference.com/v1"
 RF = json_schema_response_format(Plan, "plan")
-TASK = {"task": "Total the amount column per region and write summary.json", "budget_usd": 0.25,
-        "pre_approved_domains": [], "attached_files": ["sales.csv"], "vm_plan": "vhp-1c-1gb-amd"}
+TASK = {
+    "task": "Total the amount column per region and write summary.json",
+    "budget_usd": 0.25,
+    "pre_approved_domains": [],
+    "attached_files": ["sales.csv"],
+    "vm_plan": "vhp-1c-1gb-amd",
+}
 SYS = SANDBOX_CONTRACT.format(max_steps=6)
 
 
 def one(model: str, effort: str | None, schema: bool, budget: int = 240) -> dict:
-    msgs = [{"role": "system", "content": SYS if schema else SYS + "\n\n" + _schema_instruction(Plan)},
-            {"role": "user", "content": "Produce the plan for this task:\n" + json.dumps(TASK)}]
+    msgs = [
+        {"role": "system", "content": SYS if schema else SYS + "\n\n" + _schema_instruction(Plan)},
+        {"role": "user", "content": "Produce the plan for this task:\n" + json.dumps(TASK)},
+    ]
     body = {"model": model, "messages": msgs, "temperature": 0, "max_tokens": 8000}
     if schema:
         body["response_format"] = RF
@@ -46,8 +54,13 @@ def one(model: str, effort: str | None, schema: bool, budget: int = 240) -> dict
         d = r.json()
         ch = d["choices"][0]
         m = ch["message"]
-        row.update(finish=ch.get("finish_reason"), usage=d.get("usage"), msg_keys=sorted(m.keys()),
-                   content_len=len(m.get("content") or ""), reasoning_len=len(m.get("reasoning_content") or m.get("reasoning") or ""))
+        row.update(
+            finish=ch.get("finish_reason"),
+            usage=d.get("usage"),
+            msg_keys=sorted(m.keys()),
+            content_len=len(m.get("content") or ""),
+            reasoning_len=len(m.get("reasoning_content") or m.get("reasoning") or ""),
+        )
         try:
             Plan.model_validate_json(m.get("content") or "")
             row["valid_plan"] = True
@@ -61,7 +74,12 @@ def one(model: str, effort: str | None, schema: bool, budget: int = 240) -> dict
 
 
 if __name__ == "__main__":
-    combos = [(m, e, s) for m in ("glm-5.3", "qwen3.8-27b", "glm-5.3-flash") for e in ("minimal", "low", None) for s in (True, False)]
+    combos = [
+        (m, e, s)
+        for m in ("glm-5.3", "qwen3.8-27b", "glm-5.3-flash")
+        for e in ("minimal", "low", None)
+        for s in (True, False)
+    ]
     out = Path(sys.argv[1])
     rows = []
     with cf.ThreadPoolExecutor(6) as ex:

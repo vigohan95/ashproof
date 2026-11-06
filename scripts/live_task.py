@@ -104,11 +104,25 @@ def main() -> int:
         "price_source": d.get("cost", {}).get("price_source"),
         "egress": {k: d.get("egress", {}).get(k) for k in ("attempts", "denied")},
         "sandboxes": [
-            {k: s.get(k) for k in ("role", "instance_id", "plan", "region", "created_at", "active_at", "destroyed_at", "destroyed")}
+            {
+                k: s.get(k)
+                for k in (
+                    "role",
+                    "instance_id",
+                    "plan",
+                    "region",
+                    "created_at",
+                    "active_at",
+                    "destroyed_at",
+                    "destroyed",
+                )
+            }
             | {"proof": s.get("proof")}
             for s in d.get("sandboxes", [])
         ],
-        "verdict": {k: (d.get("verdict") or {}).get(k) for k in ("passed", "rerun_performed", "rerun_match", "model_review")},
+        "verdict": {
+            k: (d.get("verdict") or {}).get(k) for k in ("passed", "rerun_performed", "rerun_match", "model_review")
+        },
     }
     (out / f"{a.name}.summary.json").write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8", newline="\n")
     print(json.dumps(summary, indent=1)[:2600], flush=True)

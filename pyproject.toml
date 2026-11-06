@@ -40,7 +40,7 @@ package-dir = { "" = ".", "brz_runner" = "sandbox/runner/brz_runner" }
 
 [tool.setuptools.package-data]
 "brz.sandbox" = ["templates/*.tmpl"]
-"apps.control_plane" = ["templates/*.html"]
+"apps.control_plane" = ["templates/*.html", "data/*.json", "recordings/*.json"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

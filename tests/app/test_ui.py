@@ -5,10 +5,13 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
+import sys
+from pathlib import Path
 
 import httpx
 import pytest
 
+from apps.control_plane import ui as ui_module
 from apps.control_plane.app import create_app
 from apps.control_plane.demo import demo_plan, demo_responder
 from apps.control_plane.deps import build_mock_deps
@@ -55,10 +58,11 @@ async def _wait(client, task_id, *statuses, timeout=30.0):
 
 async def test_pages_render_and_receipt_page(ui):
     client, app, deps = ui
-    r = await client.get("/", follow_redirects=False)
-    assert r.status_code == 307 and r.headers["location"] == "/ui"
-    r = await client.get("/ui")
-    assert r.status_code == 200 and "No tasks yet" in r.text and "mode <strong>mock</strong>" in r.text
+    for path in ("/", "/ui"):  # the home page answers on both, so older links keep working
+        r = await client.get(path)
+        assert r.status_code == 200 and "Recording, not live" in r.text and "security reviewer" in r.text
+    r = await client.get("/ui/tasks")
+    assert r.status_code == 200 and "mode <strong>mock</strong>" in r.text
     r = await client.get("/ui/new")
     assert r.status_code == 200 and 'id="require_approval"' in r.text and "Budget (USD)" in r.text
     assert (await client.get("/ui/tasks/nope")).status_code == 404
@@ -72,7 +76,7 @@ async def test_pages_render_and_receipt_page(ui):
     assert tl["sandboxes"][0]["proof"]["http_status"] == 404 and tl["sandboxes"][0]["proof"]["observed_at"]
     assert "list" in tl["egress"]
 
-    r = await client.get("/ui")
+    r = await client.get("/ui/tasks")
     assert task_id in r.text and "badge verified" in r.text and '<span class="ok">yes</span>' in r.text
     r = await client.get(f"/ui/tasks/{task_id}/receipt")
     assert r.status_code == 200
@@ -131,7 +135,7 @@ async def test_ui_kill_flow(ui):
     assert tl["kill_requested"] is True and all(s["destroyed"] for s in tl["sandboxes"])
     page = (await client.get(f"/ui/tasks/{task_id}/receipt")).text
     assert "badge killed" in page and "CHAIN VERIFIED" in page and "VMs DESTROYED" in page
-    listing = (await client.get("/ui")).text
+    listing = (await client.get("/ui/tasks")).text
     assert "badge killed" in listing
 
 
@@ -146,3 +150,32 @@ def test_markdown_subset_renderer():
     assert '<span class="ok">' in html and '<span class="bad">' in html
     assert '<tr class="deny">' in html and "<th>a</th>" in html
     assert "&lt;script&gt;" in html and "<script>" not in html
+
+
+async def test_home_replays_a_real_task_that_the_api_serves(ui):
+    client, app, _ = ui
+    featured = json.loads((Path(ui_module.__file__).parent / "data" / "featured.json").read_text(encoding="utf-8"))
+    for task_id in {featured["replay"], *(p["id"] for p in featured["pinned"])}:
+        d = (await client.get(f"/tasks/{task_id}")).json()
+        assert d["events"] and d["finished_at"], task_id
+        assert (await client.get(f"/ui/tasks/{task_id}/receipt")).status_code == 200
+        chain = (await client.get(f"/tasks/{task_id}/receipt/verify")).json()
+        assert chain["ok"], chain
+
+
+async def test_evidence_page_matches_the_stored_results(ui):
+    client, _, _ = ui
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
+    import build_demo_data
+
+    built = build_demo_data.build()
+    stored = json.loads((Path(ui_module.__file__).parent / "data" / "evidence.json").read_text(encoding="utf-8"))
+    assert stored == built
+    r = await client.get("/ui/evidence")
+    assert r.status_code == 200 and "A24" in r.text and "still works" in r.text
+
+
+async def test_task_list_does_not_print_long_preset_text(ui):
+    client, _, _ = ui
+    r = await client.get("/ui/tasks")
+    assert "This is an authorised test" not in r.text and "Test the walls" in r.text

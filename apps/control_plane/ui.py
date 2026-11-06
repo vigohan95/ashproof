@@ -1,6 +1,8 @@
 """Server-rendered UI (Jinja2 + a little vanilla JS, no build step).
 
-    /ui                      task list
+    /  and /ui               home: what this is, a replay of a real recorded task, a live run
+    /ui/tasks                task list
+    /ui/evidence             attack results, kill switch and reliability numbers from real runs
     /ui/new                  new task form (posts JSON to /tasks from the browser)
     /ui/tasks/{id}           live task page: polls GET /tasks/{id} every 2 s
     /ui/tasks/{id}/receipt   receipt: verification result, rendered Markdown, JSON download
@@ -13,6 +15,7 @@ tables, bold, inline code) - no third-party Markdown dependency.
 from __future__ import annotations
 
 import html
+import json
 import re
 from pathlib import Path
 
@@ -22,8 +25,11 @@ from fastapi.templating import Jinja2Templates
 
 from brz import __version__
 
+from .presets import DEMO_CSV, PRESETS, short_title
+
 router = APIRouter(prefix="/ui", include_in_schema=False)
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+DATA = Path(__file__).parent / "data"
 
 _INLINE_CODE = re.compile(r"`([^`]+)`")
 _BOLD = re.compile(r"\*\*([^*]+)\*\*")
@@ -118,7 +124,45 @@ def _ctx(request: Request, **extra):
     }
 
 
+def _load(name: str) -> dict:
+    return json.loads((DATA / name).read_text(encoding="utf-8"))
+
+
+def _pinned(store, featured: dict) -> list[dict]:
+    out = []
+    for item in featured["pinned"]:
+        state = store.tasks.get(item["id"])
+        if state is not None:
+            out.append({**item, "status": state.status, "total_usd": state.cost.total_usd})
+    return out
+
+
 @router.get("", response_class=HTMLResponse)
+async def home(request: Request) -> HTMLResponse:
+    store = request.app.state.store
+    featured = _load("featured.json")
+    replay = store.tasks.get(featured["replay"])
+    return templates.TemplateResponse(
+        request,
+        "home.html",
+        _ctx(
+            request,
+            replay_id=replay.id if replay else None,
+            replay_when=replay.created_at.strftime("%Y-%m-%d %H:%M UTC") if replay else "",
+            pinned=_pinned(store, featured),
+            evidence=_load("evidence.json"),
+            presets=PRESETS,
+            demo_csv=DEMO_CSV,
+        ),
+    )
+
+
+@router.get("/evidence", response_class=HTMLResponse)
+async def evidence_page(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request, "evidence.html", _ctx(request, evidence=_load("evidence.json")))
+
+
+@router.get("/tasks", response_class=HTMLResponse)
 async def index(request: Request) -> HTMLResponse:
     store = request.app.state.store
     tasks = sorted(store.tasks.values(), key=lambda s: s.created_at, reverse=True)
@@ -127,7 +171,7 @@ async def index(request: Request) -> HTMLResponse:
             "id": s.id,
             "status": s.status,
             "created_at": s.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-            "task": s.request.task[:140],
+            "task": short_title(s.request.task),
             "total_usd": s.cost.total_usd,
             "vms": len(s.sandboxes),
             "destroyed": all(h.proof and h.proof.destroyed for h in s.sandboxes) if s.sandboxes else None,
@@ -140,7 +184,7 @@ async def index(request: Request) -> HTMLResponse:
 
 @router.get("/new", response_class=HTMLResponse)
 async def new_task(request: Request) -> HTMLResponse:
-    return templates.TemplateResponse(request, "new.html", _ctx(request))
+    return templates.TemplateResponse(request, "new.html", _ctx(request, presets=PRESETS, demo_csv=DEMO_CSV))
 
 
 @router.get("/tasks/{task_id}", response_class=HTMLResponse)

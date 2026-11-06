@@ -6,11 +6,12 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
+from pathlib import Path
 
 import httpx
 import pytest
 
-from apps.control_plane.app import create_app
+from apps.control_plane.app import RECORDINGS, create_app
 from apps.control_plane.demo import demo_plan, demo_responder
 from apps.control_plane.deps import build_mock_deps
 from brz.llm import FakeLLM, Planner, Verifier
@@ -97,7 +98,7 @@ async def test_unknown_task_and_not_ready_receipt(make_stack):
     assert r.status_code == 422
     r = await client.post("/tasks", json={"task": "valid task", "files": [{"name": "a.csv", "content_b64": "!!!"}]})
     assert r.status_code == 400
-    assert (await client.get("/tasks")).json()["tasks"] == []
+    assert all(Path(RECORDINGS / f"{t['id']}.json").exists() for t in (await client.get("/tasks")).json()["tasks"])
 
 
 async def test_kill_switch_mid_step_destroys_vm_and_receipts_it(make_stack):

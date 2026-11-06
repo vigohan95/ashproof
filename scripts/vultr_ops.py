@@ -1,10 +1,11 @@
 """Operator commands against the live Vultr account. Run from Windows Python (system proxy). Prints no secrets.
 
-    python scripts/vultr_ops.py status              balance, pending charges, every instance
-    python scripts/vultr_ops.py sweep [--all]       delete brz-sandbox VMs (older than TTL, or all with --all)
-    python scripts/vultr_ops.py ensure-sshkey PUB   register a public key, print its id
-    python scripts/vultr_ops.py ensure-firewall DESC CIDR PORTS   firewall group with tcp rules, print its id
+python scripts/vultr_ops.py status              balance, pending charges, every instance
+python scripts/vultr_ops.py sweep [--all]       delete brz-sandbox VMs (older than TTL, or all with --all)
+python scripts/vultr_ops.py ensure-sshkey PUB   register a public key, print its id
+python scripts/vultr_ops.py ensure-firewall DESC CIDR PORTS   firewall group with tcp rules, print its id
 """
+
 from __future__ import annotations
 
 import argparse
@@ -30,8 +31,18 @@ async def status(c: VultrClient) -> dict:
         "balance": acct.get("balance"),
         "pending_charges": acct.get("pending_charges"),
         "instances": [
-            {"id": i.id, "label": i.label, "plan": i.plan, "region": i.region, "ip": i.main_ip, "status": i.status,
-             "power": i.power_status, "server": i.server_status, "created": str(i.date_created), "tags": i.tags}
+            {
+                "id": i.id,
+                "label": i.label,
+                "plan": i.plan,
+                "region": i.region,
+                "ip": i.main_ip,
+                "status": i.status,
+                "power": i.power_status,
+                "server": i.server_status,
+                "created": str(i.date_created),
+                "tags": i.tags,
+            }
             for i in inst
         ],
     }

@@ -1,6 +1,6 @@
 """Consecutive real tasks through the public API, on the deployed code. Every outcome is counted, none is dropped.
 
-    python scripts/reliability.py <base url> <out dir> <count>
+python scripts/reliability.py <base url> <out dir> <count>
 """
 
 from __future__ import annotations

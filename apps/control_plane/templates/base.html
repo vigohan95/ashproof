@@ -54,19 +54,19 @@
 </style>
 {% block head %}{% endblock %}
 </head>
-<body>
+<body{% block body_attrs %}{% endblock %}>
 <header>
-  <a class="brand" href="/ui">Ash<span>proof</span></a>
-  <nav><a href="/ui">Tasks</a><a href="/ui/new">New task</a><a href="/docs">API</a></nav>
+  <a class="brand" href="/">Ash<span>proof</span></a>
+  <nav><a href="/ui/tasks">Tasks</a><a href="/ui/new">New task</a><a href="/ui/evidence">Evidence</a><a href="/docs">API</a></nav>
   <div class="mode">mode <strong>{{ mode }}</strong> · provider <strong>{{ provider }}</strong> · inner layer <strong>{{ inner_isolation }}</strong> · v{{ version }}</div>
 </header>
 <main>
-{% if demo and demo.enabled %}
+{% block notice %}{% if demo and demo.enabled %}
 <div class="panel muted" style="font-size:13px">Public demo on real Vultr VMs. Tasks and receipts here are visible to everyone, so do not paste anything private. Limits: {{ demo.tasks_today }} of {{ demo.tasks_per_day }} tasks used today, budget up to ${{ '%.2f' % demo.max_budget_usd }} per task, outbound domains limited to {{ demo.allowed_domains | join(', ') }}.</div>
-{% endif %}
+{% endif %}{% endblock %}
 {% block content %}{% endblock %}
 </main>
-<footer>Every task: one throwaway Vultr VM · default-deny egress · zero secrets inside · independent re-run · hash-chained receipt · VM deleted (GET 404).</footer>
+<footer>{% block footer %}Every task: one throwaway Vultr VM, outbound traffic denied by default, no keys inside, a second clean VM repeats the work, then both VMs are deleted.{% endblock %}</footer>
 {% block scripts %}{% endblock %}
 </body>
 </html>

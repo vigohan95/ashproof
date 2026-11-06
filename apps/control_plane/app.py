@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query, Request, Response
-from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel, Field
 
 from brz import __version__
@@ -36,6 +36,7 @@ from .guard import DemoGuard, DemoPolicy
 
 log = logging.getLogger("brz")
 SWEEP_INTERVAL_S = 300.0
+RECORDINGS = Path(__file__).parent / "recordings"
 
 
 class FileIn(BaseModel):
@@ -107,6 +108,8 @@ def create_app(deps: Deps | None = None, guard: DemoGuard | None = None, data_di
             d.mkdir(parents=True, exist_ok=True)
             for old in archive.load(d / "tasks"):
                 store.tasks[old.id] = old
+        for recording in archive.load(RECORDINGS):  # real tasks shipped with the code, so the home page always works
+            store.tasks.setdefault(recording.id, recording)
         sweeper = asyncio.create_task(sweep_loop(app.state.deps)) if app.state.deps.mode == "live" else None
         try:
             yield
@@ -150,6 +153,7 @@ def create_app(deps: Deps | None = None, guard: DemoGuard | None = None, data_di
             "inner_isolation": d.backend.inner_isolation,
             "tasks": len(store.tasks),
             "running": running,
+            "running_id": next((i for i, r in store.runs.items() if not r.done()), None),
             "demo": app.state.guard.status(),
             "price_source": d.orchestrator.prices.source,
         }
@@ -275,13 +279,14 @@ def create_app(deps: Deps | None = None, guard: DemoGuard | None = None, data_di
         media = "application/json" if name.endswith(".json") else "text/plain; charset=utf-8"
         return Response(content=data, media_type=media)
 
+    from .ui import home
     from .ui import router as ui_router
 
     app.include_router(ui_router)
 
     @app.get("/", include_in_schema=False)
-    async def root() -> Response:
-        return RedirectResponse(url="/ui", status_code=307)
+    async def root(request: Request) -> Response:
+        return await home(request)
 
     return app
 

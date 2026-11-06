@@ -133,7 +133,6 @@ class ChatClient:
         data = resp.json()
         return parse_chat_response(data, default_model=self.model)
 
-
     async def _post(self, body: dict[str, Any]) -> httpx.Response:
         attempt = 0
         while True:

@@ -142,7 +142,9 @@ async def main() -> int:
                 print(log["boot_debug"], flush=True)
             raise
         r1 = await client.run_step(
-            PlanStep(id="probe", title="probe", kind="python", code=PROBE, expected_outputs=["probe.json"], timeout_s=60)
+            PlanStep(
+                id="probe", title="probe", kind="python", code=PROBE, expected_outputs=["probe.json"], timeout_s=60
+            )
         )
         log["step_probe"] = r1.model_dump(exclude={"files"}) | {"files": r1.file_hashes}
         print("probe", r1.exit_code, r1.executor, r1.stdout[:600], r1.stderr[:300], flush=True)
@@ -160,7 +162,9 @@ async def main() -> int:
         log["egress_all"] = await client.egress()
         print("egress_all", len(log["egress_all"]), flush=True)
         log["scan"] = await client.scan()
-        print("scan", {k: v for k, v in log["scan"].items() if k != "findings"}, log["scan"].get("findings"), flush=True)
+        print(
+            "scan", {k: v for k, v in log["scan"].items() if k != "findings"}, log["scan"].get("findings"), flush=True
+        )
         if sshkey:
             log["vm_debug"] = ssh(handle.meta["main_ip"], VM_DEBUG, 60)
             print(log["vm_debug"], flush=True)

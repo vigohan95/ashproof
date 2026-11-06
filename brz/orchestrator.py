@@ -570,8 +570,7 @@ class Orchestrator:
             state.primary_outcomes,
             state.rerun_outcomes,
             inputs={
-                n: b[: self.config.preview_bytes].decode("utf-8", "replace")
-                for n, b in state.request.files.items()
+                n: b[: self.config.preview_bytes].decode("utf-8", "replace") for n, b in state.request.files.items()
             },
         )
         state.verdict = verdict
