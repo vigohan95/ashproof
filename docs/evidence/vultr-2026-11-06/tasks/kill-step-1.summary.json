@@ -1,0 +1,70 @@
+{
+ "task_id": "40303d78f489",
+ "status": "killed",
+ "seconds_total": 114.7,
+ "kill": {
+  "seconds_button_to_response": 0.766,
+  "response": {
+   "id": "40303d78f489",
+   "status": "killed",
+   "killed": true,
+   "sandboxes": [
+    {
+     "instance_id": "fc1927c9-37df-4a88-a126-a5be271010bb",
+     "destroyed": true
+    },
+    {
+     "instance_id": "2a15d9af-28b8-4b8a-8d83-bc3e1af6deee",
+     "destroyed": true
+    }
+   ]
+  }
+ },
+ "offline_verify_rc": 0,
+ "cost": 0.01702825,
+ "price_source": "live (/v2/plans + /v1/models)",
+ "egress": {
+  "attempts": 0,
+  "denied": 0
+ },
+ "sandboxes": [
+  {
+   "role": "primary",
+   "instance_id": "fc1927c9-37df-4a88-a126-a5be271010bb",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T06:16:55.881486+00:00",
+   "active_at": "2026-11-06T06:17:27.201766+00:00",
+   "destroyed_at": "2026-11-06T06:18:43.123661+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T06:18:43.123661+00:00",
+    "attempts": 1
+   }
+  },
+  {
+   "role": "verifier",
+   "instance_id": "2a15d9af-28b8-4b8a-8d83-bc3e1af6deee",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T06:16:56.239426+00:00",
+   "active_at": "2026-11-06T06:17:27.475154+00:00",
+   "destroyed_at": "2026-11-06T06:18:43.116125+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T06:18:43.116125+00:00",
+    "attempts": 1
+   }
+  }
+ ],
+ "verdict": {
+  "passed": null,
+  "rerun_performed": null,
+  "rerun_match": null,
+  "model_review": null
+ }
+}

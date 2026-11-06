@@ -1,0 +1,70 @@
+{
+ "task_id": "def42ffeb355",
+ "status": "killed",
+ "seconds_total": 113.7,
+ "kill": {
+  "seconds_button_to_response": 1.328,
+  "response": {
+   "id": "def42ffeb355",
+   "status": "killed",
+   "killed": true,
+   "sandboxes": [
+    {
+     "instance_id": "b9d10404-a8e4-4685-93f5-016bd9f4c655",
+     "destroyed": true
+    },
+    {
+     "instance_id": "d30976b6-5d0d-4097-ab33-e154d134d555",
+     "destroyed": true
+    }
+   ]
+  }
+ },
+ "offline_verify_rc": 0,
+ "cost": 0.01702825,
+ "price_source": "live (/v2/plans + /v1/models)",
+ "egress": {
+  "attempts": 0,
+  "denied": 0
+ },
+ "sandboxes": [
+  {
+   "role": "verifier",
+   "instance_id": "b9d10404-a8e4-4685-93f5-016bd9f4c655",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T06:18:51.288543+00:00",
+   "active_at": "2026-11-06T06:19:22.425124+00:00",
+   "destroyed_at": "2026-11-06T06:20:38.923028+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T06:20:38.923028+00:00",
+    "attempts": 1
+   }
+  },
+  {
+   "role": "primary",
+   "instance_id": "d30976b6-5d0d-4097-ab33-e154d134d555",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T06:18:51.371740+00:00",
+   "active_at": "2026-11-06T06:19:22.787333+00:00",
+   "destroyed_at": "2026-11-06T06:20:38.921781+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T06:20:38.921781+00:00",
+    "attempts": 1
+   }
+  }
+ ],
+ "verdict": {
+  "passed": null,
+  "rerun_performed": null,
+  "rerun_match": null,
+  "model_review": null
+ }
+}
