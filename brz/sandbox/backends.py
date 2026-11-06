@@ -56,7 +56,7 @@ class SandboxHandle:
 class VultrSandboxConfig:
     region: str = "ewr"
     plan: str = "vhp-1c-1gb-amd"
-    os_id: int | None = 2284  # Ubuntu 24.04 LTS x64 (confirm id via GET /v2/os on event day)
+    os_id: int | None = 2284  # Ubuntu 24.04 LTS x64, confirmed with GET /v2/os on 2026-11-06
     snapshot_id: str | None = None  # pre-baked image: packages + runsc preinstalled
     firewall_group_id: str | None = None
     control_plane_cidr: str = "0.0.0.0/0"
@@ -64,7 +64,8 @@ class VultrSandboxConfig:
     ttl_minutes: int = 20
     dns_server: str = "1.1.1.1"
     inner_isolation: str = "gvisor"
-    vm_active_timeout_s: float = 300.0
+    # Normal boots took 40 to 75 s. One real VM stayed installingbooting for good, so give up early and retry.
+    vm_active_timeout_s: float = 150.0
     vm_poll_interval_s: float = 5.0
     destroy_confirm_timeout_s: float = 120.0
     capacity_wait_s: float = 90.0  # deleted VMs keep counting against the account limit for a while

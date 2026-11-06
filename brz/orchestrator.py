@@ -56,7 +56,7 @@ class OrchestratorConfig:
     max_repairs: int = 1
     require_approval_for_new_domains: bool = True
     approval_timeout_s: float = 900.0
-    runner_ready_timeout_s: float = 240.0
+    runner_ready_timeout_s: float = 200.0
     runner_ready_interval_s: float = 3.0
     preview_bytes: int = 4000
     planner_model_label: str = ""
@@ -217,12 +217,12 @@ class Orchestrator:
             await self._approval_gate(state)
             self._budget_preflight(state)
             if self.config.verify_in_fresh_sandbox and self.config.parallel_verifier_boot:
-                verifier_boot = asyncio.create_task(self._provision(state, "verifier", background=True))
-            primary = await self._provision(state, "primary")
+                verifier_boot = asyncio.create_task(self._boot(state, "verifier", background=True))
+            primary = await self._boot(state, "primary")
             await self._execute_steps(state, primary, record=True)
             if self.config.verify_in_fresh_sandbox:
                 state.set_status("verifying", mode="fresh-sandbox re-run")
-                verifier_vm = await self._verifier_vm(state, verifier_boot)
+                verifier_vm = await (verifier_boot or self._boot(state, "verifier"))
                 state.rerun_outcomes = await self._execute_steps(state, verifier_vm, record=False)
                 await self._destroy(state, verifier_vm)
             else:
@@ -385,18 +385,20 @@ class Orchestrator:
         self._check_kill(state)
         return handle
 
-    async def _verifier_vm(self, state: TaskState, boot: asyncio.Task | None) -> SandboxHandle:
-        if boot is None:
-            return await self._provision(state, "verifier")
+    async def _boot(self, state: TaskState, role: str, *, background: bool = False) -> SandboxHandle:
+        """Provision, with one retry. A real VM can stay stuck installing: delete it first, then start again."""
         try:
-            return await boot
-        except TaskKilled:
+            return await self._provision(state, role, background=background)
+        except (TaskKilled, TaskFailed):
             raise
-        except Exception as exc:  # noqa: BLE001 - one retry, now without racing the primary VM
-            state.audit.append("vm.verifier_boot_failed", {"error": repr(exc)[:300]})
-            self._check_kill(state)
-            state._created.pop("verifier", None)
-            return await self._provision(state, "verifier")
+        except Exception as exc:  # noqa: BLE001
+            if state.kill_requested:
+                raise
+            state.audit.append("vm.boot_failed", {"role": role, "error": repr(exc)[:300]})
+        for handle in [h for h in state.sandboxes if h.role == role and h.proof is None]:
+            await self._destroy(state, handle)
+        state._created.pop(role, None)
+        return await self._provision(state, role, background=background)
 
     async def _stop_verifier_boot(self, state: TaskState, boot: asyncio.Task | None) -> None:
         """Never cancel a create in flight: Vultr may finish it, and that VM would be billing with no owner."""

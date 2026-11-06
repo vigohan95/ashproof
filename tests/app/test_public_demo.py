@@ -181,3 +181,32 @@ async def test_kill_during_boot_reaches_the_vm_and_ends_killed():
     await deps.aclose()
     assert receipt.status == "killed"
     assert all(h.proof and h.proof.destroyed for h in state.sandboxes)
+
+
+async def test_a_vm_stuck_installing_is_deleted_and_retried():
+    """One real VM stayed installingbooting for good while the task waited on it."""
+    from brz.orchestrator import TaskRequest
+    from brz.vultr.client import VultrTimeout
+
+    deps = build_mock_deps()
+    orch = deps.orchestrator
+    backend = deps.backend
+    real = backend.client.wait_until_active
+    calls = []
+
+    async def first_one_sticks(instance_id, **kw):
+        calls.append(instance_id)
+        if len(calls) == 1:
+            raise VultrTimeout("stuck installing")
+        return await real(instance_id, **kw)
+
+    backend.client.wait_until_active = first_one_sticks
+    orch.config.verify_in_fresh_sandbox = False
+    orch.verifier.require_rerun_match = False
+    state = orch.new_task(TaskRequest(task="Total the amount column per region", files={"sales.csv": b"region,amount"}))
+    await orch.run(state)
+    await deps.aclose()
+    primaries = [h for h in state.sandboxes if h.role == "primary"]
+    assert len(primaries) == 2, "a replacement was created"
+    assert all(h.proof and h.proof.destroyed for h in primaries), "the stuck VM is gone too"
+    assert "vm.boot_failed" in [e.kind for e in state.audit.events]

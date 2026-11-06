@@ -1,0 +1,43 @@
+{
+ "task_id": "1cdca008aa23",
+ "status": "verifying",
+ "seconds_total": 280.7,
+ "kill": null,
+ "offline_verify_rc": 1,
+ "cost": 0.00141675,
+ "price_source": "live (/v2/plans + /v1/models)",
+ "egress": {
+  "attempts": 1,
+  "denied": 0
+ },
+ "sandboxes": [
+  {
+   "role": "primary",
+   "instance_id": "62684b8d-3cee-42e0-acc0-d36acf5f1473",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T06:48:05.929282+00:00",
+   "active_at": "2026-11-06T06:48:50.899223+00:00",
+   "destroyed_at": null,
+   "destroyed": false,
+   "proof": null
+  },
+  {
+   "role": "verifier",
+   "instance_id": "c346027e-a402-45bd-ab13-09154af22ab5",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T06:48:16.370992+00:00",
+   "active_at": null,
+   "destroyed_at": null,
+   "destroyed": false,
+   "proof": null
+  }
+ ],
+ "verdict": {
+  "passed": null,
+  "rerun_performed": null,
+  "rerun_match": null,
+  "model_review": null
+ }
+}

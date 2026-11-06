@@ -1,0 +1,99 @@
+[
+ {
+  "name": "rel-01-csv",
+  "rc": 0,
+  "seconds": 109.8,
+  "status": "verified",
+  "offline_verify_rc": 0,
+  "cost": 0.0175896,
+  "rerun_match": true,
+  "denied": 4,
+  "all_404": true
+ },
+ {
+  "name": "rel-02-fetch",
+  "rc": 0,
+  "seconds": 131.8,
+  "status": "verified",
+  "offline_verify_rc": 0,
+  "cost": 0.01777115,
+  "rerun_match": true,
+  "denied": 0,
+  "all_404": true
+ },
+ {
+  "name": "rel-03-walls",
+  "rc": 0,
+  "seconds": 240.4,
+  "status": "verified",
+  "offline_verify_rc": 0,
+  "cost": 0.01854605,
+  "rerun_match": true,
+  "denied": 12,
+  "all_404": true
+ },
+ {
+  "name": "rel-04-csv",
+  "rc": 0,
+  "seconds": 118.7,
+  "status": "verified",
+  "offline_verify_rc": 0,
+  "cost": 0.01778745,
+  "rerun_match": true,
+  "denied": 0,
+  "all_404": true
+ },
+ {
+  "name": "rel-05-fetch",
+  "rc": 0,
+  "seconds": 285.9,
+  "status": "verifying",
+  "offline_verify_rc": 1,
+  "cost": 0.00141675,
+  "rerun_match": null,
+  "denied": 0,
+  "all_404": false
+ },
+ {
+  "name": "rel-06-walls",
+  "rc": 1,
+  "seconds": 2.5,
+  "stderr": "ls.py\", line 829, in raise_for_status\n    raise HTTPStatusError(message, request=request, response=self)\nhttpx.HTTPStatusError: Client error '429 Too Many Requests' for url 'https://66-135-3-140.sslip.io/tasks'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429\nPOST /tasks 429 {\"detail\":\"public demo: a task is running, one at a time here; try again in about 2 minutes\"}\n"
+ },
+ {
+  "name": "rel-07-csv",
+  "rc": 1,
+  "seconds": 2.3,
+  "stderr": "ls.py\", line 829, in raise_for_status\n    raise HTTPStatusError(message, request=request, response=self)\nhttpx.HTTPStatusError: Client error '429 Too Many Requests' for url 'https://66-135-3-140.sslip.io/tasks'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429\nPOST /tasks 429 {\"detail\":\"public demo: a task is running, one at a time here; try again in about 2 minutes\"}\n"
+ },
+ {
+  "name": "rel-08-fetch",
+  "rc": 1,
+  "seconds": 2.4,
+  "stderr": "ls.py\", line 829, in raise_for_status\n    raise HTTPStatusError(message, request=request, response=self)\nhttpx.HTTPStatusError: Client error '429 Too Many Requests' for url 'https://66-135-3-140.sslip.io/tasks'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429\nPOST /tasks 429 {\"detail\":\"public demo: a task is running, one at a time here; try again in about 2 minutes\"}\n"
+ },
+ {
+  "name": "rel-09-walls",
+  "rc": 1,
+  "seconds": 2.4,
+  "stderr": "ls.py\", line 829, in raise_for_status\n    raise HTTPStatusError(message, request=request, response=self)\nhttpx.HTTPStatusError: Client error '429 Too Many Requests' for url 'https://66-135-3-140.sslip.io/tasks'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429\nPOST /tasks 429 {\"detail\":\"public demo: a task is running, one at a time here; try again in about 2 minutes\"}\n"
+ },
+ {
+  "name": "rel-10-csv",
+  "rc": 1,
+  "seconds": 2.3,
+  "stderr": "ls.py\", line 829, in raise_for_status\n    raise HTTPStatusError(message, request=request, response=self)\nhttpx.HTTPStatusError: Client error '429 Too Many Requests' for url 'https://66-135-3-140.sslip.io/tasks'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429\nPOST /tasks 429 {\"detail\":\"public demo: a task is running, one at a time here; try again in about 2 minutes\"}\n"
+ },
+ {
+  "name": "rel-11-fetch",
+  "rc": 1,
+  "seconds": 2.3,
+  "stderr": "ls.py\", line 829, in raise_for_status\n    raise HTTPStatusError(message, request=request, response=self)\nhttpx.HTTPStatusError: Client error '429 Too Many Requests' for url 'https://66-135-3-140.sslip.io/tasks'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429\nPOST /tasks 429 {\"detail\":\"public demo: a task is running, one at a time here; try again in about 2 minutes\"}\n"
+ },
+ {
+  "name": "rel-12-walls",
+  "rc": 1,
+  "seconds": 2.3,
+  "stderr": "ls.py\", line 829, in raise_for_status\n    raise HTTPStatusError(message, request=request, response=self)\nhttpx.HTTPStatusError: Client error '429 Too Many Requests' for url 'https://66-135-3-140.sslip.io/tasks'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429\nPOST /tasks 429 {\"detail\":\"public demo: a task is running, one at a time here; try again in about 2 minutes\"}\n"
+ }
+]

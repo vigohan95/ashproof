@@ -4,8 +4,8 @@ Only the endpoints Ashproof needs. Every call goes through ``_request`` which
 retries 429 / 5xx / transport errors with exponential backoff (govultr uses 3 retries,
 500 ms base; we do the same by default). ``sleep`` is injectable so tests run instantly.
 
-Anything we are not 100% sure about against the live API is isolated here so it can
-be fixed on event day without touching the orchestrator (see docs/EVENT-DAY-TODO.md).
+Behaviour of the live API that a mock would not show (instance limit, 409 on DELETE during
+install, creates that must not be repeated) is handled here and pinned in tests/vultr/test_live_behaviour.py.
 """
 
 from __future__ import annotations
@@ -350,7 +350,7 @@ class VultrClient:
         return group
 
     # ------------------------------------------------------- object storage
-    # Stubs: shapes copied from the v2 reference; exercised for the first time on event day
+    # Not used yet and never run against the live API. Shapes copied from the v2 reference.
     # (Object Storage itself is S3-compatible; uploads will use the S3 keys returned here).
     async def list_object_storage(self) -> list[ObjectStorage]:
         items = await self._paginate("/object-storage", "object_storages")

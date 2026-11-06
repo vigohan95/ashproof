@@ -63,6 +63,9 @@ EGRESS = "\n".join(
         CURL.format(t=4, url="http://169.254.169.254/v1.json"),
         "echo '== allowlisted name, wrong port'",
         CURL.format(t=4, url="http://example.com:8080/"),
+        "echo '== known limitation: another site on the allowlisted IP'",
+        "PINNED=$(awk '/example.com/{print $1; exit}' /etc/hosts)",
+        CURL.format(t=10, url="--resolve www.cloudflare.com:443:$PINNED https://www.cloudflare.com/"),
         "echo '== allowlisted name'",
         CURL.format(t=10, url="https://example.com"),
     ]

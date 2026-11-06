@@ -8,7 +8,7 @@ looks like::
     DST=93.184.216.34 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=1234 DF PROTO=TCP SPT=43210 DPT=443 ...
 
 :func:`parse_line` is pure and unit-tested; :class:`JournalEgressReader` shells out to
-``journalctl -k`` (or tails ``/var/log/kern.log``) and is exercised on event day.
+``journalctl -k`` (or tails ``/var/log/kern.log``) and was checked on real Vultr VMs on 2026-11-06.
 """
 
 from __future__ import annotations
@@ -16,6 +16,7 @@ from __future__ import annotations
 import re
 import subprocess
 from dataclasses import asdict, dataclass
+from datetime import datetime
 
 PREFIX_RE = re.compile(r"BRZ-EGRESS-(?P<verdict>DENY|ALLOW)\b")
 KV_RE = re.compile(r"\b(?P<k>[A-Z]+)=(?P<v>\S*)")
@@ -66,6 +67,24 @@ def parse_lines(lines) -> list[EgressAttempt]:
     return out
 
 
+def only_since(attempts: list[EgressAttempt], since_iso: str | None) -> list[EgressAttempt]:
+    """Keep what is provably at or after ``since_iso``. A line with no usable time is not attributed to anyone."""
+    if not since_iso:
+        return attempts
+    start = datetime.fromisoformat(since_iso)
+    kept = []
+    for a in attempts:
+        try:
+            when = datetime.fromisoformat(a.ts)
+            if when.tzinfo is None:
+                when = when.replace(tzinfo=start.tzinfo)
+            if when >= start:
+                kept.append(a)
+        except (TypeError, ValueError):
+            continue
+    return kept
+
+
 class EgressReader:
     """Interface the runner server uses; swap in a fake for tests."""
 
@@ -105,12 +124,14 @@ class JournalEgressReader(EgressReader):
             cmd += ["--since", since_iso]
         try:
             proc = subprocess.run(cmd, capture_output=True, text=True, timeout=10, check=False)
-            if proc.returncode == 0:
+            # 1 means "-- No entries --". Treating it as a failure read the whole kernel log instead, and a quiet
+            # step was blamed for packets from boot, seen on a real VM.
+            if proc.returncode in (0, 1):
                 return parse_lines(proc.stdout.splitlines())
         except (OSError, subprocess.TimeoutExpired):
             pass
         try:
             with open(self.kern_log, encoding="utf-8", errors="replace") as fh:
-                return parse_lines(fh.readlines()[-5000:])
+                return only_since(parse_lines(fh.readlines()[-5000:]), since_iso)
         except OSError:
             return []

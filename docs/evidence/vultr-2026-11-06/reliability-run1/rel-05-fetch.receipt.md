@@ -1,0 +1,1 @@
+{"detail":"receipt not ready (task is verifying)"}

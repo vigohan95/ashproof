@@ -11,7 +11,7 @@ It is a FastAPI app, so the real :class:`brz.vultr.client.VultrClient` talks to 
 * a full call log (``calls``) for assertions
 
 Shapes are taken from govultr (instance.go, plan.go, firewall_rule.go). Where the real
-API differs on event day, fix it HERE and in the client, never in the orchestrator.
+API differs, fix it HERE and in the client, never in the orchestrator.
 """
 
 from __future__ import annotations

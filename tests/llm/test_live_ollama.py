@@ -2,7 +2,7 @@
 
 Skipped unless the server answers ``GET /models`` within one second, or when
 ``BRZ_SKIP_LIVE=1`` (CI). Override with ``BRZ_LIVE_BASE_URL`` / ``BRZ_LIVE_MODEL`` to point it
-at Vultr Serverless Inference on event day (``BRZ_LIVE_API_KEY`` for the bearer token).
+at Vultr Serverless Inference (``BRZ_LIVE_API_KEY`` for the bearer token).
 
 gemma3:4b on CPU takes ~1 minute per call, so this is one planner call only.
 """

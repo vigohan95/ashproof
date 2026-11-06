@@ -10,9 +10,8 @@ Security notes that the template implements:
 * The only secret written into the VM is the per-task token key. It authenticates the
   control plane to *this* runner and is useless anywhere else.
 * Egress lock-down (``brz-egress-apply``) runs AFTER package install and gVisor download,
-  so there is a short open window during boot. Event-day mitigation: bake a snapshot with
-  packages + runsc preinstalled and pass ``inner_isolation="gvisor-preinstalled"`` so the
-  lock-down is the first runcmd (see docs/EVENT-DAY-TODO.md).
+  so there is a short open window during boot, before any step exists. A snapshot image with
+  packages and runsc preinstalled would remove it; that is not built.
 * TTL watchdog: a systemd timer powers the VM off after ``ttl_minutes`` even if the
   control plane dies; the control plane's orphan sweep then deletes it by tag.
 """
