@@ -1,0 +1,315 @@
+{
+ "id": "06c02213bdee",
+ "status": "killed",
+ "created_at": "2026-11-06T06:27:51.711378+00:00",
+ "finished_at": "2026-11-06T06:29:20.868862+00:00",
+ "task": "Run one python step that prints a heartbeat line every second for 100 seconds, flushing each line, and then writes done.txt containing the word done.",
+ "budget_usd": 0.25,
+ "allowed_domains": [],
+ "pending_domains": [],
+ "require_approval": true,
+ "kill_requested": true,
+ "plan": {
+  "task_summary": "Single Python step printing a flushed heartbeat line every second for 100 seconds, then writing done.txt.",
+  "refused_reason": "",
+  "steps": [
+   {
+    "id": "1",
+    "title": "Heartbeat loop and done.txt",
+    "kind": "python",
+    "code": "import time\nfor i in range(1, 101):\n    print(f\"heartbeat {i}\", flush=True)\n    time.sleep(1)\nwith open(\"/work/out/done.txt\", \"w\") as f:\n    f.write(\"done\")\n",
+    "expected_outputs": [
+     "done.txt"
+    ],
+    "needs_network": false,
+    "timeout_s": 120
+   }
+  ],
+  "required_domains": [],
+  "assertions": [],
+  "est_cost_usd": 0.02,
+  "est_minutes": 2.0,
+  "risk_notes": [
+   "The attached sales.csv is not used by this task; no prompt-injection risk since its contents are never read.",
+   "Step takes ~100 seconds wall clock; timeout set to 180s to allow VM startup overhead."
+  ]
+ },
+ "planner_model": "glm-5.3",
+ "sandboxes": [
+  {
+   "role": "verifier",
+   "instance_id": "6fd7c84a-184b-46ef-890c-838372c20be1",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T06:28:45.739076+00:00",
+   "active_at": "2026-11-06T06:29:17.447513+00:00",
+   "destroyed_at": "2026-11-06T06:29:19.891923+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T06:29:19.891923+00:00",
+    "attempts": 1
+   },
+   "runner_url": "http://45.76.6.205:8700"
+  },
+  {
+   "role": "primary",
+   "instance_id": "e058611f-3e5e-4cd2-bf1d-3ce391d430ce",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T06:28:47.746516+00:00",
+   "active_at": "2026-11-06T06:29:19.218269+00:00",
+   "destroyed_at": "2026-11-06T06:29:20.868652+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T06:29:20.868652+00:00",
+    "attempts": 1
+   },
+   "runner_url": "http://64.176.214.139:8700"
+  }
+ ],
+ "steps": [],
+ "verdict": null,
+ "egress": {
+  "attempts": 0,
+  "denied": 0,
+  "list": []
+ },
+ "secret_scan": null,
+ "cost": {
+  "total_usd": 0.01702825,
+  "vm_usd": 0.016,
+  "tokens_usd": 0.00102825,
+  "budget_usd": 0.25,
+  "over_budget": false,
+  "price_source": "live (/v2/plans + /v1/models)",
+  "lines": [
+   {
+    "kind": "tokens",
+    "label": "planner",
+    "usd": 0.00102825,
+    "model": "glm-5.3",
+    "prompt_tokens": 451,
+    "completion_tokens": 230,
+    "input_per_1m": 0.75,
+    "output_per_1m": 3.0
+   },
+   {
+    "kind": "vm",
+    "label": "VM verifier vhp-1c-1gb-amd",
+    "usd": 0.008,
+    "plan": "vhp-1c-1gb-amd",
+    "seconds": 34.2,
+    "billed_hours": 1.0,
+    "hourly_usd": 0.008
+   },
+   {
+    "kind": "vm",
+    "label": "VM primary vhp-1c-1gb-amd",
+    "usd": 0.008,
+    "plan": "vhp-1c-1gb-amd",
+    "seconds": 33.1,
+    "billed_hours": 1.0,
+    "hourly_usd": 0.008
+   }
+  ]
+ },
+ "error": "",
+ "events": [
+  {
+   "seq": 0,
+   "ts": "2026-11-06T06:27:51.711428+00:00",
+   "kind": "task.received",
+   "data": {
+    "allowed_domains": [],
+    "budget_usd": 0.25,
+    "files": {
+     "sales.csv": "4dce1698d6f3f6a739e400991084263cb029d5c0b1c3d8754af81d13d5c77e2b"
+    },
+    "task_id": "06c02213bdee",
+    "task_sha256": "15fb68e706e11a6c4e85e737c76f3e27415386e3ea4733df2f428434c9b9fb1e"
+   },
+   "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+   "hash": "ae6b59c95c8195aa0ff5612a4f23c0f0091327c30a21ffed020dc8105014586a"
+  },
+  {
+   "seq": 1,
+   "ts": "2026-11-06T06:27:51.713069+00:00",
+   "kind": "task.planning",
+   "data": {
+    "task_id": "06c02213bdee"
+   },
+   "prev_hash": "ae6b59c95c8195aa0ff5612a4f23c0f0091327c30a21ffed020dc8105014586a",
+   "hash": "0e8c37a7bd37195e7c9f44ebba27d727958a8f52dbf5840cae4d8a277e250f55"
+  },
+  {
+   "seq": 2,
+   "ts": "2026-11-06T06:27:53.351224+00:00",
+   "kind": "cost.tokens",
+   "data": {
+    "completion_tokens": 230,
+    "label": "planner",
+    "model": "glm-5.3",
+    "prompt_tokens": 451,
+    "usd": 0.00102825
+   },
+   "prev_hash": "0e8c37a7bd37195e7c9f44ebba27d727958a8f52dbf5840cae4d8a277e250f55",
+   "hash": "751bc8e098a8c6f71d7bf426dea8091a1383bbdccf2cc3371c288f9eb567f731"
+  },
+  {
+   "seq": 3,
+   "ts": "2026-11-06T06:27:53.351435+00:00",
+   "kind": "plan.created",
+   "data": {
+    "est_cost_usd": 0.02,
+    "json_schema": true,
+    "model": "glm-5.3",
+    "required_domains": [],
+    "risk_notes": [
+     "The attached sales.csv is not used by this task; no prompt-injection risk since its contents are never read.",
+     "Step takes ~100 seconds wall clock; timeout set to 180s to allow VM startup overhead."
+    ],
+    "steps": [
+     {
+      "code_sha256": "77765182e49498c6fa79fd2951d7b56be875821ff24e3986388aa506b153a7b1",
+      "expected_outputs": [
+       "done.txt"
+      ],
+      "id": "1",
+      "kind": "python",
+      "needs_network": false,
+      "timeout_s": 120,
+      "title": "Heartbeat loop and done.txt"
+     }
+    ],
+    "unapproved_domains": [],
+    "usage": {
+     "completion_tokens": 230,
+     "prompt_tokens": 451
+    }
+   },
+   "prev_hash": "751bc8e098a8c6f71d7bf426dea8091a1383bbdccf2cc3371c288f9eb567f731",
+   "hash": "7dce2e4d7784d7569176ba05904230d7dd29a1eec7a5f2debd15916138066886"
+  },
+  {
+   "seq": 4,
+   "ts": "2026-11-06T06:27:53.351702+00:00",
+   "kind": "budget.preflight",
+   "data": {
+    "budget_usd": 0.25,
+    "plan_estimate_usd": 0.02,
+    "projected_usd": 0.01702825,
+    "spent_usd": 0.00102825
+   },
+   "prev_hash": "7dce2e4d7784d7569176ba05904230d7dd29a1eec7a5f2debd15916138066886",
+   "hash": "07b6d2490d7c980a3a6fb238edf077e7821ded6871cdff509975b3a57f953550"
+  },
+  {
+   "seq": 5,
+   "ts": "2026-11-06T06:27:53.351859+00:00",
+   "kind": "task.provisioning",
+   "data": {
+    "role": "primary",
+    "task_id": "06c02213bdee"
+   },
+   "prev_hash": "07b6d2490d7c980a3a6fb238edf077e7821ded6871cdff509975b3a57f953550",
+   "hash": "fdc28461fc77488ce9a5c8be3525c4091f5dc6584ebb3745bf07cdd25e746e05"
+  },
+  {
+   "seq": 6,
+   "ts": "2026-11-06T06:27:53.357984+00:00",
+   "kind": "task.provisioning",
+   "data": {
+    "background": true,
+    "role": "verifier",
+    "task_id": "06c02213bdee"
+   },
+   "prev_hash": "fdc28461fc77488ce9a5c8be3525c4091f5dc6584ebb3745bf07cdd25e746e05",
+   "hash": "7bebbb502c96faeed1da813a15f2b9954d7f1130326c72439465767049454433"
+  },
+  {
+   "seq": 7,
+   "ts": "2026-11-06T06:28:03.745019+00:00",
+   "kind": "kill.requested",
+   "data": {
+    "reason": "live_task.py",
+    "status_at_kill": "provisioning"
+   },
+   "prev_hash": "7bebbb502c96faeed1da813a15f2b9954d7f1130326c72439465767049454433",
+   "hash": "188cccecdfe335dd0b7a9146cea8649dec67c1a9579372d166297d0ad8102f1e"
+  },
+  {
+   "seq": 8,
+   "ts": "2026-11-06T06:29:19.218346+00:00",
+   "kind": "task.destroying",
+   "data": {
+    "instance_id": "6fd7c84a-184b-46ef-890c-838372c20be1",
+    "role": "verifier",
+    "task_id": "06c02213bdee"
+   },
+   "prev_hash": "188cccecdfe335dd0b7a9146cea8649dec67c1a9579372d166297d0ad8102f1e",
+   "hash": "5cb6d75df5e3a3dbae84675aa14a879d78d96e2b86eeb1f234c7becb10dec126"
+  },
+  {
+   "seq": 9,
+   "ts": "2026-11-06T06:29:19.892017+00:00",
+   "kind": "vm.destroyed",
+   "data": {
+    "attempts": 1,
+    "http_status": 404,
+    "instance_id": "6fd7c84a-184b-46ef-890c-838372c20be1",
+    "lifetime_s": 34.2,
+    "method": "GET /v2/instances/{id}",
+    "observed_at": "2026-11-06T06:29:19.891923+00:00",
+    "role": "verifier"
+   },
+   "prev_hash": "5cb6d75df5e3a3dbae84675aa14a879d78d96e2b86eeb1f234c7becb10dec126",
+   "hash": "faa80ac0591f598c78dfd749807ed4d8da86df4abd1bebce93d6b977cbeb7603"
+  },
+  {
+   "seq": 10,
+   "ts": "2026-11-06T06:29:19.892146+00:00",
+   "kind": "task.destroying",
+   "data": {
+    "instance_id": "e058611f-3e5e-4cd2-bf1d-3ce391d430ce",
+    "role": "primary",
+    "task_id": "06c02213bdee"
+   },
+   "prev_hash": "faa80ac0591f598c78dfd749807ed4d8da86df4abd1bebce93d6b977cbeb7603",
+   "hash": "521cce87869f1906ef40ba8ee40eea5a9eedda6b40cab71302d7e471e00bd17c"
+  },
+  {
+   "seq": 11,
+   "ts": "2026-11-06T06:29:20.868741+00:00",
+   "kind": "vm.destroyed",
+   "data": {
+    "attempts": 1,
+    "http_status": 404,
+    "instance_id": "e058611f-3e5e-4cd2-bf1d-3ce391d430ce",
+    "lifetime_s": 33.1,
+    "method": "GET /v2/instances/{id}",
+    "observed_at": "2026-11-06T06:29:20.868652+00:00",
+    "role": "primary"
+   },
+   "prev_hash": "521cce87869f1906ef40ba8ee40eea5a9eedda6b40cab71302d7e471e00bd17c",
+   "hash": "3806efc39bb0f555dae22d679739fc0ec51a661b37b0a143a3832e5d68a1d527"
+  },
+  {
+   "seq": 12,
+   "ts": "2026-11-06T06:29:20.868880+00:00",
+   "kind": "task.killed",
+   "data": {
+    "error": null,
+    "task_id": "06c02213bdee",
+    "total_usd": 0.01702825
+   },
+   "prev_hash": "3806efc39bb0f555dae22d679739fc0ec51a661b37b0a143a3832e5d68a1d527",
+   "hash": "575380084508aba1fae9b983dcabcdf5eea525b630857ec778091e2b1952403d"
+  }
+ ],
+ "audit_head_hash": "575380084508aba1fae9b983dcabcdf5eea525b630857ec778091e2b1952403d",
+ "receipt_ready": true
+}

@@ -18,11 +18,13 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from brz_runner.executor import default_memory_limit
+
 from . import harness as H
 from .harness import Canaries, RunnerHarness, Sampler, json_stdout
 
 # The step's memory limit in GvisorExecutor, and the disk quota for /work.
-MEMORY_LIMIT_MIB = 1_500_000_000 / 1024 / 1024
+MEMORY_LIMIT_MIB = default_memory_limit() / 1024 / 1024
 WORK_QUOTA_MIB = 2048
 # Fake credential in a real key format, assembled at run time inside the step so that the step's own
 # source file does not match the scanner. It authenticates to nothing.

@@ -1,0 +1,25 @@
+{
+ "task_id": "attacks-062920",
+ "plan": "vhp-1c-1gb-amd",
+ "region": "ewr",
+ "only": "A10",
+ "health": {
+  "ok": true,
+  "task_id": "attacks-062920",
+  "executor": "gvisor-systrap",
+  "revoked": false,
+  "steps_run": 0,
+  "started_at": "2026-11-06T06:33:58.665588+00:00",
+  "version": "0.1.0",
+  "egress_source": "journalctl -k"
+ },
+ "git_head": "b489c2b",
+ "seconds": 23,
+ "suite_log_tail": "Killed\n",
+ "oom_lines": "[  180.122650] systemd-network invoked oom-killer: gfp_mask=0x100cca(GFP_HIGHUSER_MOVABLE), order=0, oom_score_adj=0\n[  180.123531] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=system.slice,mems_allowed=0,global_oom,task_memcg=/brz-s1-1793946858314616018,task=gvisor_sentry,pid=6007,uid=0\n[  180.123558] Out of memory: Killed process 6007 (gvisor_sentry) total-vm:825996kB, anon-rss:0kB, file-rss:2176kB, shmem-rss:792992kB, UID:0 pgtables:1632kB oom_score_adj:0\n[  181.219602] python3 invoked oom-killer: gfp_mask=0x140cca(GFP_HIGHUSER_MOVABLE|__GFP_COMP), order=0, oom_score_adj=0\n[  181.220324] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=user.slice,mems_allowed=0,global_oom,task_memcg=/user.slice/user-0.slice/user@0.service/init.scope,task=systemd,pid=5712,uid=0\n[  181.220388] Out of memory: Killed process 5712 (systemd) total-vm:20092kB, anon-rss:0kB, file-rss:2944kB, shmem-rss:0kB, UID:0 pgtables:84kB oom_score_adj:100\n[  181.496995] systemd invoked oom-killer: gfp_mask=0x100cca(GFP_HIGHUSER_MOVABLE), order=0, oom_score_adj=0\n[  181.497834] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=init.scope,mems_allowed=0,global_oom,task_memcg=/user.slice/user-0.slice/user@0.service/init.scope,task=(sd-pam),pid=5713,uid=0\n[  181.497869] Out of memory: Killed process 5713 ((sd-pam)) total-vm:21296kB, anon-rss:80kB, file-rss:1024kB, shmem-rss:0kB, UID:0 pgtables:72kB oom_score_adj:100\n[  181.597107] systemd invoked oom-killer: gfp_mask=0x100cca(GFP_HIGHUSER_MOVABLE), order=0, oom_score_adj=0\n[  181.597923] oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=init.scope,mems_allowed=0,global_oom,task_memcg=/user.slice/user-0.slice/session-4.scope,task=python3,pid=5957,uid=0\n[  181.597955] Out of memory: Killed process 5957 (python3) total-vm:256556kB, anon-rss:44kB, file-rss:2560kB, shmem-rss:0kB, UID:0 pgtables:128kB oom_score_adj:0\n",
+ "vm_memory": "               total        used        free      shared  buff/cache   available\nMem:             955         241         743           0          86         713\nSwap:           2399          45        2354\n 06:34:45 up 3 min,  2 users,  load average: 1.78, 0.99, 0.41\n/dev/vda2        23G  6.1G   16G  28% /\n",
+ "destroy": {
+  "http_status": 404,
+  "observed_at": "2026-11-06T06:34:28.550985+00:00"
+ }
+}

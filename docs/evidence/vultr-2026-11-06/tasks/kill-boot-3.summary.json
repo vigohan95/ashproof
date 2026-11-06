@@ -1,0 +1,61 @@
+{
+ "task_id": "06c02213bdee",
+ "status": "killed",
+ "seconds_total": 90.2,
+ "kill": {
+  "seconds_button_to_response": 0.219,
+  "response": {
+   "id": "06c02213bdee",
+   "status": "provisioning",
+   "killed": true,
+   "sandboxes": []
+  }
+ },
+ "offline_verify_rc": 0,
+ "cost": 0.01702825,
+ "price_source": "live (/v2/plans + /v1/models)",
+ "egress": {
+  "attempts": 0,
+  "denied": 0
+ },
+ "sandboxes": [
+  {
+   "role": "verifier",
+   "instance_id": "6fd7c84a-184b-46ef-890c-838372c20be1",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T06:28:45.739076+00:00",
+   "active_at": "2026-11-06T06:29:17.447513+00:00",
+   "destroyed_at": "2026-11-06T06:29:19.891923+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T06:29:19.891923+00:00",
+    "attempts": 1
+   }
+  },
+  {
+   "role": "primary",
+   "instance_id": "e058611f-3e5e-4cd2-bf1d-3ce391d430ce",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T06:28:47.746516+00:00",
+   "active_at": "2026-11-06T06:29:19.218269+00:00",
+   "destroyed_at": "2026-11-06T06:29:20.868652+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T06:29:20.868652+00:00",
+    "attempts": 1
+   }
+  }
+ ],
+ "verdict": {
+  "passed": null,
+  "rerun_performed": null,
+  "rerun_match": null,
+  "model_review": null
+ }
+}

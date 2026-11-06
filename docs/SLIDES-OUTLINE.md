@@ -1,62 +1,52 @@
-# Slide deck outline (PDF, 10 slides, 16:9)
+# Slide outline (PDF, 10 slides, 16:9)
 
-Judging rubric mapping in brackets: [A] Application of Technology, [P] Presentation, [B] Business Value,
-[O] Originality. The lablab rubric gives Presentation 5/5 only with a competitive analysis and Business
-Value 4-5 only with market + revenue model, so slides 7-9 are not optional.
+Rubric in brackets: [A] Application of Technology, [P] Presentation, [B] Business Value, [O] Originality. The lablab
+rubric gives top marks in Presentation only with a competitive analysis, and in Business Value only with a market and a
+revenue model, so slides 7 to 9 are required. Every number comes from the README status table.
 
-1. **Title** - Ashproof. One line: *Every AI task in its own throwaway Vultr VM: executed,
-   verified, receipted, destroyed.* Three numbers: 1 VM per task · 0 secrets inside · $0.0x per task.
-   Repo + demo URL. [P]
+1. **Title.** Ashproof. *One throwaway Vultr VM per agent task, checked on a second VM, with a receipt that outlives both.*
+   Three numbers: 1 VM per task, 0 keys inside, about 2 cents per task. Repo and demo URL. [P]
 
-2. **The problem** - Agents that run real code/browse real sites are the biggest new attack surface
-   (prompt injection -> exfiltration, lateral movement, destroyed environments). OWASP Agentic Top 10
-   ASI05 lists sandboxing as a required control. Today's default (one VM, open egress, keys in a config
-   file, "the model says it's done") is what every tutorial ships. [B]
+2. **The problem.** An agent that runs code can leak a key, send data out, or claim work it did not do. The common setup is
+   one long-lived VM, open outbound traffic, a key in a config file, and the model's word that it finished. OWASP's Agentic
+   Top 10 (ASI05) lists sandboxing as a control. [B]
 
-3. **What we built** - the 60-second architecture diagram from the README. Two blast-radius layers,
-   default-deny egress, zero secrets, independent verifier, hash-chained receipt, kill switch, cost
-   meter, approval gate. [A][O]
+3. **What we built.** The architecture diagram from the README: planner, approval gate, two VMs, gVisor per step, nftables
+   default deny, single-use tokens, verifier, receipt, kill switch. [A][O]
 
-4. **Vultr, specifically** - table: Cloud Compute (control plane + throwaway instances), Serverless
-   Inference (`glm-5.3` planner, `qwen3.8-27b` verifier, `json_schema`), API v2 (`instances`, `plans`,
-   `firewalls`, `snapshots`), Object Storage (receipt export), Firewall (inbound-only). Screenshot of the
-   console instance list mid-task. [A]
+4. **Vultr, specifically.** Cloud Compute: control plane plus two throwaway VMs per task. Serverless Inference: `glm-5.3`
+   plans, `qwen3.8-27b` verifies, both with `json_schema`. v2 API: instances, plans, firewalls. Live prices from `/v2/plans`
+   and `/v1/models`. Screenshot of the console during a task. [A]
 
-5. **Demo 1 - a CSV task, start to receipt** - four screenshots: plan with required domains ->
-   instance active -> results -> receipt with `GET /v2/instances/{id} -> 404`. [A]
+5. **Demo: a task from start to receipt.** Four screenshots: plan, two VMs active, verdict with the recomputed totals,
+   receipt with 404. Measured: 110 seconds, $0.018. [A]
 
-6. **Demo 2 - the containment moments** - injected file tries to call out: *EGRESS DENIED*; secret scan:
-   *0 findings*; re-run hashes identical in a second VM; kill switch -> all sandbox processes gone in 10 ms (measured in WSL), VM gone in <measure on Vultr>. Each with
-   the matching line from the audit chain. [O][A]
+6. **Containment on real VMs.** Denied packets to 1.1.1.1 and to the metadata service, from the kernel log. Output hashes
+   identical across two VMs. Kill switch time from `kill-switch.md`. Attack suite result on a real VM. [O][A]
 
-7. **Competitive analysis** - the table from `docs/COMPETITORS.md` (8 differentiators as rows; Ashproof vs
-   Vultr tutorial, microsandbox, OpenSandbox, E2B, OpenHands, k8s agent-sandbox, browser-use). Honest
-   row: boot time (they win) and runtime breadth (OpenSandbox wins). [P][O]
+7. **What real VMs found.** The strongest slide for credibility. A table with four rows: uid 1000 was a sudo and lxd user;
+   memory limit above RAM; account cap on active instances; DELETE refused during install. Each row: how we found it, the
+   fix. None of these showed up in local tests. [A][O]
 
-8. **Market and buyer** - who pays: platform/security teams at companies rolling out coding and data
-   agents; finance/ops teams that need evidence for auditors. Pain: cannot let agents touch production
-   data without a containment story; need per-task cost. Size pointers: agent-platform spend + the
-   compliance budget that already pays for audit trails. (Numbers to be filled with cited sources on D5;
-   no invented TAM.) [B]
+8. **Competitive analysis.** The table from `docs/COMPETITORS.md`. Include the rows where others win: boot time
+   (sub-second microVMs against our 80 seconds) and runtime breadth (OpenSandbox). [P][O]
 
-9. **Pricing and unit economics** - "trusted execution" priced per task: our cost meter already shows
-   the floor (one `vhp-1c-1gb-amd` started hour ≈ $0.009 + ~$0.002 tokens per verified task on Vultr).
-   Price tiers: free (self-hosted, MIT) / team ($ per verified task with hosted control plane) /
-   enterprise (private Vultr account, SSO, retention). Gross margin illustration from the meter. [B]
+9. **Market, pricing, unit cost.** Buyer: platform and security teams rolling out agents, who need evidence for audits. Our
+   measured floor per verified task is $0.018 on Vultr: $0.016 for two VM hours and $0.002 for tokens. VM time is billed by
+   the started hour, so reusing an hour across tasks is the first margin lever. Tiers: self-hosted (MIT), hosted per
+   verified task, private deployment. Market size only with cited sources; no invented figures. [B]
 
-10. **Roadmap and ask** - Next 90 days: snapshot image + warm pool (sub-minute start), egress
-    sets that follow DNS changes, Pattern B (Playwright + vision verifier + human approval of irreversible actions), Object
-    Storage retention policies, Web UI, Vultr Marketplace listing. Ask: pilot teams. Links. [B][P]
+10. **Limits and next steps.** Limits, stated plainly: 2 minutes per task, IPv4 pinning at boot, encrypted data passes the
+    scanner, control link not encrypted. Next: snapshot image and warm pool, browser tasks with a vision check, receipts in
+    Object Storage, signed receipts. Ask: pilot teams. Links. [B][P]
 
-## Appendix slides (only if asked)
+## Appendix (only if asked)
 
-* A1 - Threat model table: attacker inside the step (prompt-injected code) vs. attacker with the runner
-  token vs. compromised control plane; what each layer stops.
-* A2 - Receipt anatomy with the hash-chain verification algorithm.
-* A3 - Test and CI evidence: 90 offline tests, live smoke tests, CI badge.
+- A1: threat model: attacker inside a step, attacker with a token, compromised control plane; what each layer stops.
+- A2: how the hash chain works and what it does not prove without a pinned head hash.
+- A3: test suite and evidence folder listing.
 
 ## Design notes
 
-* One idea per slide, screenshots over bullet lists, the receipt is the hero image.
-* Use the exact rubric words in slide titles where natural ("Application", "Business value").
-* Export PDF; file name `ashproof-deck.pdf`; check every link in the PDF opens.
+- One idea per slide, screenshots over bullets, and the receipt is the main image.
+- Export as `ashproof-deck.pdf` and check that every link opens.

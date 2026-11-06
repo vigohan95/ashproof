@@ -1,0 +1,70 @@
+{
+ "task_id": "706fa63d1e02",
+ "status": "killed",
+ "seconds_total": 36.0,
+ "kill": {
+  "seconds_button_to_response": 20.266,
+  "response": {
+   "id": "706fa63d1e02",
+   "status": "destroying",
+   "killed": true,
+   "sandboxes": [
+    {
+     "instance_id": "c3e48b59-26f3-49d5-b59a-1c0e5ed14a44",
+     "destroyed": true
+    },
+    {
+     "instance_id": "24810128-5879-4c41-938b-25e78ef55a23",
+     "destroyed": true
+    }
+   ]
+  }
+ },
+ "offline_verify_rc": 0,
+ "cost": 0.01729525,
+ "price_source": "live (/v2/plans + /v1/models)",
+ "egress": {
+  "attempts": 0,
+  "denied": 0
+ },
+ "sandboxes": [
+  {
+   "role": "verifier",
+   "instance_id": "c3e48b59-26f3-49d5-b59a-1c0e5ed14a44",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T06:27:17.456396+00:00",
+   "active_at": null,
+   "destroyed_at": "2026-11-06T06:27:36.733213+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T06:27:36.733213+00:00",
+    "attempts": 1
+   }
+  },
+  {
+   "role": "primary",
+   "instance_id": "24810128-5879-4c41-938b-25e78ef55a23",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T06:27:17.479764+00:00",
+   "active_at": null,
+   "destroyed_at": "2026-11-06T06:27:47.869168+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T06:27:47.869168+00:00",
+    "attempts": 1
+   }
+  }
+ ],
+ "verdict": {
+  "passed": null,
+  "rerun_performed": null,
+  "rerun_match": null,
+  "model_review": null
+ }
+}

@@ -41,6 +41,22 @@ EXIT_QUOTA = 125
 # A step id becomes a directory name, a bundle path and part of a container id.
 # Not 1000: on Vultr's Ubuntu image uid 1000 is `linuxuser`, a member of sudo and lxd (found on the first real boot).
 STEP_UID = 10001
+MAX_STEP_MEMORY = 1_500_000_000
+
+
+def default_memory_limit(meminfo: str = "/proc/meminfo") -> int:
+    """60 percent of this machine's RAM, at most MAX_STEP_MEMORY. A limit above RAM is no limit: on a 1 GB VM the
+    host runs out first and takes the runner with it, which is what the first run on a real VM showed."""
+    try:
+        with open(meminfo, encoding="ascii") as fh:
+            for line in fh:
+                if line.startswith("MemTotal:"):
+                    return min(MAX_STEP_MEMORY, int(line.split()[1]) * 1024 * 60 // 100)
+    except (OSError, ValueError, IndexError):
+        pass
+    return MAX_STEP_MEMORY
+
+
 STEP_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
 _O_NOFOLLOW = getattr(os, "O_NOFOLLOW", 0)
 _O_NONBLOCK = getattr(os, "O_NONBLOCK", 0)
@@ -438,7 +454,7 @@ class GvisorExecutor(BaseExecutor):
         bundle_root: str = "/var/lib/brz/bundles",
         uid: int = STEP_UID,
         gid: int = STEP_UID,
-        memory_limit_bytes: int = 1_500_000_000,
+        memory_limit_bytes: int | None = None,
         network: str = "none",  # steps without needs_network get no network at all
         network_when_needed: str = "host",  # steps with needs_network: host networking, filtered by VM nftables
         hosts_file: str = "/etc/brz/hosts",  # names pinned at boot; steps get no DNS (see brz_runner.egress)
@@ -452,7 +468,7 @@ class GvisorExecutor(BaseExecutor):
         self.gid = gid
         self.step_uid = uid
         self.step_gid = gid
-        self.memory_limit_bytes = memory_limit_bytes
+        self.memory_limit_bytes = memory_limit_bytes or default_memory_limit()
         self.network = network
         self.network_when_needed = network_when_needed
         self.hosts_file = hosts_file

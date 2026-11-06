@@ -294,3 +294,18 @@ def test_runner_cli_parser(tmp_path: Path):
     kf.write_bytes(KEY)
     assert load_key(build_parser().parse_args(["--task-id", "t", "--token-key-file", str(kf)])) == KEY
     assert os.path.basename(args.workroot) == "work"
+
+
+def test_memory_limit_stays_below_the_machine(tmp_path):
+    """A limit above RAM is no limit: on a 1 GB Vultr VM a step exhausted the whole machine."""
+    from brz_runner.executor import MAX_STEP_MEMORY, default_memory_limit
+
+    small = tmp_path / "small"
+    small.write_text("MemTotal:         978944 kB
+")
+    assert default_memory_limit(str(small)) == 978944 * 1024 * 60 // 100
+    big = tmp_path / "big"
+    big.write_text("MemTotal:       33554432 kB
+")
+    assert default_memory_limit(str(big)) == MAX_STEP_MEMORY
+    assert default_memory_limit(str(tmp_path / "missing")) == MAX_STEP_MEMORY
