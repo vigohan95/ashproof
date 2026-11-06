@@ -10,7 +10,7 @@ is part of the receipt.
 > **plans, dispatches and verifies real executed work** inside a sandbox. MIT licensed.
 
 **Live demo:** https://66-135-3-140.sslip.io/ (real Vultr VMs and real models; one task at a time, limits on the page).
-**A real receipt:** [`RECEIPT_MD`](RECEIPT_MD).
+**A real receipt:** [`final-csv.receipt.md`](docs/evidence/vultr-2026-11-06/tasks/final-csv.receipt.md).
 
 ## The problem
 
@@ -57,7 +57,7 @@ step. Both go to zero when the task ends.
 
 | Service | Role |
 |---|---|
-| **Cloud Compute** | the control plane (`vc2-1c-1gb`, about $0.17 a day) and two *throwaway* instances per task (`vhp-1c-1gb-amd`), created and deleted through the API |
+| **Cloud Compute** | the control plane (`vc2-1c-1gb`, about $0.18 a day) and two *throwaway* instances per task (`vhp-1c-1gb-amd`), created and deleted through the API |
 | **Serverless Inference** (`https://api.vultrinference.com/v1`) | planner `glm-5.3` and independent verifier `qwen3.8-27b` (a different model family), both through `chat/completions` with `response_format: json_schema` and `reasoning_effort: low` |
 | **Vultr API v2** | `POST/GET/DELETE /v2/instances`, `GET /v2/plans` for live VM prices. With an inference key, `GET /v1/models` gives live token prices |
 | **Firewall groups** | only the control plane can reach a sandbox's runner port. Vultr groups are inbound only, so outbound default-deny is nftables inside the VM |
@@ -68,7 +68,7 @@ step. Both go to zero when the task ends.
 git clone <repo> ashproof && cd ashproof
 python -m venv .venv && . .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
-python -m pytest -q                                   # TEST_COUNT tests, no credentials, no cloud
+python -m pytest -q                                   # 185 tests, no credentials, no cloud
 
 # Offline demo (mock Vultr + local runner + demo planner): zero credentials
 BRZ_MODE=mock uvicorn apps.control_plane.app:app --port 8000
@@ -116,7 +116,7 @@ Known limitations:
 - **Kill during boot is slow.** Mid-step the kill takes about half a second, but Vultr refuses `DELETE` while a VM installs,
   so during boot it took 20 to 77 seconds.
 - **Tasks are slow next to a microVM.** A task usually takes about 2 minutes, nearly all of it VM boot. The slowest verified
-  task took 240 seconds. Vultr VMs can also get stuck: one of about 40 stayed `installingbooting` for good. It is deleted
+  task took 240 seconds. Vultr VMs can also get stuck: one of about 80 stayed `installingbooting` for good. It is deleted
   after 150 seconds and replaced.
 - **One task at a time on the demo.** The account limits active instances, and deleted ones seem to count for a short time.
 - **The secret scan is a tripwire, not data-loss prevention.** Encrypted data passes it (attack A24, the one attack that still
@@ -140,10 +140,10 @@ All of this ran on real Vultr VMs in `ewr` on 2026-11-06, with real models. Evid
 
 | What ran | Result | Evidence |
 |---|---|---|
-| Task from the public HTTPS API to receipt | two VMs, step in gVisor, hashes identical across both, verifier recomputed the totals, both VMs 404, offline verifier OK. 110 s, $0.018 | [`tasks/`](docs/evidence/vultr-2026-11-06/tasks/) |
-| Reliability on the final code | RELIABILITY_ROW | [`reliability.json`](docs/evidence/vultr-2026-11-06/reliability.json) |
+| Task from the public HTTPS API to receipt | two VMs, step in gVisor, hashes identical across both, verifier recomputed the totals, both VMs 404, offline verifier OK. 114 s, $0.0196 | [`tasks/`](docs/evidence/vultr-2026-11-06/tasks/) |
+| Reliability on the final code | **12 of 12 verified**, in a row: 4 CSV, 4 fetch, 4 walls. Median 122 s, slowest 239 s. Hashes identical across all 12 VM pairs, every VM 404, every receipt passed the offline verifier. Tasks with no network show 0 denied packets; the walls task shows 12 each time | [`reliability.json`](docs/evidence/vultr-2026-11-06/reliability.json) |
 | An earlier reliability run, on the code before it | stopped at task 5 of 12: one stuck VM and false egress attribution, both fixed. Kept as found | [`reliability-run1/`](docs/evidence/vultr-2026-11-06/reliability-run1/) |
-| Boot, API call to ready runner | 77 to 82 s in three direct measurements (37 to 40 s to `active`). 109 KB of `user_data` accepted | `first-vm-*.json` |
+| Boot, API call to ready runner | 77 to 82 s in three direct measurements (37 to 40 s to `active`). 109 KB of `user_data` (145 KB as base64) accepted, no limit reached | `first-vm-*.json` |
 | gVisor step | `4.19.0-gvisor`, uid 10001, only `lo` without `needs_network`, root is a skeleton, env has no secrets. runsc release-20261102.0, systrap. `/dev/kvm` absent on `vc2` and `vhp`, which systrap does not need | `first-vm-*.json` |
 | Egress in the kernel log | not on the list: no DNS. 1.1.1.1:443, the metadata service and an allowed IP on 8080: `BRZ-EGRESS-DENY`. Allowed name: 200 and `BRZ-EGRESS-ALLOW`. Lines reach the receipt | `first-vm-*.json`, `tasks/walls.*` |
 | Attack suite on a real VM | same plan and cloud-init as production: **30 of 31 attacks contained, the negative control passes**. A24 is the accepted limitation | [`attacks-vm/report.md`](docs/evidence/vultr-2026-11-06/attacks-vm/report.md) |
@@ -152,8 +152,8 @@ All of this ran on real Vultr VMs in `ewr` on 2026-11-06, with real models. Evid
 | Kill switch, during boot, 3 runs | 20 to 77 s, because of Vultr's 409. All VMs 404 | [`kill-switch.md`](docs/evidence/vultr-2026-11-06/kill-switch.md) |
 | Task the planner refuses | data theft request: refused in 3.2 s, $0.0011, no VM, status `failed` | `tasks/exfil-refused.*` |
 | Serverless Inference | `json_schema` accepted by both models. Alone, `glm-5.3` takes about 4 s and `qwen3.8-27b` about 3 s. Verifier passed good work and rejected wrong numbers, empty output and an injection | `llm-*.json` |
-| Orphan sweep | ORPHAN_ROW | - |
-| Prices | live from `/v2/plans` and `/v1/models`; each receipt names its price source | any `tasks/*.timeline.json` |
+| Orphan sweep | a script of ours was killed before its cleanup and left a tagged VM running. The control plane found it by tag at 25 minutes and deleted it on its own; `GET` returned 404. The control plane VM has a different tag and is not swept | `orphan-sweep.txt` |
+| Prices | live from `/v2/plans` and `/v1/models`; each receipt names its price source. The VM rate matches the pending charges (0.008929 per started hour). Receipts before the last commit were metered about 10 percent low | `tasks/final-csv.*` |
 
 Measured earlier on a workstation (WSL2, gVisor release-20261026.0), and not repeated on Vultr:
 
@@ -183,6 +183,7 @@ The workstation runs passed before any of this was seen.
 | The planner refused a data theft task, ran something harmless, and the receipt said `verified` | running that task with real models | a refusal is a field on the plan: no VM, status `failed` |
 | The verifier never saw the input files, so it could not catch wrong totals | noticing that our first live test had pasted the data into the task text | it gets input previews and recomputes |
 | At default reasoning effort `qwen3.8-27b` spent all 8,000 tokens thinking and returned no JSON | a matrix across three models | `reasoning_effort` is `low` |
+| The cost meter read about 10 percent low: `hourly_cost` in `/v2/plans` is rounded on monthly-invoiced plans | comparing the meter with Vultr's pending charges | those plans use `monthly_cost / 672`, which matches the bill |
 | A syntax error from our own edit left the task page dead while the server answered 200 | running the page's script against a real timeline | a test parses every page's inline script |
 
 ## Repository layout
@@ -193,7 +194,7 @@ brz/              library: vultr/ (API client + mock) · llm/ (client, structure
                   orchestrator.py
 sandbox/runner/   brz_runner: the stdlib-only program that runs inside the throwaway VM
 apps/control_plane/  FastAPI app + server-rendered UI, wiring (mock | live), public demo limits, task archive
-tests/            TEST_COUNT tests; tests/attacks/ is the attack suite
+tests/            185 tests; tests/attacks/ is the attack suite
 scripts/          deploy, live runs and evidence: deploy_cp.py, first_vm.py, live_task.py, attack_vm.py, reliability.py
 docs/             SUBMISSION · VIDEO-SCRIPT · SLIDES-OUTLINE · COMPETITORS · evidence/
 ```

@@ -32,18 +32,18 @@ the tokens and deletes both VMs. Denied packets are read from the kernel log int
 against the sandbox, first in WSL and then on a real Vultr VM, and report the ones that got through. The first boot on
 Vultr found problems our local tests could not: the image's uid 1000 belongs to a user in the sudo and lxd groups, the
 memory limit was higher than the VM's RAM, and the account has a cap on active instances. Each is fixed and written up in
-the repository.
+the repository. On the final code, 12 tasks in a row all verified, with identical hashes across each pair of VMs.
 
 **Vultr services.** Cloud Compute for the control plane and for every throwaway VM, Serverless Inference for both models
 with `response_format: json_schema`, the v2 API for instances, plans, firewalls and live prices, and firewall groups so
 that only the control plane can reach a sandbox.
 
 **Limits.** A task takes about two minutes, nearly all of it VM boot. Allowed domains are pinned by IPv4 at boot, so other
-sites on the same address are reachable. The secret scanner does not stop encrypted data, which is why the guarantee rests
+sites on the same address are reachable; we measured this on a Cloudflare address. The secret scanner does not stop encrypted data, which is why the guarantee rests
 on there being no secret to take and no route out.
 
 **Who it is for.** Teams that want agents to work on real data and need evidence for security or audit reviews. Each task
-reports its own cost, about two cents on the current plan.
+reports its own cost, about two cents on the current plan, checked against Vultr's pending charges.
 
 ## Technology and category tags
 

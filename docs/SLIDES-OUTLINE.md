@@ -19,20 +19,20 @@ revenue model, so slides 7 to 9 are required. Every number comes from the README
    and `/v1/models`. Screenshot of the console during a task. [A]
 
 5. **Demo: a task from start to receipt.** Four screenshots: plan, two VMs active, verdict with the recomputed totals,
-   receipt with 404. Measured: 110 seconds, $0.018. [A]
+   receipt with 404. Measured: about 2 minutes, $0.02. Then: 12 of 12 tasks verified in a row. [A]
 
 6. **Containment on real VMs.** Denied packets to 1.1.1.1 and to the metadata service, from the kernel log. Output hashes
    identical across two VMs. Kill switch time from `kill-switch.md`. Attack suite result on a real VM. [O][A]
 
 7. **What real VMs found.** The strongest slide for credibility. A table with four rows: uid 1000 was a sudo and lxd user;
-   memory limit above RAM; account cap on active instances; DELETE refused during install. Each row: how we found it, the
+   memory limit above RAM; account cap on active instances; quiet steps blamed for boot traffic. Each row: how we found it, the
    fix. None of these showed up in local tests. [A][O]
 
 8. **Competitive analysis.** The table from `docs/COMPETITORS.md`. Include the rows where others win: boot time
    (sub-second microVMs against our 80 seconds) and runtime breadth (OpenSandbox). [P][O]
 
 9. **Market, pricing, unit cost.** Buyer: platform and security teams rolling out agents, who need evidence for audits. Our
-   measured floor per verified task is $0.018 on Vultr: $0.016 for two VM hours and $0.002 for tokens. VM time is billed by
+   measured floor per verified task is about $0.02 on Vultr: $0.018 for two started VM hours and $0.002 for tokens. VM time is billed by
    the started hour, so reusing an hour across tasks is the first margin lever. Tiers: self-hosted (MIT), hosted per
    verified task, private deployment. Market size only with cited sources; no invented figures. [B]
 

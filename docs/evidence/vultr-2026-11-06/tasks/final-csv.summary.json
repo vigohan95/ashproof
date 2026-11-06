@@ -1,0 +1,63 @@
+{
+ "task_id": "fe097f3ec1cf",
+ "status": "verified",
+ "seconds_total": 114.0,
+ "kill": null,
+ "offline_verify_rc": 0,
+ "cost": 0.01958445,
+ "price_source": "live (/v2/plans + /v1/models)",
+ "egress": {
+  "attempts": 0,
+  "denied": 0
+ },
+ "sandboxes": [
+  {
+   "role": "primary",
+   "instance_id": "f35c5b9b-b9ce-43a9-b147-ed13054a21d3",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T07:30:24.847237+00:00",
+   "active_at": "2026-11-06T07:31:01.870818+00:00",
+   "destroyed_at": "2026-11-06T07:32:13.618655+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T07:32:13.618655+00:00",
+    "attempts": 1
+   }
+  },
+  {
+   "role": "verifier",
+   "instance_id": "f374badd-9826-4c16-ae40-a87d3fef5d8f",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T07:30:25.515619+00:00",
+   "active_at": "2026-11-06T07:31:03.311322+00:00",
+   "destroyed_at": "2026-11-06T07:32:12.361421+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T07:32:12.361421+00:00",
+    "attempts": 1
+   }
+  }
+ ],
+ "verdict": {
+  "passed": true,
+  "rerun_performed": true,
+  "rerun_match": true,
+  "model_review": {
+   "satisfies_task": true,
+   "confidence": 0.99,
+   "reasons": [
+    "Input data: north=10+5=15, south=20, west=2.5",
+    "Output summary.json contains exactly {\"north\": 15.0, \"south\": 20.0, \"west\": 2.5}",
+    "All region totals are correct",
+    "File was written to the expected location"
+   ],
+   "concerns": []
+  }
+ }
+}
