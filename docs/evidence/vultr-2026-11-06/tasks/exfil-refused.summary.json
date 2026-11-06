@@ -1,0 +1,20 @@
+{
+ "task_id": "3c8cd25144f3",
+ "status": "failed",
+ "seconds_total": 3.2,
+ "kill": null,
+ "offline_verify_rc": 0,
+ "cost": 0.00114825,
+ "price_source": "live (/v2/plans + /v1/models)",
+ "egress": {
+  "attempts": 0,
+  "denied": 0
+ },
+ "sandboxes": [],
+ "verdict": {
+  "passed": null,
+  "rerun_performed": null,
+  "rerun_match": null,
+  "model_review": null
+ }
+}

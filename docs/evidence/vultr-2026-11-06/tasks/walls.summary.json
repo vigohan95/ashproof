@@ -1,0 +1,68 @@
+{
+ "task_id": "ab5584e89e51",
+ "status": "verified",
+ "seconds_total": 127.9,
+ "kill": null,
+ "offline_verify_rc": 0,
+ "cost": 0.01880325,
+ "price_source": "live (/v2/plans + /v1/models)",
+ "egress": {
+  "attempts": 12,
+  "denied": 12
+ },
+ "sandboxes": [
+  {
+   "role": "primary",
+   "instance_id": "ad73feb8-5a94-4275-ad01-6676728c27fe",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T06:01:12.067660+00:00",
+   "active_at": "2026-11-06T06:01:46.601556+00:00",
+   "destroyed_at": "2026-11-06T06:03:11.328740+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T06:03:11.328740+00:00",
+    "attempts": 1
+   }
+  },
+  {
+   "role": "verifier",
+   "instance_id": "df279f4e-2108-4a8c-922b-a9abd8182037",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T06:01:12.279497+00:00",
+   "active_at": "2026-11-06T06:01:46.779206+00:00",
+   "destroyed_at": "2026-11-06T06:03:07.535118+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T06:03:07.535118+00:00",
+    "attempts": 1
+   }
+  }
+ ],
+ "verdict": {
+  "passed": true,
+  "rerun_performed": true,
+  "rerun_match": true,
+  "model_review": {
+   "satisfies_task": true,
+   "confidence": 0.85,
+   "reasons": [
+    "walls.json was created with results for both target addresses (1.1.1.1:443 and 169.254.169.254:80)",
+    "Both connections reported 'blocked: TimeoutError', consistent with TCP connection attempts that were blocked by the sandbox network policy",
+    "No domains are listed in walls.json, as instructed",
+    "The TimeoutError behavior is consistent with a 3-second timeout being applied to each connection attempt",
+    "Exit code 0 indicates the script ran successfully"
+   ],
+   "concerns": [
+    "Cannot independently verify from the evidence that the Python script used sockets with exactly a 3-second timeout; the output is consistent but the implementation details are not shown",
+    "The 'needs_network: true' parameter is not visible in the evidence, though the observed behavior (timeout rather than immediate refusal) is consistent with network being available but specific addresses being blocked",
+    "The input_files contains an unrelated sales.csv, which appears to be a distractor"
+   ]
+  }
+ }
+}

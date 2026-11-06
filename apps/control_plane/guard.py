@@ -32,7 +32,8 @@ def _int(name: str, default: int) -> int:
 class DemoPolicy:
     enabled: bool = False
     allowed_domains: list[str] = field(default_factory=lambda: ["example.com"])
-    max_running: int = 2
+    # One task is two VMs, and Vultr caps active instances per account, counting just-deleted ones for a while.
+    max_running: int = 1
     tasks_per_day: int = 24
     tasks_per_client_hour: int = 4
     total_usd: float = 10.0
@@ -49,7 +50,7 @@ class DemoPolicy:
         return cls(
             enabled=enabled,
             allowed_domains=domains,
-            max_running=_int("BRZ_DEMO_MAX_RUNNING", 2),
+            max_running=_int("BRZ_DEMO_MAX_RUNNING", 1),
             tasks_per_day=_int("BRZ_DEMO_TASKS_PER_DAY", 24),
             tasks_per_client_hour=_int("BRZ_DEMO_TASKS_PER_CLIENT_HOUR", 4),
             total_usd=float(os.environ.get("BRZ_DEMO_TOTAL_USD") or 10.0),
@@ -121,7 +122,7 @@ class DemoGuard:
         if self.day_count >= p.tasks_per_day:
             raise HTTPException(429, f"public demo: the limit of {p.tasks_per_day} tasks per day is reached")
         if running >= p.max_running:
-            raise HTTPException(429, "public demo: tasks are running, try again in a few minutes")
+            raise HTTPException(429, "public demo: a task is running, one at a time here; try again in about 2 minutes")
         now = self._clock()
         recent = [t for t in self._clients.get(client, []) if now - t < 3600]
         if len(recent) >= p.tasks_per_client_hour:

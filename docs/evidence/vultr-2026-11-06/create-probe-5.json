@@ -1,0 +1,56 @@
+{
+ "creates": [
+  {
+   "i": 0,
+   "started_s": 0.0,
+   "seconds": 1.62,
+   "status": 400,
+   "headers": {},
+   "body": "{\"error\":\"Server add failed: You have reached the maximum number of active instances for this account. To deploy additional services, please request a limit increase.\",\"status\":400}"
+  },
+  {
+   "i": 1,
+   "started_s": 0.02,
+   "seconds": 1.77,
+   "status": 202,
+   "headers": {
+    "x-ratelimit-limit": "250",
+    "x-ratelimit-remaining": "249"
+   },
+   "instance_id": "0f452bbf-5116-4c3e-ab8a-0b167e7f57eb"
+  },
+  {
+   "i": 2,
+   "started_s": 0.02,
+   "seconds": 1.66,
+   "status": 400,
+   "headers": {},
+   "body": "{\"error\":\"Server add failed: You have reached the maximum number of active instances for this account. To deploy additional services, please request a limit increase.\",\"status\":400}"
+  },
+  {
+   "i": 3,
+   "started_s": 0.02,
+   "seconds": 1.61,
+   "status": 400,
+   "headers": {},
+   "body": "{\"error\":\"Server add failed: You have reached the maximum number of active instances for this account. To deploy additional services, please request a limit increase.\",\"status\":400}"
+  },
+  {
+   "i": 4,
+   "started_s": 0.03,
+   "seconds": 1.61,
+   "status": 400,
+   "headers": {},
+   "body": "{\"error\":\"Server add failed: You have reached the maximum number of active instances for this account. To deploy additional services, please request a limit increase.\",\"status\":400}"
+  }
+ ],
+ "deletes": [
+  {
+   "instance_id": "0f452bbf-5116-4c3e-ab8a-0b167e7f57eb",
+   "codes": [
+    204
+   ],
+   "seconds_until_delete_accepted": 0.4
+  }
+ ]
+}

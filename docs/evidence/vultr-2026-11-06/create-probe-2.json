@@ -1,0 +1,42 @@
+{
+ "creates": [
+  {
+   "i": 0,
+   "started_s": 0.0,
+   "seconds": 3.61,
+   "status": 202,
+   "headers": {
+    "x-ratelimit-limit": "250",
+    "x-ratelimit-remaining": "249"
+   },
+   "instance_id": "c9a510ed-f8b7-42ab-8dac-ab5c180c4b19"
+  },
+  {
+   "i": 1,
+   "started_s": 0.02,
+   "seconds": 4.44,
+   "status": 202,
+   "headers": {
+    "x-ratelimit-limit": "250",
+    "x-ratelimit-remaining": "249"
+   },
+   "instance_id": "f43a64fd-96e4-4499-82b6-dee227ac9325"
+  }
+ ],
+ "deletes": [
+  {
+   "instance_id": "c9a510ed-f8b7-42ab-8dac-ab5c180c4b19",
+   "codes": [
+    204
+   ],
+   "seconds_until_delete_accepted": 0.4
+  },
+  {
+   "instance_id": "f43a64fd-96e4-4499-82b6-dee227ac9325",
+   "codes": [
+    204
+   ],
+   "seconds_until_delete_accepted": 0.4
+  }
+ ]
+}

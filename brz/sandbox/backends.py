@@ -67,6 +67,7 @@ class VultrSandboxConfig:
     vm_active_timeout_s: float = 300.0
     vm_poll_interval_s: float = 5.0
     destroy_confirm_timeout_s: float = 120.0
+    capacity_wait_s: float = 90.0  # deleted VMs keep counting against the account limit for a while
     extra_tags: list[str] = field(default_factory=list)
     # Debug door, off by default: SSH into the sandbox from one address. Recorded on every VM it applies to.
     sshkey_ids: list[str] = field(default_factory=list)
@@ -140,7 +141,9 @@ class VultrSandboxBackend:
         """``on_created`` fires as soon as the instance exists, so a kill during boot can reach it."""
         key = new_key()
         user_data = render_cloud_init(self._spec(task_id, allowed_domains, key))
-        inst = await self.client.create_instance(self._instance_spec(task_id, role, user_data))
+        inst = await self.client.create_instance(
+            self._instance_spec(task_id, role, user_data), capacity_wait_s=self.config.capacity_wait_s
+        )
         handle = SandboxHandle(
             role=role,
             task_id=task_id,

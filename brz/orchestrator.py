@@ -117,6 +117,7 @@ class TaskState:
     step_logs: dict[str, dict[str, str]] = field(default_factory=dict)  # last attempt, redacted by the runner
     _clients: dict[str, RunnerClient] = field(default_factory=dict)
     _destroy_locks: dict[str, asyncio.Lock] = field(default_factory=dict)
+    _created: dict[str, asyncio.Event] = field(default_factory=dict)  # role -> its create call has returned
 
     def set_status(self, status: str, **data: Any) -> None:
         self.status = status
@@ -221,7 +222,7 @@ class Orchestrator:
             await self._execute_steps(state, primary, record=True)
             if self.config.verify_in_fresh_sandbox:
                 state.set_status("verifying", mode="fresh-sandbox re-run")
-                verifier_vm = await (verifier_boot or self._provision(state, "verifier"))
+                verifier_vm = await self._verifier_vm(state, verifier_boot)
                 state.rerun_outcomes = await self._execute_steps(state, verifier_vm, record=False)
                 await self._destroy(state, verifier_vm)
             else:
@@ -246,10 +247,7 @@ class Orchestrator:
                 state.audit.append("task.error", {"error": state.error})
                 final_status = "error"
         finally:
-            if verifier_boot is not None:
-                if not verifier_boot.done():
-                    verifier_boot.cancel()
-                await asyncio.gather(verifier_boot, return_exceptions=True)
+            await self._stop_verifier_boot(state, verifier_boot)
             await self._destroy_all(state)
             await self._close_clients(state)
             state.finished_at = datetime.now(timezone.utc)
@@ -342,7 +340,16 @@ class Orchestrator:
         else:
             state.set_status("provisioning", role=role)
         domains = sorted({*state.request.allowed_domains, *state.approved_domains})
-        handle = await self.backend.provision(state.id, role, domains, on_created=state.sandboxes.append)
+        created = state._created.setdefault(role, asyncio.Event())
+
+        def register(h: SandboxHandle) -> None:
+            state.sandboxes.append(h)
+            created.set()
+
+        try:
+            handle = await self.backend.provision(state.id, role, domains, on_created=register)
+        finally:
+            created.set()
         self._check_kill(state)
         state.audit.append(
             "vm.created",
@@ -377,6 +384,33 @@ class Orchestrator:
         )
         self._check_kill(state)
         return handle
+
+    async def _verifier_vm(self, state: TaskState, boot: asyncio.Task | None) -> SandboxHandle:
+        if boot is None:
+            return await self._provision(state, "verifier")
+        try:
+            return await boot
+        except TaskKilled:
+            raise
+        except Exception as exc:  # noqa: BLE001 - one retry, now without racing the primary VM
+            state.audit.append("vm.verifier_boot_failed", {"error": repr(exc)[:300]})
+            self._check_kill(state)
+            state._created.pop("verifier", None)
+            return await self._provision(state, "verifier")
+
+    async def _stop_verifier_boot(self, state: TaskState, boot: asyncio.Task | None) -> None:
+        """Never cancel a create in flight: Vultr may finish it, and that VM would be billing with no owner."""
+        if boot is None:
+            return
+        created = state._created.get("verifier")
+        if not boot.done() and created is not None:
+            try:
+                await asyncio.wait_for(created.wait(), timeout=120.0)
+            except TimeoutError:
+                state.audit.append("vm.create_unresolved", {"role": "verifier"})
+        if not boot.done():
+            boot.cancel()
+        await asyncio.gather(boot, return_exceptions=True)
 
     async def _execute_steps(self, state: TaskState, handle: SandboxHandle, *, record: bool) -> list[StepOutcome]:
         assert state.plan is not None

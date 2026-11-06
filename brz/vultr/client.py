@@ -33,6 +33,9 @@ from .models import (
 
 DEFAULT_BASE_URL = "https://api.vultr.com/v2"
 RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
+CREATE_TIMEOUT_S = 90.0
+CAPACITY_POLL_S = 10.0
+BUSY_POLL_S = 2.0
 
 
 class VultrError(Exception):
@@ -52,6 +55,14 @@ class VultrRateLimited(VultrError):
 
 class VultrTimeout(VultrError):
     pass
+
+
+class VultrCapacity(VultrError):
+    """The account is at its limit of active instances. Instances deleted moments ago still count for a while."""
+
+
+class VultrBusy(VultrError):
+    """HTTP 409: the instance is in a state that refuses this call, seen on DELETE while it is installing."""
 
 
 SleepFn = Callable[[float], Awaitable[None]]
@@ -95,13 +106,15 @@ class VultrClient:
         await self.aclose()
 
     # ----------------------------------------------------------------- core
-    async def _request(self, method: str, path: str, *, expect_json: bool = True, **kw: Any) -> Any:
+    async def _request(
+        self, method: str, path: str, *, expect_json: bool = True, retry_transport: bool = True, **kw: Any
+    ) -> Any:
         attempt = 0
         while True:
             try:
                 resp = await self._http.request(method, path, **kw)
             except httpx.TransportError as exc:
-                if attempt >= self.max_retries:
+                if attempt >= self.max_retries or not retry_transport:
                     raise VultrError(f"{method} {path}: transport error {exc!r}") from exc
                 attempt += 1
                 self.retry_count += 1
@@ -123,7 +136,14 @@ class VultrClient:
             if resp.status_code == 429:
                 raise VultrRateLimited(f"{method} {path}: 429 rate limited", 429, _safe_json(resp))
             if resp.status_code >= 400:
-                raise VultrError(f"{method} {path}: HTTP {resp.status_code}", resp.status_code, _safe_json(resp))
+                body = _safe_json(resp)
+                detail = body.get("error", "") if isinstance(body, dict) else str(body)
+                message = f"{method} {path}: HTTP {resp.status_code}: {str(detail)[:200]}"
+                if resp.status_code == 400 and "maximum number of active instances" in str(detail):
+                    raise VultrCapacity(message, 400, body)
+                if resp.status_code == 409:
+                    raise VultrBusy(message, 409, body)
+                raise VultrError(message, resp.status_code, body)
             if resp.status_code == 204 or not expect_json or not resp.content:
                 return None
             return resp.json()
@@ -156,9 +176,27 @@ class VultrClient:
         return [OperatingSystem.model_validate(o) for o in await self._paginate("/os", "os")]
 
     # ------------------------------------------------------------ instances
-    async def create_instance(self, spec: InstanceCreate) -> Instance:
-        data = await self._request("POST", "/instances", json=spec.to_api_body())
-        return Instance.model_validate(data["instance"])
+    async def create_instance(self, spec: InstanceCreate, *, capacity_wait_s: float = 0.0) -> Instance:
+        """Create once. A create is not idempotent: after a timeout the VM may exist, so look for it by label
+        instead of sending the POST again, which would leave a second billing VM nobody knows about."""
+        deadline = self._clock() + capacity_wait_s
+        while True:
+            try:
+                data = await self._request(
+                    "POST", "/instances", json=spec.to_api_body(), retry_transport=False, timeout=CREATE_TIMEOUT_S
+                )
+                return Instance.model_validate(data["instance"])
+            except VultrCapacity:
+                if self._clock() >= deadline:
+                    raise
+                await self._sleep(CAPACITY_POLL_S)
+            except VultrError as exc:
+                if exc.status is not None or not spec.label:
+                    raise
+                found = await self.list_instances(label=spec.label)
+                if found:
+                    return found[0]
+                raise
 
     async def get_instance(self, instance_id: str) -> Instance:
         data = await self._request("GET", f"/instances/{instance_id}")
@@ -228,11 +266,20 @@ class VultrClient:
                 )
             await self._sleep(interval)
 
-    async def destroy_and_confirm(self, instance_id: str, **kw: Any) -> ProofOfDestruction:
-        try:
-            await self.delete_instance(instance_id)
-        except VultrNotFound:
-            pass
+    async def destroy_and_confirm(
+        self, instance_id: str, *, busy_wait_s: float = 120.0, **kw: Any
+    ) -> ProofOfDestruction:
+        deadline = self._clock() + busy_wait_s
+        while True:
+            try:
+                await self.delete_instance(instance_id)
+                break
+            except VultrNotFound:
+                break
+            except VultrBusy:  # still installing: Vultr refuses the delete until it can act on it
+                if self._clock() >= deadline:
+                    raise
+                await self._sleep(BUSY_POLL_S)
         return await self.confirm_destroyed(instance_id, **kw)
 
     async def cleanup_orphans(
