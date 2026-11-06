@@ -1,0 +1,152 @@
+{
+  "output": "ashproof-demo.mp4",
+  "output_small": "ashproof-demo-small.mp4",
+  "voice": "en-US-AndrewNeural",
+  "rate": "+5%",
+  "recorded": "2026-11-06, public demo, tasks 609b5e4c06f2 (normal), d6aa0eff8681 (compromised agent), 924d6b1dbb61 (kill switch)",
+  "terminal": [
+    {"show": "ls", "run": ["ls"]},
+    {"show": "python -I -S offline_verify.py receipt.json --require-signature --anchors anchors.jsonl --checkpoint anchors-checkpoint.jsonl",
+     "run": ["{python}", "-I", "-S", "offline_verify.py", "receipt.json", "--require-signature", "--anchors", "anchors.jsonl", "--checkpoint", "anchors-checkpoint.jsonl"]},
+    {"show": "python -c \"b=bytearray(open('receipt.json','rb').read()); b[20833]=49; open('tampered.json','wb').write(b)\"",
+     "run": ["{python}", "-c", "b=bytearray(open('receipt.json','rb').read()); b[20833]=49; open('tampered.json','wb').write(b)"]},
+    {"show": "python -I -S offline_verify.py tampered.json --require-signature",
+     "run": ["{python}", "-I", "-S", "offline_verify.py", "tampered.json", "--require-signature"], "exit": 1}
+  ],
+  "scenes": [
+    {
+      "id": "open",
+      "narration": "These two Vultr VMs lived for about a hundred seconds. They ran an AI agent's task. Both are gone now, and Vultr answers 404 for each one. What is left is a receipt.",
+      "tts": "These two Vultr VMs lived for about a hundred seconds. They ran an AI agent's task. Both are gone now, and Vultr answers four oh four for each one. What is left is a receipt.",
+      "clips": [
+        {"seg": "normal", "from": 125.4, "to": 129.9,
+         "caption": "A real task on the public demo, 2026-11-06. Times are UTC.",
+         "boxes": [
+           {"rect": [1170, 214, 1580, 280], "on": "Vultr answers", "color": "green"},
+           {"rect": [1170, 297, 1580, 362], "on": "Vultr answers", "color": "green"}
+         ]}
+      ]
+    },
+    {
+      "id": "home",
+      "narration": "Ashproof is for the security reviewer who has to approve an AI agent before it works on finance data. Each task gets a throwaway VM, a second VM repeats the work, and the reviewer gets a signed receipt. The home page replays a recorded task in about fifteen seconds.",
+      "clips": [
+        {"seg": "home", "from": 2.6, "to": 20.4,
+         "boxes": [{"rect": [1124, 116, 1372, 152], "on": "replays a recorded task", "color": "ember"}]}
+      ]
+    },
+    {
+      "id": "normal",
+      "narration": "Now a live task: total a CSV by region. GLM 5.3 on Vultr Serverless Inference writes the plan. The model never touches the VM. The control plane creates two VMs through the Vultr API, with no keys inside. This wait is VM boot. Each step runs in gVisor. The second VM repeats the plan, and every output must match byte for byte. Qwen, a different model family, recomputes the totals.",
+      "tts": "Now a live task: total a CSV by region. G L M 5.3 on Vultr Serverless Inference writes the plan. The model never touches the VM. The control plane creates two VMs through the Vultr API, with no keys inside. This wait is VM boot. Each step runs in G-visor. The second VM repeats the plan, and every output must match byte for byte. Qwen, a different model family, recomputes the totals.",
+      "clips": [
+        {"seg": "normal", "from": 3.2, "to": 5.3},
+        {"seg": "normal", "on": "G L M 5.3", "from": 7.0, "to": 14.5, "fit": true},
+        {"seg": "normal", "on": "The control plane creates", "from": 15.5, "to": 108.9, "fit": true, "what": "VM boot"},
+        {"seg": "normal", "on": "The second VM repeats", "from": 114.7, "to": 125.0, "fit": true,
+         "boxes": [
+           {"rect": [776, 178, 1012, 214], "on": "every output must match", "color": "green"},
+           {"rect": [700, 670, 1445, 756], "on": "byte for byte", "color": "green"},
+           {"rect": [136, 488, 1180, 520], "on": "recomputes the totals", "color": "ember"}
+         ]}
+      ]
+    },
+    {
+      "id": "attack",
+      "narration": "Now the worst case. This CSV carries an injected instruction. Our planner only sees file names, so we assume the agent has already been turned. This plan is a fixed attack script, and no model wrote it. Everything after the plan is real. The script tries the cloud metadata service and tries to send the file out three ways. The kernel refuses every packet, and these red rows come from the kernel's own log. The totals are right, but the task fails, because it tried to leave. Nemotron, the content filter, marks the file and the output unsafe. Qwen says the sums are correct, and still reports the injection. On the receipt: what was refused, and the script's own report. It found no keys, because the VM holds none.",
+      "clips": [
+        {"seg": "attack", "from": 3.75, "to": 5.3},
+        {"seg": "github", "on": "This CSV carries", "from": 0, "to": 0,
+         "boxes": [{"rect": [156, 609, 1900, 643], "on": "injected instruction", "color": "red"}]},
+        {"seg": "attack", "on": "Our planner only sees", "from": 5.8, "to": 8.3,
+         "boxes": [{"rect": [108, 368, 1812, 484], "on": "fixed attack script", "color": "ember"}]},
+        {"seg": "attack", "on": "Everything after the plan", "from": 15.5, "to": 108.3, "fit": true, "what": "VM boot, then the script"},
+        {"seg": "attack", "on": "The kernel refuses", "from": 108.9, "to": 117.0,
+         "boxes": [{"rect": [840, 206, 1560, 700], "on": "these red rows", "color": "red"}]},
+        {"seg": "attack", "on": "The totals are right", "from": 128.0, "to": 133.0,
+         "boxes": [
+           {"rect": [111, 501, 1809, 579], "on": "because it tried to leave", "color": "red"},
+           {"rect": [970, 598, 1812, 752], "on": "because it tried to leave", "color": "red"}
+         ]},
+        {"seg": "attack", "on": "Nemotron", "from": 133.3, "to": 142.0, "fit": true,
+         "boxes": [
+           {"rect": [132, 702, 1696, 740], "on": "marks the file", "color": "red"},
+           {"rect": [132, 520, 1466, 552], "on": "Qwen says", "color": "green"},
+           {"rect": [132, 552, 1792, 684], "on": "reports the injection", "color": "ember"}
+         ]},
+        {"seg": "attack", "on": "On the receipt", "from": 162.5, "to": 166.9,
+         "boxes": [{"rect": [136, 100, 1786, 342], "on": "what was refused", "color": "red"}]},
+        {"seg": "attack", "on": "the script's own report", "from": 167.4, "to": 171.8,
+         "boxes": [{"rect": [136, 198, 1786, 500], "on": "It found no keys", "color": "green"}]}
+      ]
+    },
+    {
+      "id": "receipt",
+      "narration": "The receipt is signed with Ed25519, and this page checks it in the browser. Change one byte, and the check names the event that broke. Put it back, and it passes.",
+      "tts": "The receipt is signed with E D 2 5 5 1 9, and this page checks it in the browser. Change one byte, and the check names the event that broke. Put it back, and it passes.",
+      "clips": [
+        {"seg": "attack", "from": 147.9, "to": 152.4,
+         "boxes": [{"rect": [132, 104, 680, 250], "on": "checks it", "color": "green"}]},
+        {"seg": "attack", "on": "Change one byte", "from": 152.0, "to": 158.2,
+         "boxes": [{"rect": [132, 116, 668, 184], "on": "names the event", "color": "red"}]},
+        {"seg": "attack", "on": "Put it back", "from": 158.8, "to": 161.0}
+      ]
+    },
+    {
+      "id": "offline",
+      "narration": "The same check runs offline, from one Python file with nothing installed. Here it finds this receipt in the public log. The same changed byte fails here too. The limit: the signing key and the log are on the control plane, so a signature shows who signed, not that the machine was clean. A copy of the log made earlier is what catches a rewrite, and the repository holds one.",
+      "term": [
+        {"block": 0, "type_s": 0.15},
+        {"block": 1, "on": "Here it finds", "type_s": 0.8},
+        {"block": 2, "on": "The same changed byte", "type_s": 0.5},
+        {"block": 3, "on": "fails here too", "type_s": 0.35}
+      ],
+      "clips": []
+    },
+    {
+      "id": "kill",
+      "narration": "If something looks wrong, the kill switch revokes the tokens, stops the step and deletes both VMs. In this run, that took 0.29 seconds from the request to both 404s. Over five earlier runs, the median was 0.52.",
+      "tts": "If something looks wrong, the kill switch revokes the tokens, stops the step and deletes both VMs. In this run, that took 0.29 seconds from the request to both four oh fours. Over five earlier runs, the median was 0.52.",
+      "clips": [
+        {"seg": "kill", "from": 117.0, "to": 123.4,
+         "caption": "Pressed at real speed. The page refreshes every 2 seconds."},
+        {"seg": "kill", "on": "In this run", "from": 131.2, "to": 135.0,
+         "caption": "The first attempt had a bug and was repaired. The repaired step was running when killed.", "caption_top": true,
+         "boxes": [
+           {"rect": [205, 696, 1380, 776], "on": "In this run", "color": "red"},
+           {"rect": [205, 900, 1770, 1040], "on": "both four oh fours", "color": "green"}
+         ]}
+      ]
+    },
+    {
+      "id": "evidence",
+      "narration": "The evidence page lists 31 attacks we wrote against the sandbox. On a real Vultr VM, 30 are contained. One still works: A24, encrypted data gets past the secret scanner.",
+      "tts": "The evidence page lists 31 attacks we wrote against the sandbox. On a real Vultr VM, 30 are contained. One still works: A 24, encrypted data gets past the secret scanner.",
+      "clips": [
+        {"seg": "evidence", "from": 1.2, "to": 4.2},
+        {"seg": "evidence", "on": "On a real Vultr VM", "from": 4.4, "to": 11.5, "fit": true, "nolabel": true},
+        {"seg": "evidence", "on": "One still works", "from": 11.5, "to": 13.0,
+         "boxes": [{"rect": [136, 450, 1785, 561], "color": "red"}]}
+      ]
+    },
+    {
+      "id": "limits",
+      "narration": "Two more limits are on the home page. Outbound rules work on IP addresses, so an approved domain opens its whole IP. And a task takes about two minutes, nearly all of it VM boot.",
+      "clips": [
+        {"seg": "limits", "from": 1.2, "to": 3.8,
+         "boxes": [
+           {"rect": [64, 550, 1092, 622], "on": "Outbound rules", "color": "ember"},
+           {"rect": [64, 700, 912, 738], "on": "And a task takes", "color": "ember"}
+         ]}
+      ]
+    },
+    {
+      "id": "end",
+      "narration": "The core library began before the November third kickoff. Everything on real Vultr came after. The code is MIT licensed, and the demo is live.",
+      "tail": 0.55,
+      "clips": [
+        {"seg": "card", "from": 0, "to": 0}
+      ]
+    }
+  ]
+}

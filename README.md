@@ -11,6 +11,7 @@ is the review evidence: what ran, what was refused, and proof that the VM is gon
 > Built for the Vultr "Agent Rush" hackathon (lablab.ai), Challenge 1 *Blast Radius Zero*: a system that
 > **plans, dispatches and verifies real executed work** inside a sandbox. MIT licensed.
 
+**Code:** https://github.com/vigohan95/ashproof
 **Live demo:** https://66-135-3-140.sslip.io/ (real Vultr VMs and real models; one task at a time, limits on the page).
 **A real receipt:** [`rel-01-compromised-agent.receipt.md`](docs/evidence/vultr-2026-11-06/final-run/rel-01-compromised-agent.receipt.md), from the compromised agent.
 
@@ -78,7 +79,7 @@ step. Both go to zero when the task ends.
 ## 5-minute quickstart
 
 ```bash
-git clone <repo> ashproof && cd ashproof
+git clone https://github.com/vigohan95/ashproof && cd ashproof
 python -m venv .venv && . .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 python -m pytest -q                                   # 221 tests, no credentials, no cloud
@@ -234,7 +235,7 @@ apps/control_plane/  FastAPI app + server-rendered UI, wiring (mock | live), pub
                   fixed scenarios, recordings shown on the home page
 tests/            221 tests; tests/attacks/ is the attack suite
 scripts/          deploy, live runs and evidence: deploy_cp.py, first_vm.py, live_task.py, attack_vm.py, reliability.py
-docs/             SUBMISSION · VIDEO-SCRIPT · SLIDES-OUTLINE · COMPETITORS · keys/ · evidence/
+docs/             SUBMISSION · VIDEO-SCRIPT · SLIDES-OUTLINE · COMPETITORS · keys/ · evidence/ · video/
 ```
 
 ## Reproduce the evidence
@@ -270,7 +271,7 @@ python brz/audit/offline_verify.py receipt.json --require-signature --anchors li
 ## Docs
 
 - [`docs/COMPETITORS.md`](docs/COMPETITORS.md) - what existing sandboxes do and do not do, feature by feature
-- [`docs/VIDEO-SCRIPT.md`](docs/VIDEO-SCRIPT.md) - the demo video, shot by shot
+- [`docs/VIDEO-SCRIPT.md`](docs/VIDEO-SCRIPT.md) - the demo video, shot by shot; [`docs/video/`](docs/video/) records and builds it
 - [`docs/SLIDES-OUTLINE.md`](docs/SLIDES-OUTLINE.md) - the deck: problem, demo, findings, market, pricing, limits
 - [`docs/SUBMISSION.md`](docs/SUBMISSION.md) - lablab form text
 

@@ -1,7 +1,7 @@
 # lablab submission text
 
-Every number below comes from a run on Vultr and is linked in the README status table. Fill the two blanks after the
-repository and the video exist.
+Every number below comes from a run on Vultr and is linked in the README status table. Fill the video link after the
+upload.
 
 ## Title (50 characters at most)
 
@@ -64,9 +64,10 @@ Vultr, Vultr Cloud Compute, Vultr Serverless Inference, gVisor, nftables, Ed2551
 ## Links
 
 - Demo: https://66-135-3-140.sslip.io/
-- GitHub: TO FILL once the repository is public
-- Video: TO FILL (YouTube unlisted, 5 minutes at most)
-- Slides: `ashproof-deck.pdf`, built from `docs/SLIDES-OUTLINE.md`
+- GitHub: https://github.com/vigohan95/ashproof
+- Video: TO FILL (YouTube unlisted; the file runs 3 minutes)
+- Slides: `ashproof-slides.pdf`, built from `docs/SLIDES-OUTLINE.md`
+- Cover image: `ashproof-cover.png`, 1280x720
 
 ## Build note
 

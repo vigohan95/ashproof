@@ -5,7 +5,7 @@ rubric gives top marks in Presentation only with a competitive analysis, and in 
 revenue model, so slides 7 to 9 are required. Every number comes from the README status table.
 
 1. **Title.** Ashproof. *One throwaway Vultr VM per agent task, checked on a second VM, with a signed receipt that outlives
-   both.* Three numbers: 1 VM per task, 0 keys inside, about 2 cents per task. Repo and demo URL. [P]
+   both.* Three numbers: 2 throwaway VMs per task, 0 keys inside, about 2 cents per task. Repo and demo URL. [P]
 
 2. **The problem, for one person.** A security reviewer is asked to approve an AI agent that will work on finance data. The
    agent can leak a key, send the file out, or claim work it did not do. The usual setup gives the reviewer one long-lived
@@ -17,10 +17,10 @@ revenue model, so slides 7 to 9 are required. Every number comes from the README
 
 4. **Vultr, specifically.** Cloud Compute: control plane plus two throwaway VMs per task. Serverless Inference, three
    models: `glm-5.3` plans, `qwen3.8-27b` verifies, `nemotron-3.5-content-safety` reads inputs and step output. v2 API:
-   instances, plans, firewalls. Live prices from `/v2/plans` and `/v1/models`. Screenshot of the console during a task. [A]
+   instances, plans, firewalls. Live prices from `/v2/plans` and `/v1/models`. Screenshots of the task page: the two instances with their 404s, and the cost lines. [A]
 
 5. **Demo: a task from start to receipt.** Four screenshots: plan, two VMs active, verdict with the recomputed totals,
-   receipt with 404. Measured: about 2 minutes, $0.02. Then: 8 of 8 tasks ended as they should on the final code. [A]
+   receipt summary. Measured: about 2 minutes, $0.02. Then: 8 of 8 tasks ended as they should on the final code. [A]
 
 6. **The compromised agent.** A CSV carries an injected note. A scripted plan stands in for a hijacked agent, and the slide
    says so. On real VMs it finds no keys, and the kernel refuses all 20 packets to the metadata service, 1.1.1.1 and 8.8.8.8.
@@ -39,8 +39,8 @@ revenue model, so slides 7 to 9 are required. Every number comes from the README
    data; the budget sits with their security or platform team. Our measured floor per task is about $0.02 on Vultr: $0.018
    for two started VM hours and about $0.001 to $0.002 for tokens across three models. VM time is billed by the started hour, so
    reusing an hour across tasks is the first margin lever. Proposed, not tested with customers: self-hosted free (MIT), hosted
-   at $0.25 per task, private deployment on the customer's Vultr account for a yearly fee. Market size only with cited sources;
-   no invented figures. [B]
+   at $0.25 per task, private deployment on the customer's Vultr account for a yearly fee. No market size figure: we have no
+   cited source for one. [B]
 
 10. **Limits and next steps.** Limits, stated plainly: 2 minutes per task; egress rules work on IPv4, so an approved domain
     opens its whole IP; encrypted data passes the scanner (A24); the control link is not encrypted; the signing key and the
@@ -56,4 +56,4 @@ revenue model, so slides 7 to 9 are required. Every number comes from the README
 ## Design notes
 
 - One idea per slide, screenshots over bullets, and the receipt is the main image.
-- Export as `ashproof-deck.pdf` and check that every link opens.
+- Export as `ashproof-slides.pdf` and check that every link opens.
