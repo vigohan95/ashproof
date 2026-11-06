@@ -201,6 +201,14 @@ async def task_page(request: Request, task_id: str) -> HTMLResponse:
     return templates.TemplateResponse(request, "task.html", _ctx(request, task_id=task_id, state=state))
 
 
+def _attack_log(state) -> list[dict]:
+    """The scripted attack's own report. Only for the fixed scenario: any other task's output is just data."""
+    raw = state.outputs.get("attack-log.json")
+    if not raw or not state.request.scripted_plan:
+        return []
+    return json.loads(raw)
+
+
 @router.get("/tasks/{task_id}/receipt", response_class=HTMLResponse)
 async def receipt_page(request: Request, task_id: str) -> HTMLResponse:
     store = request.app.state.store
@@ -220,5 +228,6 @@ async def receipt_page(request: Request, task_id: str) -> HTMLResponse:
             verify_problems=problems,
             receipt_html=markdown_to_html(receipt.to_markdown()),
             outputs=sorted(state.outputs),
+            attack_log=_attack_log(state),
         ),
     )

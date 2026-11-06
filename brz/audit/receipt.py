@@ -185,7 +185,7 @@ class Receipt(BaseModel):
             lines.append(f"- **Signed:** Ed25519, key `{sig.get('key_id')}`, at {sig.get('signed_at')}")
         else:
             lines.append("- **Signed:** no")
-        if str(self.plan.get("task_summary", "")).startswith("SCRIPTED ATTACK"):
+        if self.planner_model.startswith("scripted"):
             lines.append(
                 "- **Plan source:** a fixed attack script standing in for a hijacked agent. No model wrote it. "
                 "The VMs, the kernel log lines and this receipt are real."

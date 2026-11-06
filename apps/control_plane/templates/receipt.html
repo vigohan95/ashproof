@@ -30,6 +30,16 @@
 
 {% include "_check.html" %}
 
+{% if attack_log %}
+<div class="panel">
+  <strong>What the attack script tried</strong>
+  <p class="muted" style="font-size:13px;margin:4px 0 8px">This is the script's own report from <code>attack-log.json</code>; its hash is in the steps table. The kernel's refusals below are the independent record.{% if receipt.verifier.rerun_match %} Both VMs gave the same report.{% endif %}</p>
+  <table><thead><tr><th>Goal</th><th>Target</th><th>Result</th></tr></thead><tbody>
+  {% for a in attack_log %}<tr><td>{{ a.goal }}</td><td><code>{{ a.target }}</code></td><td class="{{ 'ok' if a.result.startswith('failed') or a.result == 'found: none' else 'bad' }}">{{ a.result }}</td></tr>
+  {% endfor %}</tbody></table>
+</div>
+{% endif %}
+
 {% if outputs %}
 <div class="panel" style="font-size:14px">Output files: {% for n in outputs %}<a href="/tasks/{{ task_id }}/outputs/{{ n }}">{{ n }}</a>{% if not loop.last %}, {% endif %}{% endfor %}. Their hashes are in the steps table below.</div>
 {% endif %}

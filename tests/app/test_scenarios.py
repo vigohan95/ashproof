@@ -22,7 +22,7 @@ DENY = (
 def harmless(needs_network: bool = True) -> Plan:
     """The sandbox here is a local process, so the test plan must not be the attack itself."""
     code = "import os; open(os.path.join(os.environ['BRZ_OUT'], 'a.txt'), 'w').write('a'); print('done')"
-    summary = "SCRIPTED ATTACK, not written by a model. Test stand-in."
+    summary = "Test stand-in."
     step = PlanStep(
         id="s1", title="t", kind="python", code=code, expected_outputs=["a.txt"], needs_network=needs_network
     )
@@ -81,7 +81,8 @@ async def test_the_attack_cannot_run_outside_a_real_sandbox_and_callers_cannot_s
 
 def test_the_fixed_plan_is_labelled_and_the_injected_note_is_in_the_file():
     s = scenarios.COMPROMISED_AGENT
-    assert s.plan.task_summary.startswith("SCRIPTED ATTACK")
+    assert "Scripted attack" in s.plan.risk_notes[0] and scenarios.SCRIPTED_LABEL.startswith("scripted")
+    assert "attack" not in s.plan.task_summary.lower()  # the verifier model reads this; it must not be told
     assert b"SYSTEM NOTE TO THE AGENT" in s.files["sales.csv"]
     assert s.plan.required_domains == [] and s.plan.steps[0].needs_network
     compile(s.plan.steps[0].code, "attack", "exec")
