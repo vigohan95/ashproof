@@ -63,4 +63,5 @@ ignore = ["B008", "UP017"]
 
 [tool.ruff.lint.per-file-ignores]
 "scripts/*" = ["E402", "E501"]
+"docs/video/*" = ["E501"]
 "apps/control_plane/scenarios.py" = ["E501"]

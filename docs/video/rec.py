@@ -3,6 +3,7 @@
 Nothing is drawn into the page except a small mouse pointer, because headless Chrome has none and a viewer needs to see
 what was clicked. The pointer has `pointer-events: none`, so it cannot change what a click does.
 """
+
 from __future__ import annotations
 
 import base64
@@ -61,7 +62,10 @@ class Recorder:
         self.t0 = time.time()
         self.cdp = self.page.context.new_cdp_session(self.page)
         self.cdp.on("Page.screencastFrame", self._on_frame)
-        self.cdp.send("Page.startScreencast", {"format": "jpeg", "quality": self.quality, "maxWidth": 1920, "maxHeight": 1080, "everyNthFrame": 1})
+        self.cdp.send(
+            "Page.startScreencast",
+            {"format": "jpeg", "quality": self.quality, "maxWidth": 1920, "maxHeight": 1080, "everyNthFrame": 1},
+        )
 
     def mark(self, name: str) -> float:
         t = time.time() - self.t0
@@ -78,7 +82,11 @@ class Recorder:
 
 def new_page(pw):
     # A real device scale factor, not an emulated one: an emulated factor makes the screencast return 1280x720 frames.
-    browser = pw.chromium.launch(channel="chrome", headless=True, args=[f"--force-device-scale-factor={SCALE}", "--window-size=1296,814", "--hide-scrollbars"])
+    browser = pw.chromium.launch(
+        channel="chrome",
+        headless=True,
+        args=[f"--force-device-scale-factor={SCALE}", "--window-size=1296,814", "--hide-scrollbars"],
+    )
     ctx = browser.new_context(no_viewport=True, color_scheme="dark", accept_downloads=True)
     ctx.add_init_script(POINTER_JS)
     page = ctx.new_page()

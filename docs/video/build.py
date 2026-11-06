@@ -16,6 +16,7 @@ Pipeline:
 
 Requires ffmpeg and ffprobe on PATH, `pip install edge-tts pillow`, and the Windows fonts named below.
 """
+
 import asyncio
 import hashlib
 import json
@@ -46,14 +47,18 @@ def run(cmd, **kw):
 
 
 def duration(path):
-    out = subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)], timeout=30)
+    out = subprocess.check_output(
+        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)], timeout=30
+    )
     return float(out.decode().strip())
 
 
 # ---- voice ----
 
+
 async def tts(text, voice, rate, mp3):
     import edge_tts
+
     words = []
     com = edge_tts.Communicate(text, voice, rate=rate, boundary="WordBoundary")
     with open(mp3, "wb") as f:
@@ -125,6 +130,7 @@ def plan(sb, tmp):
 
 # ---- recorded frames ----
 
+
 class Segment:
     def __init__(self, base, name):
         self.dir = base / name
@@ -135,6 +141,7 @@ class Segment:
 
     def at(self, t):
         import bisect
+
         i = max(0, bisect.bisect_right(self.times, t) - 1)
         return i
 
@@ -154,6 +161,7 @@ class Segment:
 
 
 # ---- overlays ----
+
 
 def fit_text(draw, text, font, width):
     words, lines, line = text.split(), [], ""
@@ -305,11 +313,14 @@ def capture_terminal(sb, cap):
         if p.returncode != spec.get("exit", 0):
             sys.exit(f"{spec['show']} exited {p.returncode}:\n{p.stdout}{p.stderr}")
         blocks.append({"show": spec["show"], "text": p.stdout})
-    (cap / "term-session.txt").write_text("".join(f"$ {b['show']}\n{b['text']}" for b in blocks), encoding="utf-8", newline="\n")
+    (cap / "term-session.txt").write_text(
+        "".join(f"$ {b['show']}\n{b['text']}" for b in blocks), encoding="utf-8", newline="\n"
+    )
     return blocks
 
 
 # ---- render ----
+
 
 def clip_at(scene, t):
     clips = scene["clips"]
@@ -347,6 +358,7 @@ def scene_frame(s, t, segs, term):
         if c.get("caption"):
             caption(img, c["caption"], c.get("caption_top", False))
         return img
+
     return make, key, c
 
 
@@ -354,8 +366,33 @@ def render(sb, total, cap, video):
     segs = {n: Segment(cap, n) for n in {c["seg"] for s in sb["scenes"] for c in s["clips"] if "seg" in c}}
     term = Terminal(sb["_blocks"])
     enc = subprocess.Popen(
-        ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
-         "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p", "-g", "60", str(video)],
+        [
+            "ffmpeg",
+            "-y",
+            "-loglevel",
+            "error",
+            "-f",
+            "rawvideo",
+            "-pix_fmt",
+            "rgb24",
+            "-s",
+            f"{W}x{H}",
+            "-r",
+            str(FPS),
+            "-i",
+            "-",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "medium",
+            "-crf",
+            "20",
+            "-pix_fmt",
+            "yuv420p",
+            "-g",
+            "60",
+            str(video),
+        ],
         stdin=subprocess.PIPE,
     )
     n = int(total * FPS)
@@ -395,7 +432,10 @@ def mix_audio(sb, total, wav):
         ms = int(s["voice_at"] * 1000)
         parts.append(f"[{i}:a]adelay={ms}|{ms}[a{i}]")
     mix = "".join(f"[a{i}]" for i in range(len(sb["scenes"])))
-    filt = ";".join(parts) + f";{mix}amix=inputs={len(sb['scenes'])}:normalize=0:duration=longest,apad,atrim=0:{total:.3f},loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000"
+    filt = (
+        ";".join(parts)
+        + f";{mix}amix=inputs={len(sb['scenes'])}:normalize=0:duration=longest,apad,atrim=0:{total:.3f},loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000"
+    )
     run(["ffmpeg", "-y", "-loglevel", "error", *inputs, "-filter_complex", filt, "-ac", "2", "-ar", "48000", wav])
 
 
@@ -414,7 +454,9 @@ def main():
         print(f"{s['id']:<12} {s['start']:6.1f} -> {s['end']:6.1f}  voice ends {s['voice_end']:6.1f}")
         for c in s["clips"]:
             if "seg" in c:
-                print(f"    {c['seg']:<9} {c['from']:7.2f}-{c['to']:7.2f} at {c['t0']:6.1f}-{c['t1']:6.1f} speed {c['speed']:.2f} {c.get('label', '')}")
+                print(
+                    f"    {c['seg']:<9} {c['from']:7.2f}-{c['to']:7.2f} at {c['t0']:6.1f}-{c['t1']:6.1f} speed {c['speed']:.2f} {c.get('label', '')}"
+                )
     print(f"total {total:.1f} s, {words} words")
     times = {s["id"]: [round(s["start"], 2), round(s["end"], 2)] for s in sb["scenes"]}
     (tmp / "timeline.json").write_text(json.dumps(times, indent=1), encoding="utf-8")
@@ -426,13 +468,66 @@ def main():
         render(sb, total, cap, video)
     mix_audio(sb, total, wav)
     final = out / sb["output"]
-    run(["ffmpeg", "-y", "-loglevel", "error", "-i", video, "-i", wav, "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-shortest", final])
+    run(
+        [
+            "ffmpeg",
+            "-y",
+            "-loglevel",
+            "error",
+            "-i",
+            video,
+            "-i",
+            wav,
+            "-map",
+            "0:v",
+            "-map",
+            "1:a",
+            "-c:v",
+            "copy",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "192k",
+            "-movflags",
+            "+faststart",
+            "-shortest",
+            final,
+        ]
+    )
     mb = final.stat().st_size / 1e6
     print(f"{final}: {duration(final):.1f} s, {mb:.1f} MB")
     if mb > 50:
         small = out / sb["output_small"]
         kbps = int(48 * 8000 / duration(final)) - 128
-        run(["ffmpeg", "-y", "-loglevel", "error", "-i", final, "-c:v", "libx264", "-preset", "slow", "-b:v", f"{kbps}k", "-maxrate", f"{kbps * 2}k", "-bufsize", f"{kbps * 4}k", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", small])
+        run(
+            [
+                "ffmpeg",
+                "-y",
+                "-loglevel",
+                "error",
+                "-i",
+                final,
+                "-c:v",
+                "libx264",
+                "-preset",
+                "slow",
+                "-b:v",
+                f"{kbps}k",
+                "-maxrate",
+                f"{kbps * 2}k",
+                "-bufsize",
+                f"{kbps * 4}k",
+                "-pix_fmt",
+                "yuv420p",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "128k",
+                "-movflags",
+                "+faststart",
+                small,
+            ]
+        )
         print(f"{small}: {small.stat().st_size / 1e6:.1f} MB")
 
 

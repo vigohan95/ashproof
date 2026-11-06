@@ -11,6 +11,7 @@ writes <out dir>/<segment>/index.json: frame times, named moments, and the task 
 
 Requires `pip install playwright` and Google Chrome.
 """
+
 from __future__ import annotations
 
 import json
@@ -155,7 +156,13 @@ def follow_boot(page, ctx, r, tid):
     d = wait_for(page, ctx, tid, lambda d: d["sandboxes"], "the VMs")
     scroll_h2(page, "Sandbox VMs")
     r.mark("vms")
-    d = wait_for(page, ctx, tid, lambda d: all(s.get("active_at") for s in d["sandboxes"]) and len(d["sandboxes"]) >= 2, "active VMs")
+    d = wait_for(
+        page,
+        ctx,
+        tid,
+        lambda d: all(s.get("active_at") for s in d["sandboxes"]) and len(d["sandboxes"]) >= 2,
+        "active VMs",
+    )
     r.mark("vms_active")
     return d
 
@@ -165,12 +172,12 @@ def seg_normal(page, ctx, r):
     follow_boot(page, ctx, r, tid)
     wait_for(page, ctx, tid, lambda d: d["steps"], "the first step")
     r.mark("step_done")
-    d = wait_for(page, ctx, tid, lambda d: d.get("verdict") or d["status"] in DONE, "the verdict")
+    wait_for(page, ctx, tid, lambda d: d.get("verdict") or d["status"] in DONE, "the verdict")
     page.wait_for_timeout(2300)
     scroll_h2(page, "Verification")
     r.mark("verdict")
     page.wait_for_timeout(1500)
-    d = wait_for(page, ctx, tid, lambda d: d["status"] in DONE, "the end")
+    wait_for(page, ctx, tid, lambda d: d["status"] in DONE, "the end")
     r.mark("done")
     page.wait_for_timeout(2500)
     page.locator("#verdict details summary").first.click()  # safe now: the page stops refreshing when the task ends
@@ -197,15 +204,15 @@ def seg_attack(page, ctx, r):
     r.mark("note")
     page.wait_for_timeout(1500)
     follow_boot(page, ctx, r, tid)
-    d = wait_for(page, ctx, tid, lambda d: d["egress"]["denied"] > 0, "refused packets")
+    wait_for(page, ctx, tid, lambda d: d["egress"]["denied"] > 0, "refused packets")
     page.wait_for_timeout(1800)
     scroll_h2(page, "Egress attempts")
     r.mark("egress_first")
-    d = wait_for(page, ctx, tid, lambda d: d.get("verdict") or d["status"] in DONE, "the verdict")
+    wait_for(page, ctx, tid, lambda d: d.get("verdict") or d["status"] in DONE, "the verdict")
     page.wait_for_timeout(2200)
     r.mark("egress_all")
     page.wait_for_timeout(2500)
-    d = wait_for(page, ctx, tid, lambda d: d["status"] in DONE, "the end")
+    wait_for(page, ctx, tid, lambda d: d["status"] in DONE, "the end")
     r.mark("done")
     page.wait_for_timeout(2500)
     page.evaluate("window.scrollTo({top:0,behavior:'smooth'})")
@@ -271,7 +278,14 @@ def seg_kill(page, ctx, r):
     r.mark("press")
     page.locator("#kill-btn").click()
     r.mark("pressed")
-    d = wait_for(page, ctx, tid, lambda d: d["status"] in DONE and all(s.get("destroyed") for s in d["sandboxes"]), "the kill", limit=120)
+    wait_for(
+        page,
+        ctx,
+        tid,
+        lambda d: d["status"] in DONE and all(s.get("destroyed") for s in d["sandboxes"]),
+        "the kill",
+        limit=120,
+    )
     r.mark("killed")
     page.wait_for_timeout(2200)
     scroll_h2(page, "Sandbox VMs")
@@ -285,8 +299,14 @@ def seg_kill(page, ctx, r):
 
 
 SEGMENTS = {
-    "home": seg_home, "limits": seg_limits, "evidence": seg_evidence, "github": seg_github, "card": seg_card,
-    "normal": seg_normal, "attack": seg_attack, "kill": seg_kill,
+    "home": seg_home,
+    "limits": seg_limits,
+    "evidence": seg_evidence,
+    "github": seg_github,
+    "card": seg_card,
+    "normal": seg_normal,
+    "attack": seg_attack,
+    "kill": seg_kill,
 }
 
 
