@@ -1,7 +1,6 @@
 # lablab submission text
 
-Every number below comes from a run on Vultr and is linked in the README status table. Fill the video link after the
-upload.
+Every number below comes from a run on Vultr and is linked in the README status table.
 
 ## Title (50 characters at most)
 
@@ -65,7 +64,7 @@ Vultr, Vultr Cloud Compute, Vultr Serverless Inference, gVisor, nftables, Ed2551
 
 - Demo: https://66-135-3-140.sslip.io/
 - GitHub: https://github.com/vigohan95/ashproof
-- Video: TO FILL (YouTube unlisted; the file runs 3 minutes)
+- Video: https://youtu.be/2jKjxSnxIjE
 - Slides: `ashproof-slides.pdf`, built from `docs/SLIDES-OUTLINE.md`
 - Cover image: `ashproof-cover.png`, 1280x720
 
