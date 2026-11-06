@@ -138,7 +138,7 @@ def check_signature(receipt: dict, public_key: str | None = None) -> tuple[str, 
         return "invalid", [f"unknown signature algorithm {block.get('alg')!r}"]
     if not trusted:
         return "invalid", ["no public key to check against: pass --pubkey"]
-    if block.get("public_key") != trusted:
+    if block.get("public_key") != trusted or block.get("key_id") != key_id(trusted):
         return "invalid", [f"signed by another key, not the published one ({block.get('key_id')})"]
     message = receipt_message(
         str(receipt.get("task_id")),
