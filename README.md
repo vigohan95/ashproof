@@ -277,3 +277,9 @@ python brz/audit/offline_verify.py receipt.json --require-signature --anchors li
 ## License
 
 MIT.
+
+## How this was built
+
+Honest timeline, and the commit dates in this repository show it. The core library (Vultr client and mock, planner and verifier, receipts, cost table, cloud-init, runner, gVisor executor, UI) was started on 2026-11-01, before the 2026-11-03 kickoff, and tested locally without Vultr. Everything on real Vultr came after the kickoff: first real VM, Serverless Inference, public control plane, attack runs on real VMs, signing, the landing page. Those runs found real defects, listed above.
+
+Written with AI coding assistance (Claude Code). All numbers here come from runs stored under `docs/evidence/`.

@@ -67,3 +67,7 @@ Vultr, Vultr Cloud Compute, Vultr Serverless Inference, gVisor, nftables, Ed2551
 - GitHub: TO FILL once the repository is public
 - Video: TO FILL (YouTube unlisted, 5 minutes at most)
 - Slides: `ashproof-deck.pdf`, built from `docs/SLIDES-OUTLINE.md`
+
+## Build note
+
+The core library was started on 2026-11-01, before the 2026-11-03 kickoff, and tested locally. All Vultr integration, real runs, signing and the landing page came after kickoff. Commit dates are public. Built with AI coding assistance.
