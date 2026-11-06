@@ -35,7 +35,7 @@ def build() -> dict:
     ]
     kill = (EV / "kill-switch.md").read_text(encoding="utf-8")
     spans = re.findall(r"median ([\d.]+) s, min ([\d.]+) s, max ([\d.]+) s", kill)
-    reliability = json.loads((EV / "reliability.json").read_text(encoding="utf-8"))
+    reliability = json.loads((EV / "final-run.json").read_text(encoding="utf-8"))
     secs = [r["seconds"] for r in reliability]
     return {
         "source": "docs/evidence/vultr-2026-11-06/",
@@ -46,7 +46,7 @@ def build() -> dict:
         "kill_step": dict(zip(("median_s", "min_s", "max_s"), map(float, spans[0]), strict=True), runs=5),
         "kill_boot": dict(zip(("median_s", "min_s", "max_s"), map(float, spans[1]), strict=True), runs=3),
         "reliability": {
-            "verified": sum(1 for r in reliability if r.get("status") == "verified"),
+            "good": sum(1 for r in reliability if r.get("good")),
             "total": len(reliability),
             "median_s": round(statistics.median(secs), 1),
             "slowest_s": max(secs),

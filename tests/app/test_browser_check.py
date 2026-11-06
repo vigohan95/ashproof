@@ -82,6 +82,7 @@ def test_a_receipt_with_another_key_or_no_signature_is_not_passed(tmp_path):
     signer = ReceiptSigner(Ed25519PrivateKey.generate())
     other = ReceiptSigner(Ed25519PrivateKey.generate())
     unsigned = recordings()[0]
+    unsigned.signature = None
     forged = recordings()[0]
     other.sign(forged)
     cases = [

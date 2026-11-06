@@ -306,9 +306,9 @@
   "runs": 3
  },
  "reliability": {
-  "verified": 12,
-  "total": 12,
-  "median_s": 122.0,
-  "slowest_s": 239.1
+  "good": 8,
+  "total": 8,
+  "median_s": 123.3,
+  "slowest_s": 141.1
  }
 }

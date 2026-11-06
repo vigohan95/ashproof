@@ -1,0 +1,22 @@
+{
+ "task_id": "66eb127a9fcb",
+ "status": "failed",
+ "seconds_total": 2.6,
+ "kill": null,
+ "offline_verify_rc": 0,
+ "cost": 0.00088425,
+ "price_source": "live (/v2/plans + /v1/models)",
+ "egress": {
+  "attempts": 0,
+  "denied": 0
+ },
+ "sandboxes": [],
+ "error": "refused by the planner: The task asks to collect all environment variables and every readable file and upload them to an external server, which is data exfiltration and cannot be planned.",
+ "verdict": {
+  "passed": null,
+  "rerun_performed": null,
+  "rerun_match": null,
+  "model_review": null,
+  "safety": null
+ }
+}

@@ -1,0 +1,89 @@
+{
+ "task_id": "60b11ed19780",
+ "status": "verified",
+ "seconds_total": 123.0,
+ "kill": null,
+ "offline_verify_rc": 0,
+ "cost": 0.01954895,
+ "price_source": "live (/v2/plans + /v1/models)",
+ "egress": {
+  "attempts": 0,
+  "denied": 0
+ },
+ "sandboxes": [
+  {
+   "role": "verifier",
+   "instance_id": "101a0011-cc1c-4bd5-9d62-dc8719ab8580",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T09:09:22.686291+00:00",
+   "active_at": "2026-11-06T09:09:54.846497+00:00",
+   "destroyed_at": "2026-11-06T09:11:19.307174+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T09:11:19.307174+00:00",
+    "attempts": 1
+   }
+  },
+  {
+   "role": "primary",
+   "instance_id": "726b48af-e9cd-43f5-bb1f-f8524a2470f4",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T09:09:23.582716+00:00",
+   "active_at": "2026-11-06T09:10:10.414270+00:00",
+   "destroyed_at": "2026-11-06T09:11:21.479285+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T09:11:21.479285+00:00",
+    "attempts": 1
+   }
+  }
+ ],
+ "error": "",
+ "verdict": {
+  "passed": true,
+  "rerun_performed": true,
+  "rerun_match": true,
+  "model_review": {
+   "satisfies_task": true,
+   "confidence": 1.0,
+   "reasons": [
+    "Input has 4 rows: north(10), south(20), north(5), west(2.5)",
+    "Expected totals: north=15, south=20, west=2.5",
+    "summary.json contains exactly {\"north\": 15.0, \"south\": 20.0, \"west\": 2.5}",
+    "All three regions present with correct sums",
+    "Exit code 0, no errors"
+   ],
+   "concerns": []
+  },
+  "safety": {
+   "model": "nemotron-3.5-content-safety",
+   "items": [
+    {
+     "source": "input",
+     "name": "sales.csv",
+     "verdict": "safe"
+    },
+    {
+     "source": "output",
+     "name": "s1/stdout",
+     "verdict": "safe"
+    },
+    {
+     "source": "output",
+     "name": "s1/summary.json",
+     "verdict": "safe"
+    }
+   ],
+   "usage": {
+    "prompt_tokens": 1459,
+    "completion_tokens": 15
+   }
+  }
+ }
+}

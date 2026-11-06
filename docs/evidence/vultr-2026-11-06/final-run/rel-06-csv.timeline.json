@@ -1,0 +1,689 @@
+{
+ "id": "60b11ed19780",
+ "status": "verified",
+ "created_at": "2026-11-06T09:09:19.755907+00:00",
+ "finished_at": "2026-11-06T09:11:21.481105+00:00",
+ "task": "Total the amount column per region in sales.csv and write summary.json",
+ "budget_usd": 0.25,
+ "allowed_domains": [],
+ "pending_domains": [],
+ "require_approval": true,
+ "kill_requested": false,
+ "plan": {
+  "task_summary": "Aggregate the amount column per region from sales.csv and write summary.json",
+  "refused_reason": "",
+  "steps": [
+   {
+    "id": "s1",
+    "title": "Aggregate amounts per region",
+    "kind": "python",
+    "code": "import csv, json, collections\n\ntotals = collections.OrderedDict()\nwith open('/work/input/sales.csv', newline='') as f:\n    for row in csv.DictReader(f):\n        region = row['region'].strip()\n        totals[region] = totals.get(region, 0.0) + float(row['amount'])\n\n# sort by region name for deterministic output\ntotals = collections.OrderedDict(sorted(totals.items(), key=lambda kv: kv[0]))\nwith open('/work/out/summary.json', 'w') as f:\n    json.dump(totals, f, indent=2)\n    f.write('\\n')\nprint('regions:', len(totals))\n",
+    "expected_outputs": [
+     "summary.json"
+    ],
+    "needs_network": false,
+    "timeout_s": 60
+   }
+  ],
+  "required_domains": [],
+  "assertions": [
+   "file_exists:summary.json",
+   "stdout_contains:regions:"
+  ],
+  "est_cost_usd": 0.01,
+  "est_minutes": 1.0,
+  "risk_notes": [
+   "Assumes sales.csv has 'region' and 'amount' columns; if column names differ the step will fail loudly with a KeyError, which is acceptable.",
+   "No network or secrets needed; fully deterministic (sorted region keys, fixed float summation order by file order)."
+  ]
+ },
+ "planner_model": "glm-5.3",
+ "scripted": false,
+ "expect_refusals": false,
+ "sandboxes": [
+  {
+   "role": "verifier",
+   "instance_id": "101a0011-cc1c-4bd5-9d62-dc8719ab8580",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T09:09:22.686291+00:00",
+   "active_at": "2026-11-06T09:09:54.846497+00:00",
+   "destroyed_at": "2026-11-06T09:11:19.307174+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T09:11:19.307174+00:00",
+    "attempts": 1
+   },
+   "runner_url": "http://66.135.20.229:8700"
+  },
+  {
+   "role": "primary",
+   "instance_id": "726b48af-e9cd-43f5-bb1f-f8524a2470f4",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T09:09:23.582716+00:00",
+   "active_at": "2026-11-06T09:10:10.414270+00:00",
+   "destroyed_at": "2026-11-06T09:11:21.479285+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T09:11:21.479285+00:00",
+    "attempts": 1
+   },
+   "runner_url": "http://45.77.207.93:8700"
+  }
+ ],
+ "steps": [
+  {
+   "step_id": "s1",
+   "title": "Aggregate amounts per region",
+   "kind": "python",
+   "code_sha256": "e21b00d0bdbd7d8a70696f7e13ee2d86518a2a015c8eed1864556452c0f2f893",
+   "exit_code": 0,
+   "duration_s": 0.166,
+   "stdout_sha256": "b234ecaddb89b8e8f7e04f9f4f4b2fcec3115f9a6ac32913ff3515664af33950",
+   "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "output_files": {
+    "summary.json": "834fc0e2acc42e8aabaeffd83c9b51c7662729e48be3bbe6b76174c38a561203"
+   },
+   "attempts": 1,
+   "repaired": false,
+   "executor": "gvisor-systrap",
+   "log": {
+    "stdout": "regions: 3\n",
+    "stderr": ""
+   }
+  }
+ ],
+ "verdict": {
+  "passed": true,
+  "checks": [
+   {
+    "name": "s1:exit_code",
+    "passed": true,
+    "detail": "exit_code=0"
+   },
+   {
+    "name": "s1:output:summary.json",
+    "passed": true,
+    "detail": "present"
+   },
+   {
+    "name": "assert:file_exists:summary.json",
+    "passed": true,
+    "detail": ""
+   },
+   {
+    "name": "assert:stdout_contains:regions:",
+    "passed": true,
+    "detail": ""
+   },
+   {
+    "name": "rerun:hashes_identical",
+    "passed": true,
+    "detail": "all outputs byte-identical across two clean sandboxes"
+   },
+   {
+    "name": "safety:step_output",
+    "passed": true,
+    "detail": "nemotron-3.5-content-safety marked nothing unsafe"
+   }
+  ],
+  "rerun_performed": true,
+  "rerun_match": true,
+  "primary_hashes": {
+   "s1/stdout": "b234ecaddb89b8e8f7e04f9f4f4b2fcec3115f9a6ac32913ff3515664af33950",
+   "s1/file/summary.json": "834fc0e2acc42e8aabaeffd83c9b51c7662729e48be3bbe6b76174c38a561203"
+  },
+  "rerun_hashes": {
+   "s1/stdout": "b234ecaddb89b8e8f7e04f9f4f4b2fcec3115f9a6ac32913ff3515664af33950",
+   "s1/file/summary.json": "834fc0e2acc42e8aabaeffd83c9b51c7662729e48be3bbe6b76174c38a561203"
+  },
+  "model_review": {
+   "satisfies_task": true,
+   "confidence": 1.0,
+   "reasons": [
+    "Input has 4 rows: north(10), south(20), north(5), west(2.5)",
+    "Expected totals: north=15, south=20, west=2.5",
+    "summary.json contains exactly {\"north\": 15.0, \"south\": 20.0, \"west\": 2.5}",
+    "All three regions present with correct sums",
+    "Exit code 0, no errors"
+   ],
+   "concerns": []
+  },
+  "verifier_model": "qwen3.8-27b",
+  "usage": {
+   "prompt_tokens": 270,
+   "completion_tokens": 250
+  },
+  "safety": {
+   "model": "nemotron-3.5-content-safety",
+   "items": [
+    {
+     "source": "input",
+     "name": "sales.csv",
+     "verdict": "safe"
+    },
+    {
+     "source": "output",
+     "name": "s1/stdout",
+     "verdict": "safe"
+    },
+    {
+     "source": "output",
+     "name": "s1/summary.json",
+     "verdict": "safe"
+    }
+   ],
+   "usage": {
+    "prompt_tokens": 1459,
+    "completion_tokens": 15
+   }
+  }
+ },
+ "egress": {
+  "attempts": 0,
+  "denied": 0,
+  "list": []
+ },
+ "secret_scan": {
+  "clean": true,
+  "findings_count": 0,
+  "findings": [],
+  "files_scanned": 20,
+  "env_vars_checked": 16,
+  "scanner": "brz_runner.secretscan"
+ },
+ "cost": {
+  "total_usd": 0.01954895,
+  "vm_usd": 0.017858,
+  "tokens_usd": 0.00169095,
+  "budget_usd": 0.25,
+  "over_budget": false,
+  "price_source": "live (/v2/plans + /v1/models)",
+  "lines": [
+   {
+    "kind": "tokens",
+    "label": "planner",
+    "usd": 0.00132525,
+    "model": "glm-5.3",
+    "prompt_tokens": 435,
+    "completion_tokens": 333,
+    "input_per_1m": 0.75,
+    "output_per_1m": 3.0
+   },
+   {
+    "kind": "vm",
+    "label": "VM verifier vhp-1c-1gb-amd",
+    "usd": 0.008929,
+    "plan": "vhp-1c-1gb-amd",
+    "seconds": 116.6,
+    "billed_hours": 1.0,
+    "hourly_usd": 0.008929
+   },
+   {
+    "kind": "tokens",
+    "label": "safety model",
+    "usd": 7.52e-05,
+    "model": "nemotron-3.5-content-safety",
+    "prompt_tokens": 1459,
+    "completion_tokens": 15,
+    "input_per_1m": 0.05,
+    "output_per_1m": 0.15
+   },
+   {
+    "kind": "tokens",
+    "label": "verifier",
+    "usd": 0.0002905,
+    "model": "qwen3.8-27b",
+    "prompt_tokens": 270,
+    "completion_tokens": 250,
+    "input_per_1m": 0.15,
+    "output_per_1m": 1.0
+   },
+   {
+    "kind": "vm",
+    "label": "VM primary vhp-1c-1gb-amd",
+    "usd": 0.008929,
+    "plan": "vhp-1c-1gb-amd",
+    "seconds": 117.9,
+    "billed_hours": 1.0,
+    "hourly_usd": 0.008929
+   }
+  ]
+ },
+ "error": "",
+ "events": [
+  {
+   "seq": 0,
+   "ts": "2026-11-06T09:09:19.755987+00:00",
+   "kind": "task.received",
+   "data": {
+    "allowed_domains": [],
+    "budget_usd": 0.25,
+    "files": {
+     "sales.csv": "4dce1698d6f3f6a739e400991084263cb029d5c0b1c3d8754af81d13d5c77e2b"
+    },
+    "task_id": "60b11ed19780",
+    "task_sha256": "9ae05af7a8024f5c7c09a01ea5d8a39096df157dd0253e1ee028e093a5e7c297"
+   },
+   "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+   "hash": "2c31e878a968f08771b84ab20d582e836aec03c66e16efc43edf7e5929ee8ca9"
+  },
+  {
+   "seq": 1,
+   "ts": "2026-11-06T09:09:19.757747+00:00",
+   "kind": "task.planning",
+   "data": {
+    "task_id": "60b11ed19780"
+   },
+   "prev_hash": "2c31e878a968f08771b84ab20d582e836aec03c66e16efc43edf7e5929ee8ca9",
+   "hash": "1e595fad51b8c7bf8ff07e52e2fb3f3f1f823c0d0decc26d3e8a68f11f3e1831"
+  },
+  {
+   "seq": 2,
+   "ts": "2026-11-06T09:09:21.984865+00:00",
+   "kind": "cost.tokens",
+   "data": {
+    "completion_tokens": 333,
+    "label": "planner",
+    "model": "glm-5.3",
+    "prompt_tokens": 435,
+    "usd": 0.00132525
+   },
+   "prev_hash": "1e595fad51b8c7bf8ff07e52e2fb3f3f1f823c0d0decc26d3e8a68f11f3e1831",
+   "hash": "67944fcfb55fa0891610d797ca9d4d0199fc635783851bbc0b7a59d4ce1800f5"
+  },
+  {
+   "seq": 3,
+   "ts": "2026-11-06T09:09:21.984995+00:00",
+   "kind": "plan.created",
+   "data": {
+    "est_cost_usd": 0.01,
+    "json_schema": true,
+    "model": "glm-5.3",
+    "required_domains": [],
+    "risk_notes": [
+     "Assumes sales.csv has 'region' and 'amount' columns; if column names differ the step will fail loudly with a KeyError, which is acceptable.",
+     "No network or secrets needed; fully deterministic (sorted region keys, fixed float summation order by file order)."
+    ],
+    "steps": [
+     {
+      "code_sha256": "e21b00d0bdbd7d8a70696f7e13ee2d86518a2a015c8eed1864556452c0f2f893",
+      "expected_outputs": [
+       "summary.json"
+      ],
+      "id": "s1",
+      "kind": "python",
+      "needs_network": false,
+      "timeout_s": 60,
+      "title": "Aggregate amounts per region"
+     }
+    ],
+    "unapproved_domains": [],
+    "usage": {
+     "completion_tokens": 333,
+     "prompt_tokens": 435
+    }
+   },
+   "prev_hash": "67944fcfb55fa0891610d797ca9d4d0199fc635783851bbc0b7a59d4ce1800f5",
+   "hash": "ad000f223fe86a2d81c884044bae435549c305459c888497972c7b8110b1554a"
+  },
+  {
+   "seq": 4,
+   "ts": "2026-11-06T09:09:21.985127+00:00",
+   "kind": "budget.preflight",
+   "data": {
+    "budget_usd": 0.25,
+    "plan_estimate_usd": 0.01,
+    "projected_usd": 0.01918325,
+    "spent_usd": 0.00132525
+   },
+   "prev_hash": "ad000f223fe86a2d81c884044bae435549c305459c888497972c7b8110b1554a",
+   "hash": "5f22dcc5edcc3f86a2b8fff44e06636dfb88de724f7d460aae14840d44afdf86"
+  },
+  {
+   "seq": 5,
+   "ts": "2026-11-06T09:09:21.985220+00:00",
+   "kind": "task.provisioning",
+   "data": {
+    "role": "primary",
+    "task_id": "60b11ed19780"
+   },
+   "prev_hash": "5f22dcc5edcc3f86a2b8fff44e06636dfb88de724f7d460aae14840d44afdf86",
+   "hash": "ecdc4ffc86776c3bd02e885684de68befa92eac02f3e37e9d12e9225359bb922"
+  },
+  {
+   "seq": 6,
+   "ts": "2026-11-06T09:09:21.990173+00:00",
+   "kind": "task.provisioning",
+   "data": {
+    "background": true,
+    "role": "verifier",
+    "task_id": "60b11ed19780"
+   },
+   "prev_hash": "ecdc4ffc86776c3bd02e885684de68befa92eac02f3e37e9d12e9225359bb922",
+   "hash": "6e630d354f6fdd2d56df86803cf6e08b44af95b67e6027adc0871bae75d5980f"
+  },
+  {
+   "seq": 7,
+   "ts": "2026-11-06T09:09:54.846528+00:00",
+   "kind": "vm.created",
+   "data": {
+    "admin_access": false,
+    "allowed_domains": [],
+    "egress_policy": "default-deny",
+    "inner_isolation": "gvisor runsc --platform=systrap",
+    "instance_id": "101a0011-cc1c-4bd5-9d62-dc8719ab8580",
+    "label": "brz-60b11ed19780-verifier",
+    "plan": "vhp-1c-1gb-amd",
+    "provider": "vultr",
+    "region": "ewr",
+    "role": "verifier"
+   },
+   "prev_hash": "6e630d354f6fdd2d56df86803cf6e08b44af95b67e6027adc0871bae75d5980f",
+   "hash": "f2e838535209d077c93ac1dee9f90302cbec11266c895026a373be5bf8de7729"
+  },
+  {
+   "seq": 8,
+   "ts": "2026-11-06T09:10:10.414304+00:00",
+   "kind": "vm.created",
+   "data": {
+    "admin_access": false,
+    "allowed_domains": [],
+    "egress_policy": "default-deny",
+    "inner_isolation": "gvisor runsc --platform=systrap",
+    "instance_id": "726b48af-e9cd-43f5-bb1f-f8524a2470f4",
+    "label": "brz-60b11ed19780-primary",
+    "plan": "vhp-1c-1gb-amd",
+    "provider": "vultr",
+    "region": "ewr",
+    "role": "primary"
+   },
+   "prev_hash": "f2e838535209d077c93ac1dee9f90302cbec11266c895026a373be5bf8de7729",
+   "hash": "11cd87c69b7251a7a80c9b335afab01873457ff0791f356687989e21f591c083"
+  },
+  {
+   "seq": 9,
+   "ts": "2026-11-06T09:11:03.230075+00:00",
+   "kind": "vm.runner_ready",
+   "data": {
+    "executor": "gvisor-systrap",
+    "instance_id": "101a0011-cc1c-4bd5-9d62-dc8719ab8580",
+    "main_ip": "66.135.20.229",
+    "role": "verifier"
+   },
+   "prev_hash": "11cd87c69b7251a7a80c9b335afab01873457ff0791f356687989e21f591c083",
+   "hash": "9444e9d2ab6446d1d1659bf1d93ca749183391d44402b0ebef4bc61b321bd1ca"
+  },
+  {
+   "seq": 10,
+   "ts": "2026-11-06T09:11:18.590644+00:00",
+   "kind": "vm.runner_ready",
+   "data": {
+    "executor": "gvisor-systrap",
+    "instance_id": "726b48af-e9cd-43f5-bb1f-f8524a2470f4",
+    "main_ip": "45.77.207.93",
+    "role": "primary"
+   },
+   "prev_hash": "9444e9d2ab6446d1d1659bf1d93ca749183391d44402b0ebef4bc61b321bd1ca",
+   "hash": "434ddd910eee079fcbd3dd5fa5133b980e44692b65f502b029e82014f5300cfe"
+  },
+  {
+   "seq": 11,
+   "ts": "2026-11-06T09:11:18.590844+00:00",
+   "kind": "task.running",
+   "data": {
+    "instance_id": "726b48af-e9cd-43f5-bb1f-f8524a2470f4",
+    "task_id": "60b11ed19780"
+   },
+   "prev_hash": "434ddd910eee079fcbd3dd5fa5133b980e44692b65f502b029e82014f5300cfe",
+   "hash": "66876bcc5d0621ecc0f27436d08c9972d40ed19cf6c7b30e1ea17ccf1f68e990"
+  },
+  {
+   "seq": 12,
+   "ts": "2026-11-06T09:11:18.773923+00:00",
+   "kind": "step.finished",
+   "data": {
+    "attempt": 1,
+    "duration_s": 0.166,
+    "executor": "gvisor-systrap",
+    "exit_code": 0,
+    "files": {
+     "summary.json": "834fc0e2acc42e8aabaeffd83c9b51c7662729e48be3bbe6b76174c38a561203"
+    },
+    "missing_expected_outputs": [],
+    "role": "primary",
+    "secret_findings": [],
+    "skipped_outputs": [],
+    "stdout_sha256": "b234ecaddb89b8e8f7e04f9f4f4b2fcec3115f9a6ac32913ff3515664af33950",
+    "step_id": "s1",
+    "timed_out": false
+   },
+   "prev_hash": "66876bcc5d0621ecc0f27436d08c9972d40ed19cf6c7b30e1ea17ccf1f68e990",
+   "hash": "3efd2e218df628e27b5a0a4648c80d5a738f53fbff6fbaf87ed1d89c9fc7cb34"
+  },
+  {
+   "seq": 13,
+   "ts": "2026-11-06T09:11:18.774115+00:00",
+   "kind": "task.verifying",
+   "data": {
+    "mode": "fresh-sandbox re-run",
+    "task_id": "60b11ed19780"
+   },
+   "prev_hash": "3efd2e218df628e27b5a0a4648c80d5a738f53fbff6fbaf87ed1d89c9fc7cb34",
+   "hash": "2afd3c3fb989c736b6911901930734cf0f308b0509b8d41f1c56eecfb9e3eb2c"
+  },
+  {
+   "seq": 14,
+   "ts": "2026-11-06T09:11:18.904697+00:00",
+   "kind": "step.finished",
+   "data": {
+    "attempt": 1,
+    "duration_s": 0.116,
+    "executor": "gvisor-systrap",
+    "exit_code": 0,
+    "files": {
+     "summary.json": "834fc0e2acc42e8aabaeffd83c9b51c7662729e48be3bbe6b76174c38a561203"
+    },
+    "missing_expected_outputs": [],
+    "role": "verifier",
+    "secret_findings": [],
+    "skipped_outputs": [],
+    "stdout_sha256": "b234ecaddb89b8e8f7e04f9f4f4b2fcec3115f9a6ac32913ff3515664af33950",
+    "step_id": "s1",
+    "timed_out": false
+   },
+   "prev_hash": "2afd3c3fb989c736b6911901930734cf0f308b0509b8d41f1c56eecfb9e3eb2c",
+   "hash": "3b2d0f2a43ba22e86612abf464144bd400abda9d83cc2976c46afc9b8db32534"
+  },
+  {
+   "seq": 15,
+   "ts": "2026-11-06T09:11:18.904932+00:00",
+   "kind": "task.destroying",
+   "data": {
+    "instance_id": "101a0011-cc1c-4bd5-9d62-dc8719ab8580",
+    "role": "verifier",
+    "task_id": "60b11ed19780"
+   },
+   "prev_hash": "3b2d0f2a43ba22e86612abf464144bd400abda9d83cc2976c46afc9b8db32534",
+   "hash": "58e65bb6d3c51a84e08dde616ce927d01eb71b9f3fbd0319840cd20c7fe7f7df"
+  },
+  {
+   "seq": 16,
+   "ts": "2026-11-06T09:11:19.307277+00:00",
+   "kind": "vm.destroyed",
+   "data": {
+    "attempts": 1,
+    "http_status": 404,
+    "instance_id": "101a0011-cc1c-4bd5-9d62-dc8719ab8580",
+    "lifetime_s": 116.6,
+    "method": "GET /v2/instances/{id}",
+    "observed_at": "2026-11-06T09:11:19.307174+00:00",
+    "role": "verifier"
+   },
+   "prev_hash": "58e65bb6d3c51a84e08dde616ce927d01eb71b9f3fbd0319840cd20c7fe7f7df",
+   "hash": "76d3cb6f23e4c4e7a60cd6812975477c0836afc1e0afcd8ab8fa804121122ce6"
+  },
+  {
+   "seq": 17,
+   "ts": "2026-11-06T09:11:20.796917+00:00",
+   "kind": "cost.tokens",
+   "data": {
+    "completion_tokens": 15,
+    "label": "safety model",
+    "model": "nemotron-3.5-content-safety",
+    "prompt_tokens": 1459,
+    "usd": 7.52e-05
+   },
+   "prev_hash": "76d3cb6f23e4c4e7a60cd6812975477c0836afc1e0afcd8ab8fa804121122ce6",
+   "hash": "a008d742615108e26609a9261792a5934edd1265fb627830dbbf2d1248b9dd30"
+  },
+  {
+   "seq": 18,
+   "ts": "2026-11-06T09:11:20.797045+00:00",
+   "kind": "safety.review",
+   "data": {
+    "items": [
+     {
+      "name": "sales.csv",
+      "source": "input",
+      "verdict": "safe"
+     },
+     {
+      "name": "s1/stdout",
+      "source": "output",
+      "verdict": "safe"
+     },
+     {
+      "name": "s1/summary.json",
+      "source": "output",
+      "verdict": "safe"
+     }
+    ],
+    "model": "nemotron-3.5-content-safety"
+   },
+   "prev_hash": "a008d742615108e26609a9261792a5934edd1265fb627830dbbf2d1248b9dd30",
+   "hash": "d224ef10bb42153456762d433740cc1eab0574caf4b79c17b7a3ec7bc63dbf58"
+  },
+  {
+   "seq": 19,
+   "ts": "2026-11-06T09:11:20.797121+00:00",
+   "kind": "cost.tokens",
+   "data": {
+    "completion_tokens": 250,
+    "label": "verifier",
+    "model": "qwen3.8-27b",
+    "prompt_tokens": 270,
+    "usd": 0.0002905
+   },
+   "prev_hash": "d224ef10bb42153456762d433740cc1eab0574caf4b79c17b7a3ec7bc63dbf58",
+   "hash": "9bf2eccca4d6ea729f3d768758f4eac35c0312444fc072942ba3f03a09408e46"
+  },
+  {
+   "seq": 20,
+   "ts": "2026-11-06T09:11:20.797212+00:00",
+   "kind": "verify.verdict",
+   "data": {
+    "failed_checks": [],
+    "model_review": {
+     "concerns": [],
+     "confidence": 1.0,
+     "reasons": [
+      "Input has 4 rows: north(10), south(20), north(5), west(2.5)",
+      "Expected totals: north=15, south=20, west=2.5",
+      "summary.json contains exactly {\"north\": 15.0, \"south\": 20.0, \"west\": 2.5}",
+      "All three regions present with correct sums",
+      "Exit code 0, no errors"
+     ],
+     "satisfies_task": true
+    },
+    "passed": true,
+    "primary_hashes": {
+     "s1/file/summary.json": "834fc0e2acc42e8aabaeffd83c9b51c7662729e48be3bbe6b76174c38a561203",
+     "s1/stdout": "b234ecaddb89b8e8f7e04f9f4f4b2fcec3115f9a6ac32913ff3515664af33950"
+    },
+    "rerun_hashes": {
+     "s1/file/summary.json": "834fc0e2acc42e8aabaeffd83c9b51c7662729e48be3bbe6b76174c38a561203",
+     "s1/stdout": "b234ecaddb89b8e8f7e04f9f4f4b2fcec3115f9a6ac32913ff3515664af33950"
+    },
+    "rerun_match": true,
+    "rerun_performed": true,
+    "verifier_model": "qwen3.8-27b"
+   },
+   "prev_hash": "9bf2eccca4d6ea729f3d768758f4eac35c0312444fc072942ba3f03a09408e46",
+   "hash": "a3cdeead2c725479cc297cce70c91aa637582ddb85ab6b87fec64a75ffa7a03b"
+  },
+  {
+   "seq": 21,
+   "ts": "2026-11-06T09:11:20.797303+00:00",
+   "kind": "task.scanning",
+   "data": {
+    "instance_id": "726b48af-e9cd-43f5-bb1f-f8524a2470f4",
+    "task_id": "60b11ed19780"
+   },
+   "prev_hash": "a3cdeead2c725479cc297cce70c91aa637582ddb85ab6b87fec64a75ffa7a03b",
+   "hash": "88d8611d207ec46fb37373346d95d274b1045094b3b9accc55c0ccaf07fcfbfc"
+  },
+  {
+   "seq": 22,
+   "ts": "2026-11-06T09:11:20.816279+00:00",
+   "kind": "secret_scan.done",
+   "data": {
+    "clean": true,
+    "env_vars_checked": 16,
+    "files_scanned": 20,
+    "findings": [],
+    "findings_count": 0,
+    "scanner": "brz_runner.secretscan"
+   },
+   "prev_hash": "88d8611d207ec46fb37373346d95d274b1045094b3b9accc55c0ccaf07fcfbfc",
+   "hash": "400bba6188930285f7824fb76c92e1ba87a91415749511be48d2ebc63a200b51"
+  },
+  {
+   "seq": 23,
+   "ts": "2026-11-06T09:11:20.816421+00:00",
+   "kind": "task.destroying",
+   "data": {
+    "instance_id": "726b48af-e9cd-43f5-bb1f-f8524a2470f4",
+    "role": "primary",
+    "task_id": "60b11ed19780"
+   },
+   "prev_hash": "400bba6188930285f7824fb76c92e1ba87a91415749511be48d2ebc63a200b51",
+   "hash": "edf8993aaa5bdf757015b2ea8bb3e2c980e3bde7cd157048353f2ac38466ed62"
+  },
+  {
+   "seq": 24,
+   "ts": "2026-11-06T09:11:21.479372+00:00",
+   "kind": "vm.destroyed",
+   "data": {
+    "attempts": 1,
+    "http_status": 404,
+    "instance_id": "726b48af-e9cd-43f5-bb1f-f8524a2470f4",
+    "lifetime_s": 117.9,
+    "method": "GET /v2/instances/{id}",
+    "observed_at": "2026-11-06T09:11:21.479285+00:00",
+    "role": "primary"
+   },
+   "prev_hash": "edf8993aaa5bdf757015b2ea8bb3e2c980e3bde7cd157048353f2ac38466ed62",
+   "hash": "6b1fd454ebfa73a70d95c7634eae6bb978fbc9cec5385f70890986cb2806c080"
+  },
+  {
+   "seq": 25,
+   "ts": "2026-11-06T09:11:21.481127+00:00",
+   "kind": "task.verified",
+   "data": {
+    "error": null,
+    "task_id": "60b11ed19780",
+    "total_usd": 0.01954895
+   },
+   "prev_hash": "6b1fd454ebfa73a70d95c7634eae6bb978fbc9cec5385f70890986cb2806c080",
+   "hash": "d9241cfaa52224fd00ad634945c6b5324baa1cc121ef2772e222b4a3d2563906"
+  }
+ ],
+ "audit_head_hash": "d9241cfaa52224fd00ad634945c6b5324baa1cc121ef2772e222b4a3d2563906",
+ "receipt_ready": true
+}

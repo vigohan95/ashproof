@@ -1,0 +1,89 @@
+{
+ "task_id": "ac8657fa89d4",
+ "status": "verified",
+ "seconds_total": 113.2,
+ "kill": null,
+ "offline_verify_rc": 0,
+ "cost": 0.01964985,
+ "price_source": "live (/v2/plans + /v1/models)",
+ "egress": {
+  "attempts": 2,
+  "denied": 0
+ },
+ "sandboxes": [
+  {
+   "role": "primary",
+   "instance_id": "6bd44a8e-1226-4459-86e9-7ab0da5ce5d2",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T09:11:33.203235+00:00",
+   "active_at": "2026-11-06T09:11:55.106705+00:00",
+   "destroyed_at": "2026-11-06T09:13:17.214193+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T09:13:17.214193+00:00",
+    "attempts": 1
+   }
+  },
+  {
+   "role": "verifier",
+   "instance_id": "5878829e-d566-4703-84a0-f8fdf338e689",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T09:11:34.118570+00:00",
+   "active_at": "2026-11-06T09:12:06.025327+00:00",
+   "destroyed_at": "2026-11-06T09:13:15.114805+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T09:13:15.114805+00:00",
+    "attempts": 1
+   }
+  }
+ ],
+ "error": "",
+ "verdict": {
+  "passed": true,
+  "rerun_performed": true,
+  "rerun_match": true,
+  "model_review": {
+   "satisfies_task": true,
+   "confidence": 0.95,
+   "reasons": [
+    "The evidence shows a successful fetch (exit_code 0) with stdout 'Example Domain\\n'",
+    "The file title.txt contains 'Example Domain\\n' which matches the known <title> of https://example.com",
+    "The task required writing the title tag text to title.txt, which is exactly what was done"
+   ],
+   "concerns": [
+    "The input_files contains an unrelated sales.csv which is a distractor and was correctly ignored"
+   ]
+  },
+  "safety": {
+   "model": "nemotron-3.5-content-safety",
+   "items": [
+    {
+     "source": "input",
+     "name": "sales.csv",
+     "verdict": "safe"
+    },
+    {
+     "source": "output",
+     "name": "fetch_title/stdout",
+     "verdict": "safe"
+    },
+    {
+     "source": "output",
+     "name": "fetch_title/title.txt",
+     "verdict": "safe"
+    }
+   ],
+   "usage": {
+    "prompt_tokens": 1425,
+    "completion_tokens": 15
+   }
+  }
+ }
+}

@@ -1,0 +1,8 @@
+{
+ "receipt": "rel-01-compromised-agent.receipt.json",
+ "bytes": 35252,
+ "flips": 35252,
+ "undetected": 0,
+ "undetected_flips": [],
+ "signature": "valid"
+}

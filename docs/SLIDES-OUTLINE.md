@@ -4,46 +4,53 @@ Rubric in brackets: [A] Application of Technology, [P] Presentation, [B] Busines
 rubric gives top marks in Presentation only with a competitive analysis, and in Business Value only with a market and a
 revenue model, so slides 7 to 9 are required. Every number comes from the README status table.
 
-1. **Title.** Ashproof. *One throwaway Vultr VM per agent task, checked on a second VM, with a receipt that outlives both.*
-   Three numbers: 1 VM per task, 0 keys inside, about 2 cents per task. Repo and demo URL. [P]
+1. **Title.** Ashproof. *One throwaway Vultr VM per agent task, checked on a second VM, with a signed receipt that outlives
+   both.* Three numbers: 1 VM per task, 0 keys inside, about 2 cents per task. Repo and demo URL. [P]
 
-2. **The problem.** An agent that runs code can leak a key, send data out, or claim work it did not do. The common setup is
-   one long-lived VM, open outbound traffic, a key in a config file, and the model's word that it finished. OWASP's Agentic
-   Top 10 (ASI05) lists sandboxing as a control. [B]
+2. **The problem, for one person.** A security reviewer is asked to approve an AI agent that will work on finance data. The
+   agent can leak a key, send the file out, or claim work it did not do. The usual setup gives the reviewer one long-lived
+   VM, open outbound traffic, a key in a config file, and the model's word that it finished. OWASP's Agentic Top 10 (ASI05)
+   lists sandboxing as a control. [B]
 
 3. **What we built.** The architecture diagram from the README: planner, approval gate, two VMs, gVisor per step, nftables
-   default deny, single-use tokens, verifier, receipt, kill switch. [A][O]
+   default deny, single-use tokens, three models, signed receipt, public log, kill switch. [A][O]
 
-4. **Vultr, specifically.** Cloud Compute: control plane plus two throwaway VMs per task. Serverless Inference: `glm-5.3`
-   plans, `qwen3.8-27b` verifies, both with `json_schema`. v2 API: instances, plans, firewalls. Live prices from `/v2/plans`
-   and `/v1/models`. Screenshot of the console during a task. [A]
+4. **Vultr, specifically.** Cloud Compute: control plane plus two throwaway VMs per task. Serverless Inference, three
+   models: `glm-5.3` plans, `qwen3.8-27b` verifies, `nemotron-3.5-content-safety` reads inputs and step output. v2 API:
+   instances, plans, firewalls. Live prices from `/v2/plans` and `/v1/models`. Screenshot of the console during a task. [A]
 
 5. **Demo: a task from start to receipt.** Four screenshots: plan, two VMs active, verdict with the recomputed totals,
-   receipt with 404. Measured: about 2 minutes, $0.02. Then: 12 of 12 tasks verified in a row. [A]
+   receipt with 404. Measured: about 2 minutes, $0.02. Then: 8 of 8 tasks ended as they should on the final code. [A]
 
-6. **Containment on real VMs.** Denied packets to 1.1.1.1 and to the metadata service, from the kernel log. Output hashes
-   identical across two VMs. Kill switch time from `kill-switch.md`. Attack suite result on a real VM. [O][A]
+6. **The compromised agent.** A CSV carries an injected note. A scripted plan stands in for a hijacked agent, and the slide
+   says so. On real VMs it finds no keys, and the kernel refuses all 20 packets to the metadata service, 1.1.1.1 and 8.8.8.8.
+   The totals are right and the task still fails, because it tried to leave. Screenshot: "What was refused" on the receipt.
+   Beside it: attack suite on a real VM and the kill switch time. [O][A]
 
 7. **What real VMs found.** The strongest slide for credibility. A table with four rows: uid 1000 was a sudo and lxd user;
    memory limit above RAM; account cap on active instances; quiet steps blamed for boot traffic. Each row: how we found it, the
    fix. None of these showed up in local tests. [A][O]
 
 8. **Competitive analysis.** The table from `docs/COMPETITORS.md`. Include the rows where others win: boot time
-   (sub-second microVMs against our 80 seconds) and runtime breadth (OpenSandbox). [P][O]
+   (sub-second microVMs against our 80 seconds) and runtime breadth (OpenSandbox). Add the sentence about the 73 repositories
+   from that page, without naming any entry. [P][O]
 
-9. **Market, pricing, unit cost.** Buyer: platform and security teams rolling out agents, who need evidence for audits. Our
-   measured floor per verified task is about $0.02 on Vultr: $0.018 for two started VM hours and $0.002 for tokens. VM time is billed by
-   the started hour, so reusing an hour across tasks is the first margin lever. Tiers: self-hosted (MIT), hosted per
-   verified task, private deployment. Market size only with cited sources; no invented figures. [B]
+9. **Market, pricing, unit cost.** Buyer: the security reviewer who has to approve an AI agent before it works on finance
+   data; the budget sits with their security or platform team. Our measured floor per task is about $0.02 on Vultr: $0.018
+   for two started VM hours and about $0.001 to $0.002 for tokens across three models. VM time is billed by the started hour, so
+   reusing an hour across tasks is the first margin lever. Proposed, not tested with customers: self-hosted free (MIT), hosted
+   at $0.25 per task, private deployment on the customer's Vultr account for a yearly fee. Market size only with cited sources;
+   no invented figures. [B]
 
-10. **Limits and next steps.** Limits, stated plainly: 2 minutes per task, IPv4 pinning at boot, encrypted data passes the
-    scanner, control link not encrypted. Next: snapshot image and warm pool, browser tasks with a vision check, receipts in
-    Object Storage, signed receipts. Ask: pilot teams. Links. [B][P]
+10. **Limits and next steps.** Limits, stated plainly: 2 minutes per task; egress rules work on IPv4, so an approved domain
+    opens its whole IP; encrypted data passes the scanner (A24); the control link is not encrypted; the signing key and the
+    public log sit on the control plane. Next: snapshot image and warm pool, browser tasks with a vision check, the log's head
+    published somewhere the control plane cannot write. Ask: pilot reviewers. Links. [B][P]
 
 ## Appendix (only if asked)
 
 - A1: threat model: attacker inside a step, attacker with a token, compromised control plane; what each layer stops.
-- A2: how the hash chain works and what it does not prove without a pinned head hash.
+- A2: what a signature and the public log prove, and what they do not without a copy kept elsewhere.
 - A3: test suite and evidence folder listing.
 
 ## Design notes

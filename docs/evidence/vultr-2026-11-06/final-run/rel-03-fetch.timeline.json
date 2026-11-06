@@ -1,0 +1,751 @@
+{
+ "id": "d78825fab7d3",
+ "status": "verified",
+ "created_at": "2026-11-06T09:03:12.584501+00:00",
+ "finished_at": "2026-11-06T09:05:15.068769+00:00",
+ "task": "Fetch https://example.com and write the text of its title tag to title.txt",
+ "budget_usd": 0.25,
+ "allowed_domains": [
+  "example.com"
+ ],
+ "pending_domains": [],
+ "require_approval": true,
+ "kill_requested": false,
+ "plan": {
+  "task_summary": "Fetch https://example.com and write its <title> text to /work/out/title.txt",
+  "refused_reason": "",
+  "steps": [
+   {
+    "id": "fetch_title",
+    "title": "Fetch example.com and extract title",
+    "kind": "python",
+    "code": "import urllib.request, re\nreq = urllib.request.Request('https://example.com', headers={'User-Agent': 'Ashproof/1.0'})\nhtml = urllib.request.urlopen(req, timeout=30).read().decode('utf-8', 'replace')\nm = re.search(r'<title[^>]*>(.*?)</title>', html, re.IGNORECASE | re.DOTALL)\ntitle = m.group(1).strip() if m else ''\nwith open('/work/out/title.txt', 'w') as f:\n    f.write(title)\nprint(title)",
+    "expected_outputs": [
+     "title.txt"
+    ],
+    "needs_network": true,
+    "timeout_s": 60
+   }
+  ],
+  "required_domains": [
+   "example.com"
+  ],
+  "assertions": [
+   "file_exists:title.txt",
+   "file_contains:title.txt:Example Domain"
+  ],
+  "est_cost_usd": 0.02,
+  "est_minutes": 1.0,
+  "risk_notes": [
+   "example.com is pre-approved; content is static and stable, so output should be deterministic ('Example Domain').",
+   "If the site were unreachable, the step fails loudly rather than writing an empty file silently."
+  ]
+ },
+ "planner_model": "glm-5.3",
+ "scripted": false,
+ "expect_refusals": false,
+ "sandboxes": [
+  {
+   "role": "verifier",
+   "instance_id": "3b32ce5d-dca3-4725-af23-725a7fbd4421",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T09:03:16.109480+00:00",
+   "active_at": "2026-11-06T09:04:03.774208+00:00",
+   "destroyed_at": "2026-11-06T09:05:12.880756+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T09:05:12.880756+00:00",
+    "attempts": 1
+   },
+   "runner_url": "http://45.77.147.68:8700"
+  },
+  {
+   "role": "primary",
+   "instance_id": "ff6e91c3-2906-4360-890d-d35570616b98",
+   "plan": "vhp-1c-1gb-amd",
+   "region": "ewr",
+   "created_at": "2026-11-06T09:03:16.277385+00:00",
+   "active_at": "2026-11-06T09:03:48.250065+00:00",
+   "destroyed_at": "2026-11-06T09:05:15.066655+00:00",
+   "destroyed": true,
+   "proof": {
+    "method": "GET /v2/instances/{id}",
+    "http_status": 404,
+    "observed_at": "2026-11-06T09:05:15.066655+00:00",
+    "attempts": 1
+   },
+   "runner_url": "http://45.77.216.39:8700"
+  }
+ ],
+ "steps": [
+  {
+   "step_id": "fetch_title",
+   "title": "Fetch example.com and extract title",
+   "kind": "python",
+   "code_sha256": "04ca2aa750cdde512eb92886e252b147ff7c9bcb46e6f9ff81be8333cce61615",
+   "exit_code": 0,
+   "duration_s": 0.266,
+   "stdout_sha256": "aa57cf1d596d2ccff473a2ff749717b9b3c70e436d84084aedde0f1e6adc9534",
+   "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "output_files": {
+    "title.txt": "162b81548a8db0ab220f7137405fb003019c266883d4181869662ad7eafdbc4d"
+   },
+   "attempts": 1,
+   "repaired": false,
+   "executor": "gvisor-systrap",
+   "log": {
+    "stdout": "Example Domain\n",
+    "stderr": ""
+   }
+  }
+ ],
+ "verdict": {
+  "passed": true,
+  "checks": [
+   {
+    "name": "fetch_title:exit_code",
+    "passed": true,
+    "detail": "exit_code=0"
+   },
+   {
+    "name": "fetch_title:output:title.txt",
+    "passed": true,
+    "detail": "present"
+   },
+   {
+    "name": "assert:file_exists:title.txt",
+    "passed": true,
+    "detail": ""
+   },
+   {
+    "name": "assert:file_contains:title.txt:Example Domain",
+    "passed": true,
+    "detail": ""
+   },
+   {
+    "name": "rerun:hashes_identical",
+    "passed": true,
+    "detail": "all outputs byte-identical across two clean sandboxes"
+   },
+   {
+    "name": "safety:step_output",
+    "passed": true,
+    "detail": "nemotron-3.5-content-safety marked nothing unsafe"
+   },
+   {
+    "name": "egress:nothing_unexpected_refused",
+    "passed": true,
+    "detail": "no packet was refused"
+   }
+  ],
+  "rerun_performed": true,
+  "rerun_match": true,
+  "primary_hashes": {
+   "fetch_title/stdout": "aa57cf1d596d2ccff473a2ff749717b9b3c70e436d84084aedde0f1e6adc9534",
+   "fetch_title/file/title.txt": "162b81548a8db0ab220f7137405fb003019c266883d4181869662ad7eafdbc4d"
+  },
+  "rerun_hashes": {
+   "fetch_title/stdout": "aa57cf1d596d2ccff473a2ff749717b9b3c70e436d84084aedde0f1e6adc9534",
+   "fetch_title/file/title.txt": "162b81548a8db0ab220f7137405fb003019c266883d4181869662ad7eafdbc4d"
+  },
+  "model_review": {
+   "satisfies_task": true,
+   "confidence": 0.95,
+   "reasons": [
+    "The title of https://example.com is well-known to be 'Example Domain'",
+    "The evidence shows title.txt contains 'Example Domain' which matches the expected title tag text",
+    "Exit code 0 with no stderr indicates the fetch and write operation succeeded",
+    "The input file sales.csv is irrelevant to this task and was not needed"
+   ],
+   "concerns": []
+  },
+  "verifier_model": "qwen3.8-27b",
+  "usage": {
+   "prompt_tokens": 243,
+   "completion_tokens": 371
+  },
+  "safety": {
+   "model": "nemotron-3.5-content-safety",
+   "items": [
+    {
+     "source": "input",
+     "name": "sales.csv",
+     "verdict": "safe"
+    },
+    {
+     "source": "output",
+     "name": "fetch_title/stdout",
+     "verdict": "safe"
+    },
+    {
+     "source": "output",
+     "name": "fetch_title/title.txt",
+     "verdict": "safe"
+    }
+   ],
+   "usage": {
+    "prompt_tokens": 1425,
+    "completion_tokens": 15
+   }
+  }
+ },
+ "egress": {
+  "attempts": 2,
+  "denied": 0,
+  "list": [
+   {
+    "ts": "2026-11-06T09:04:56+00:00",
+    "dst_ip": "104.20.23.154",
+    "dst_port": 443,
+    "proto": "tcp",
+    "verdict": "allowed",
+    "domain": null,
+    "raw": "2026-11-06T09:04:56+00:00 brz-d78825fab7d3 kernel: BRZ-EGRESS-ALLOW IN= OUT=enp1s0 SRC=45.77.216.39 DST=104.20.23.154 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=1714 DF PROTO=TCP SPT=42968 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0"
+   },
+   {
+    "ts": "2026-11-06T09:05:12+00:00",
+    "dst_ip": "104.20.23.154",
+    "dst_port": 443,
+    "proto": "tcp",
+    "verdict": "allowed",
+    "domain": null,
+    "raw": "2026-11-06T09:05:12+00:00 brz-d78825fab7d3 kernel: BRZ-EGRESS-ALLOW IN= OUT=enp1s0 SRC=45.77.147.68 DST=104.20.23.154 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=49075 DF PROTO=TCP SPT=56734 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0"
+   }
+  ]
+ },
+ "secret_scan": {
+  "clean": true,
+  "findings_count": 0,
+  "findings": [],
+  "files_scanned": 20,
+  "env_vars_checked": 16,
+  "scanner": "brz_runner.secretscan"
+ },
+ "cost": {
+  "total_usd": 0.0196627,
+  "vm_usd": 0.017858,
+  "tokens_usd": 0.0018047,
+  "budget_usd": 0.25,
+  "over_budget": false,
+  "price_source": "live (/v2/plans + /v1/models)",
+  "lines": [
+   {
+    "kind": "tokens",
+    "label": "planner",
+    "usd": 0.00132375,
+    "model": "glm-5.3",
+    "prompt_tokens": 441,
+    "completion_tokens": 331,
+    "input_per_1m": 0.75,
+    "output_per_1m": 3.0
+   },
+   {
+    "kind": "vm",
+    "label": "VM verifier vhp-1c-1gb-amd",
+    "usd": 0.008929,
+    "plan": "vhp-1c-1gb-amd",
+    "seconds": 116.8,
+    "billed_hours": 1.0,
+    "hourly_usd": 0.008929
+   },
+   {
+    "kind": "tokens",
+    "label": "safety model",
+    "usd": 7.35e-05,
+    "model": "nemotron-3.5-content-safety",
+    "prompt_tokens": 1425,
+    "completion_tokens": 15,
+    "input_per_1m": 0.05,
+    "output_per_1m": 0.15
+   },
+   {
+    "kind": "tokens",
+    "label": "verifier",
+    "usd": 0.00040745,
+    "model": "qwen3.8-27b",
+    "prompt_tokens": 243,
+    "completion_tokens": 371,
+    "input_per_1m": 0.15,
+    "output_per_1m": 1.0
+   },
+   {
+    "kind": "vm",
+    "label": "VM primary vhp-1c-1gb-amd",
+    "usd": 0.008929,
+    "plan": "vhp-1c-1gb-amd",
+    "seconds": 118.8,
+    "billed_hours": 1.0,
+    "hourly_usd": 0.008929
+   }
+  ]
+ },
+ "error": "",
+ "events": [
+  {
+   "seq": 0,
+   "ts": "2026-11-06T09:03:12.584644+00:00",
+   "kind": "task.received",
+   "data": {
+    "allowed_domains": [
+     "example.com"
+    ],
+    "budget_usd": 0.25,
+    "files": {
+     "sales.csv": "4dce1698d6f3f6a739e400991084263cb029d5c0b1c3d8754af81d13d5c77e2b"
+    },
+    "task_id": "d78825fab7d3",
+    "task_sha256": "b55c2f72d0269a1a0811e890fc2e751883be984d5c6d12f2f9e73c5883149cd5"
+   },
+   "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+   "hash": "3a83c70c35fc565d77c9e0b0d89496ab41689abd15d2ce757681f5db80d25540"
+  },
+  {
+   "seq": 1,
+   "ts": "2026-11-06T09:03:12.586273+00:00",
+   "kind": "task.planning",
+   "data": {
+    "task_id": "d78825fab7d3"
+   },
+   "prev_hash": "3a83c70c35fc565d77c9e0b0d89496ab41689abd15d2ce757681f5db80d25540",
+   "hash": "3025f9a7c779f03374e8320bcf17a32f6c977db55f45a30ac010ab3315065eec"
+  },
+  {
+   "seq": 2,
+   "ts": "2026-11-06T09:03:15.125337+00:00",
+   "kind": "cost.tokens",
+   "data": {
+    "completion_tokens": 331,
+    "label": "planner",
+    "model": "glm-5.3",
+    "prompt_tokens": 441,
+    "usd": 0.00132375
+   },
+   "prev_hash": "3025f9a7c779f03374e8320bcf17a32f6c977db55f45a30ac010ab3315065eec",
+   "hash": "c7c2ba62c5a01f0feffb14677c72356737e6dec14e7e966b489c0c18e917b0a1"
+  },
+  {
+   "seq": 3,
+   "ts": "2026-11-06T09:03:15.125470+00:00",
+   "kind": "plan.created",
+   "data": {
+    "est_cost_usd": 0.02,
+    "json_schema": true,
+    "model": "glm-5.3",
+    "required_domains": [
+     "example.com"
+    ],
+    "risk_notes": [
+     "example.com is pre-approved; content is static and stable, so output should be deterministic ('Example Domain').",
+     "If the site were unreachable, the step fails loudly rather than writing an empty file silently."
+    ],
+    "steps": [
+     {
+      "code_sha256": "04ca2aa750cdde512eb92886e252b147ff7c9bcb46e6f9ff81be8333cce61615",
+      "expected_outputs": [
+       "title.txt"
+      ],
+      "id": "fetch_title",
+      "kind": "python",
+      "needs_network": true,
+      "timeout_s": 60,
+      "title": "Fetch example.com and extract title"
+     }
+    ],
+    "unapproved_domains": [],
+    "usage": {
+     "completion_tokens": 331,
+     "prompt_tokens": 441
+    }
+   },
+   "prev_hash": "c7c2ba62c5a01f0feffb14677c72356737e6dec14e7e966b489c0c18e917b0a1",
+   "hash": "fc5d28a25225ee3420a6507c8acd0ce0ceb23b09a3401187a26993b8c5c96347"
+  },
+  {
+   "seq": 4,
+   "ts": "2026-11-06T09:03:15.125617+00:00",
+   "kind": "budget.preflight",
+   "data": {
+    "budget_usd": 0.25,
+    "plan_estimate_usd": 0.02,
+    "projected_usd": 0.019181749999999997,
+    "spent_usd": 0.00132375
+   },
+   "prev_hash": "fc5d28a25225ee3420a6507c8acd0ce0ceb23b09a3401187a26993b8c5c96347",
+   "hash": "c2127a6f3fb758e51b0f3a1aa80e526c830b86f97d11287a07853afe62d541f2"
+  },
+  {
+   "seq": 5,
+   "ts": "2026-11-06T09:03:15.125705+00:00",
+   "kind": "task.provisioning",
+   "data": {
+    "role": "primary",
+    "task_id": "d78825fab7d3"
+   },
+   "prev_hash": "c2127a6f3fb758e51b0f3a1aa80e526c830b86f97d11287a07853afe62d541f2",
+   "hash": "04b8a56f634890f4b03ea84c05f9bd3aac2741844513cd3c7e56c6639443e4f3"
+  },
+  {
+   "seq": 6,
+   "ts": "2026-11-06T09:03:15.130934+00:00",
+   "kind": "task.provisioning",
+   "data": {
+    "background": true,
+    "role": "verifier",
+    "task_id": "d78825fab7d3"
+   },
+   "prev_hash": "04b8a56f634890f4b03ea84c05f9bd3aac2741844513cd3c7e56c6639443e4f3",
+   "hash": "11c26147a56517d65a6d8ccaea7f019c7dea5c02997cdacb7511816dd6c534a3"
+  },
+  {
+   "seq": 7,
+   "ts": "2026-11-06T09:03:48.250118+00:00",
+   "kind": "vm.created",
+   "data": {
+    "admin_access": false,
+    "allowed_domains": [
+     "example.com"
+    ],
+    "egress_policy": "default-deny",
+    "inner_isolation": "gvisor runsc --platform=systrap",
+    "instance_id": "ff6e91c3-2906-4360-890d-d35570616b98",
+    "label": "brz-d78825fab7d3-primary",
+    "plan": "vhp-1c-1gb-amd",
+    "provider": "vultr",
+    "region": "ewr",
+    "role": "primary"
+   },
+   "prev_hash": "11c26147a56517d65a6d8ccaea7f019c7dea5c02997cdacb7511816dd6c534a3",
+   "hash": "970b837f804ff558b10c8ba32d029cb6bebb8042220d48c3d214bdb2c389fdec"
+  },
+  {
+   "seq": 8,
+   "ts": "2026-11-06T09:04:03.774248+00:00",
+   "kind": "vm.created",
+   "data": {
+    "admin_access": false,
+    "allowed_domains": [
+     "example.com"
+    ],
+    "egress_policy": "default-deny",
+    "inner_isolation": "gvisor runsc --platform=systrap",
+    "instance_id": "3b32ce5d-dca3-4725-af23-725a7fbd4421",
+    "label": "brz-d78825fab7d3-verifier",
+    "plan": "vhp-1c-1gb-amd",
+    "provider": "vultr",
+    "region": "ewr",
+    "role": "verifier"
+   },
+   "prev_hash": "970b837f804ff558b10c8ba32d029cb6bebb8042220d48c3d214bdb2c389fdec",
+   "hash": "1beb287479280a185257c2731b3ee237329a0a2b0029814bb0091d616aab08c6"
+  },
+  {
+   "seq": 9,
+   "ts": "2026-11-06T09:04:56.638325+00:00",
+   "kind": "vm.runner_ready",
+   "data": {
+    "executor": "gvisor-systrap",
+    "instance_id": "ff6e91c3-2906-4360-890d-d35570616b98",
+    "main_ip": "45.77.216.39",
+    "role": "primary"
+   },
+   "prev_hash": "1beb287479280a185257c2731b3ee237329a0a2b0029814bb0091d616aab08c6",
+   "hash": "0c9eb3c317e81a7827c9865d525fb4358504e00cf1450fe7454724303d2a48cc"
+  },
+  {
+   "seq": 10,
+   "ts": "2026-11-06T09:04:56.638492+00:00",
+   "kind": "task.running",
+   "data": {
+    "instance_id": "ff6e91c3-2906-4360-890d-d35570616b98",
+    "task_id": "d78825fab7d3"
+   },
+   "prev_hash": "0c9eb3c317e81a7827c9865d525fb4358504e00cf1450fe7454724303d2a48cc",
+   "hash": "b4393d790d50ad83ebd5e0360292264d687bfa8fb07847e4b847eb3cd53f57f5"
+  },
+  {
+   "seq": 11,
+   "ts": "2026-11-06T09:04:56.918941+00:00",
+   "kind": "egress.allowed",
+   "data": {
+    "dst_ip": "104.20.23.154",
+    "dst_port": 443,
+    "proto": "tcp",
+    "role": "primary",
+    "step_id": "fetch_title"
+   },
+   "prev_hash": "b4393d790d50ad83ebd5e0360292264d687bfa8fb07847e4b847eb3cd53f57f5",
+   "hash": "b448f01a05dcb7cddfedaf9535ac7138971ebad2b1900e8374452b0da83da0ff"
+  },
+  {
+   "seq": 12,
+   "ts": "2026-11-06T09:04:56.919074+00:00",
+   "kind": "step.finished",
+   "data": {
+    "attempt": 1,
+    "duration_s": 0.266,
+    "executor": "gvisor-systrap",
+    "exit_code": 0,
+    "files": {
+     "title.txt": "162b81548a8db0ab220f7137405fb003019c266883d4181869662ad7eafdbc4d"
+    },
+    "missing_expected_outputs": [],
+    "role": "primary",
+    "secret_findings": [],
+    "skipped_outputs": [],
+    "stdout_sha256": "aa57cf1d596d2ccff473a2ff749717b9b3c70e436d84084aedde0f1e6adc9534",
+    "step_id": "fetch_title",
+    "timed_out": false
+   },
+   "prev_hash": "b448f01a05dcb7cddfedaf9535ac7138971ebad2b1900e8374452b0da83da0ff",
+   "hash": "da40ffd653beb88b755a1f34bb3ed3108fa2f73c11217292e2cbbc47c2468122"
+  },
+  {
+   "seq": 13,
+   "ts": "2026-11-06T09:04:56.919223+00:00",
+   "kind": "task.verifying",
+   "data": {
+    "mode": "fresh-sandbox re-run",
+    "task_id": "d78825fab7d3"
+   },
+   "prev_hash": "da40ffd653beb88b755a1f34bb3ed3108fa2f73c11217292e2cbbc47c2468122",
+   "hash": "9fa5831cdda3ffdeeea930bc0082571602cde0a1eb594f4cb939851ebbc1be9b"
+  },
+  {
+   "seq": 14,
+   "ts": "2026-11-06T09:05:12.069950+00:00",
+   "kind": "vm.runner_ready",
+   "data": {
+    "executor": "gvisor-systrap",
+    "instance_id": "3b32ce5d-dca3-4725-af23-725a7fbd4421",
+    "main_ip": "45.77.147.68",
+    "role": "verifier"
+   },
+   "prev_hash": "9fa5831cdda3ffdeeea930bc0082571602cde0a1eb594f4cb939851ebbc1be9b",
+   "hash": "0c0a22bd55f37d5e94d5423f1bc473fb6fef3b6a94bc2cb6ee3395a677388637"
+  },
+  {
+   "seq": 15,
+   "ts": "2026-11-06T09:05:12.444843+00:00",
+   "kind": "egress.allowed",
+   "data": {
+    "dst_ip": "104.20.23.154",
+    "dst_port": 443,
+    "proto": "tcp",
+    "role": "verifier",
+    "step_id": "fetch_title"
+   },
+   "prev_hash": "0c0a22bd55f37d5e94d5423f1bc473fb6fef3b6a94bc2cb6ee3395a677388637",
+   "hash": "58e4d3b3cd6fca702f08b1c7a1e8387f5f7b2feb18cd464b13c98b2758800cd3"
+  },
+  {
+   "seq": 16,
+   "ts": "2026-11-06T09:05:12.444961+00:00",
+   "kind": "step.finished",
+   "data": {
+    "attempt": 1,
+    "duration_s": 0.333,
+    "executor": "gvisor-systrap",
+    "exit_code": 0,
+    "files": {
+     "title.txt": "162b81548a8db0ab220f7137405fb003019c266883d4181869662ad7eafdbc4d"
+    },
+    "missing_expected_outputs": [],
+    "role": "verifier",
+    "secret_findings": [],
+    "skipped_outputs": [],
+    "stdout_sha256": "aa57cf1d596d2ccff473a2ff749717b9b3c70e436d84084aedde0f1e6adc9534",
+    "step_id": "fetch_title",
+    "timed_out": false
+   },
+   "prev_hash": "58e4d3b3cd6fca702f08b1c7a1e8387f5f7b2feb18cd464b13c98b2758800cd3",
+   "hash": "8dafd0e63a7d75bca76eeef055cb026d2247a6c15e75b14ecde8090085c9af4f"
+  },
+  {
+   "seq": 17,
+   "ts": "2026-11-06T09:05:12.445162+00:00",
+   "kind": "task.destroying",
+   "data": {
+    "instance_id": "3b32ce5d-dca3-4725-af23-725a7fbd4421",
+    "role": "verifier",
+    "task_id": "d78825fab7d3"
+   },
+   "prev_hash": "8dafd0e63a7d75bca76eeef055cb026d2247a6c15e75b14ecde8090085c9af4f",
+   "hash": "12b6446e761cd2b32e77c14df0c9b1990d426182722331840473f895013e51ae"
+  },
+  {
+   "seq": 18,
+   "ts": "2026-11-06T09:05:12.880846+00:00",
+   "kind": "vm.destroyed",
+   "data": {
+    "attempts": 1,
+    "http_status": 404,
+    "instance_id": "3b32ce5d-dca3-4725-af23-725a7fbd4421",
+    "lifetime_s": 116.8,
+    "method": "GET /v2/instances/{id}",
+    "observed_at": "2026-11-06T09:05:12.880756+00:00",
+    "role": "verifier"
+   },
+   "prev_hash": "12b6446e761cd2b32e77c14df0c9b1990d426182722331840473f895013e51ae",
+   "hash": "71d7bab078561a583b2f7c75ee2f481a1e36ff53082de61e84be68be4d426d8c"
+  },
+  {
+   "seq": 19,
+   "ts": "2026-11-06T09:05:14.632358+00:00",
+   "kind": "cost.tokens",
+   "data": {
+    "completion_tokens": 15,
+    "label": "safety model",
+    "model": "nemotron-3.5-content-safety",
+    "prompt_tokens": 1425,
+    "usd": 7.35e-05
+   },
+   "prev_hash": "71d7bab078561a583b2f7c75ee2f481a1e36ff53082de61e84be68be4d426d8c",
+   "hash": "799d34e5dd9b1d3d0ac3c861678ce09994cc76799d11f213f0695442588c75a7"
+  },
+  {
+   "seq": 20,
+   "ts": "2026-11-06T09:05:14.632494+00:00",
+   "kind": "safety.review",
+   "data": {
+    "items": [
+     {
+      "name": "sales.csv",
+      "source": "input",
+      "verdict": "safe"
+     },
+     {
+      "name": "fetch_title/stdout",
+      "source": "output",
+      "verdict": "safe"
+     },
+     {
+      "name": "fetch_title/title.txt",
+      "source": "output",
+      "verdict": "safe"
+     }
+    ],
+    "model": "nemotron-3.5-content-safety"
+   },
+   "prev_hash": "799d34e5dd9b1d3d0ac3c861678ce09994cc76799d11f213f0695442588c75a7",
+   "hash": "0aac55dde94760f2e57925a132676260fe12849203cc8688fa5a8e5635e73ab8"
+  },
+  {
+   "seq": 21,
+   "ts": "2026-11-06T09:05:14.632600+00:00",
+   "kind": "cost.tokens",
+   "data": {
+    "completion_tokens": 371,
+    "label": "verifier",
+    "model": "qwen3.8-27b",
+    "prompt_tokens": 243,
+    "usd": 0.00040745
+   },
+   "prev_hash": "0aac55dde94760f2e57925a132676260fe12849203cc8688fa5a8e5635e73ab8",
+   "hash": "8669bbbda7ca7f776e896eb59bfd5d24e1ac44c32ab40e1f84c24f287e52b6f9"
+  },
+  {
+   "seq": 22,
+   "ts": "2026-11-06T09:05:14.632674+00:00",
+   "kind": "verify.verdict",
+   "data": {
+    "failed_checks": [],
+    "model_review": {
+     "concerns": [],
+     "confidence": 0.95,
+     "reasons": [
+      "The title of https://example.com is well-known to be 'Example Domain'",
+      "The evidence shows title.txt contains 'Example Domain' which matches the expected title tag text",
+      "Exit code 0 with no stderr indicates the fetch and write operation succeeded",
+      "The input file sales.csv is irrelevant to this task and was not needed"
+     ],
+     "satisfies_task": true
+    },
+    "passed": true,
+    "primary_hashes": {
+     "fetch_title/file/title.txt": "162b81548a8db0ab220f7137405fb003019c266883d4181869662ad7eafdbc4d",
+     "fetch_title/stdout": "aa57cf1d596d2ccff473a2ff749717b9b3c70e436d84084aedde0f1e6adc9534"
+    },
+    "rerun_hashes": {
+     "fetch_title/file/title.txt": "162b81548a8db0ab220f7137405fb003019c266883d4181869662ad7eafdbc4d",
+     "fetch_title/stdout": "aa57cf1d596d2ccff473a2ff749717b9b3c70e436d84084aedde0f1e6adc9534"
+    },
+    "rerun_match": true,
+    "rerun_performed": true,
+    "verifier_model": "qwen3.8-27b"
+   },
+   "prev_hash": "8669bbbda7ca7f776e896eb59bfd5d24e1ac44c32ab40e1f84c24f287e52b6f9",
+   "hash": "95a1e99b5e7b5acee47760f9a2546497335ac576ddf9e0bd1f56c3923ff782ab"
+  },
+  {
+   "seq": 23,
+   "ts": "2026-11-06T09:05:14.632775+00:00",
+   "kind": "task.scanning",
+   "data": {
+    "instance_id": "ff6e91c3-2906-4360-890d-d35570616b98",
+    "task_id": "d78825fab7d3"
+   },
+   "prev_hash": "95a1e99b5e7b5acee47760f9a2546497335ac576ddf9e0bd1f56c3923ff782ab",
+   "hash": "b8c964f2f48ef55de865f29229cd86d7717583de422b8afb7feec5c42664bd17"
+  },
+  {
+   "seq": 24,
+   "ts": "2026-11-06T09:05:14.644652+00:00",
+   "kind": "secret_scan.done",
+   "data": {
+    "clean": true,
+    "env_vars_checked": 16,
+    "files_scanned": 20,
+    "findings": [],
+    "findings_count": 0,
+    "scanner": "brz_runner.secretscan"
+   },
+   "prev_hash": "b8c964f2f48ef55de865f29229cd86d7717583de422b8afb7feec5c42664bd17",
+   "hash": "afa57ac135f682a933faf70ce26af9e61b8bff89657086146b0e7b386859a006"
+  },
+  {
+   "seq": 25,
+   "ts": "2026-11-06T09:05:14.644762+00:00",
+   "kind": "task.destroying",
+   "data": {
+    "instance_id": "ff6e91c3-2906-4360-890d-d35570616b98",
+    "role": "primary",
+    "task_id": "d78825fab7d3"
+   },
+   "prev_hash": "afa57ac135f682a933faf70ce26af9e61b8bff89657086146b0e7b386859a006",
+   "hash": "560bf6e4542f3f84f54983b35c82d29e848be717b83e45614f30b4e0dd232150"
+  },
+  {
+   "seq": 26,
+   "ts": "2026-11-06T09:05:15.066782+00:00",
+   "kind": "vm.destroyed",
+   "data": {
+    "attempts": 1,
+    "http_status": 404,
+    "instance_id": "ff6e91c3-2906-4360-890d-d35570616b98",
+    "lifetime_s": 118.8,
+    "method": "GET /v2/instances/{id}",
+    "observed_at": "2026-11-06T09:05:15.066655+00:00",
+    "role": "primary"
+   },
+   "prev_hash": "560bf6e4542f3f84f54983b35c82d29e848be717b83e45614f30b4e0dd232150",
+   "hash": "32c61305eaa613be7fcf94562d5991f535a61d652ad31eb56491a0c0e776f7d2"
+  },
+  {
+   "seq": 27,
+   "ts": "2026-11-06T09:05:15.068795+00:00",
+   "kind": "task.verified",
+   "data": {
+    "error": null,
+    "task_id": "d78825fab7d3",
+    "total_usd": 0.0196627
+   },
+   "prev_hash": "32c61305eaa613be7fcf94562d5991f535a61d652ad31eb56491a0c0e776f7d2",
+   "hash": "b653e0e83f9ba2015a37a2f3a7eadf6fc5c987096922618e5a1e1c48ae1d9cf3"
+  }
+ ],
+ "audit_head_hash": "b653e0e83f9ba2015a37a2f3a7eadf6fc5c987096922618e5a1e1c48ae1d9cf3",
+ "receipt_ready": true
+}
