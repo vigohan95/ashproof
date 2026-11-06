@@ -35,6 +35,7 @@ from brz.orchestrator import TaskRequest, TaskState
 from . import archive
 from .deps import Deps, build_deps_from_env
 from .guard import DemoGuard, DemoPolicy
+from .scenarios import SCENARIOS, SCRIPTED_LABEL
 
 log = logging.getLogger("brz")
 SWEEP_INTERVAL_S = 300.0
@@ -52,6 +53,8 @@ class TaskCreate(BaseModel):
     allowed_domains: list[str] = Field(default_factory=list)
     files: list[FileIn] = Field(default_factory=list)
     require_approval: bool = True
+    expect_refusals: bool = False  # this task is a test of the walls, so refused packets do not fail it
+    scenario: str | None = None  # a fixed server-side scenario; replaces the task, the files and the plan
 
 
 class ApproveIn(BaseModel):
@@ -186,23 +189,36 @@ def create_app(
             files = {f.name: base64.b64decode(f.content_b64, validate=True) for f in body.files}
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=f"bad base64 in files: {exc}") from exc
+        scenario = None
+        if body.scenario is not None:
+            scenario = SCENARIOS.get(body.scenario)
+            if scenario is None:
+                raise HTTPException(status_code=404, detail="no such scenario")
+            if _deps().mode != "live":  # attack code must only ever run inside a real sandbox
+                raise HTTPException(
+                    status_code=409, detail="this scenario runs attack code, so it only runs on real VMs"
+                )
+            files = scenario.files
         guard: DemoGuard = app.state.guard
         # Caddy appends the real peer, so the last entry is the one a client cannot forge
         forwarded = http.headers.get("x-forwarded-for", "").split(",")[-1].strip()
         guard.admit(
             forwarded or (http.client.host if http.client else "unknown"),
-            task=body.task,
+            task=scenario.task if scenario else body.task,
             budget_usd=body.budget_usd,
-            domains=body.allowed_domains,
+            domains=[] if scenario else body.allowed_domains,
             files=files,
             running=sum(1 for r in store.runs.values() if not r.done()),
         )
         request = TaskRequest(
-            task=body.task,
+            task=scenario.task if scenario else body.task,
             budget_usd=body.budget_usd,
-            allowed_domains=body.allowed_domains,
+            allowed_domains=[] if scenario else body.allowed_domains,
             files=files,
             require_approval=body.require_approval or guard.policy.enabled,  # strangers cannot waive the gate
+            expect_refusals=body.expect_refusals and not scenario,
+            scripted_plan=scenario.plan if scenario else None,
+            scripted_label=SCRIPTED_LABEL if scenario else "",
         )
         orch = _deps().orchestrator
         state = orch.new_task(request)

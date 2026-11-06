@@ -34,12 +34,16 @@ def main() -> int:
     ap.add_argument("--kill-after", type=float)
     ap.add_argument("--kill-when", default="running", help="status that starts the --kill-after countdown")
     ap.add_argument("--file", action="append", default=[])
+    ap.add_argument("--scenario")
+    ap.add_argument("--expect-refusals", action="store_true")
     ap.add_argument("--timeout", type=float, default=400)
     a = ap.parse_args()
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     files = {"sales.csv": CSV} if not a.file else dict(f.split("=", 1) for f in a.file)
     body = {
+        "scenario": a.scenario,
+        "expect_refusals": a.expect_refusals,
         "task": a.task,
         "budget_usd": 0.25,
         "allowed_domains": [d for d in a.domains.split(",") if d],
@@ -131,8 +135,10 @@ def main() -> int:
             | {"proof": s.get("proof")}
             for s in d.get("sandboxes", [])
         ],
+        "error": d.get("error"),
         "verdict": {
-            k: (d.get("verdict") or {}).get(k) for k in ("passed", "rerun_performed", "rerun_match", "model_review")
+            k: (d.get("verdict") or {}).get(k)
+            for k in ("passed", "rerun_performed", "rerun_match", "model_review", "safety")
         },
     }
     (out / f"{a.name}.summary.json").write_text(json.dumps(summary, indent=1) + "\n", encoding="utf-8", newline="\n")

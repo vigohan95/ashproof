@@ -38,6 +38,7 @@ from brz.audit import (
 from brz.cost import CostMeter, PriceTable, StaticPriceTable
 from brz.llm import Plan, Planner, PlanStep, StepOutcome, Verifier, VerifierVerdict
 from brz.llm.client import Usage
+from brz.llm.verifier import Check
 from brz.sandbox.backends import SandboxBackend, SandboxHandle
 from brz.sandbox.runner_client import RunnerClient, RunnerError, RunnerStepResult
 
@@ -48,6 +49,11 @@ class TaskRequest(BaseModel):
     allowed_domains: list[str] = Field(default_factory=list)
     files: dict[str, bytes] = Field(default_factory=dict)  # name -> content
     require_approval: bool = True  # park on new egress domains until a human approves (UI toggle)
+    # The requester, never the plan, can say that refused packets are the point of the task (a test of the walls).
+    expect_refusals: bool = False
+    # Set only by the server's fixed scenarios: this plan runs instead of asking the model.
+    scripted_plan: Plan | None = None
+    scripted_label: str = ""
 
 
 @dataclass
@@ -110,6 +116,7 @@ class TaskState:
     rerun_outcomes: list[StepOutcome] | None = None
     verdict: VerifierVerdict | None = None
     egress_attempts: list[EgressAttempt] = field(default_factory=list)
+    refused_packets: int = 0  # refused during steps that have a network; a step without one cannot send anything
     secret_scan: SecretScanSummary | None = None
     receipt: Receipt | None = None
     error: str = ""
@@ -137,6 +144,8 @@ class TaskState:
             "kill_requested": self.kill_requested,
             "plan": self.plan.model_dump() if self.plan else None,
             "planner_model": self.planner_model,
+            "scripted": self.request.scripted_plan is not None,
+            "expect_refusals": self.request.expect_refusals,
             "sandboxes": [
                 {
                     "role": h.role,
@@ -259,6 +268,9 @@ class Orchestrator:
     async def _plan(self, state: TaskState) -> None:
         state.set_status("planning")
         req = state.request
+        if req.scripted_plan is not None:
+            self._use_scripted_plan(state)
+            return
         res = await self.planner.plan(
             req.task,
             budget_usd=req.budget_usd,
@@ -289,6 +301,28 @@ class Orchestrator:
         if res.plan.refused_reason:  # no VM, and never "verified": nothing was done
             state.audit.append("plan.refused", {"reason": res.plan.refused_reason})
             raise TaskFailed(f"refused by the planner: {res.plan.refused_reason}")
+
+    def _use_scripted_plan(self, state: TaskState) -> None:
+        """A fixed plan from the server. It is marked in the chain and passes every gate a model's plan does."""
+        req = state.request
+        state.plan = req.scripted_plan.model_copy(deep=True)
+        state.planner_model = req.scripted_label
+        for step in state.plan.steps:
+            step.timeout_s = min(step.timeout_s, self.config.max_step_timeout_s)
+        state.pending_domains = state.plan.unapproved_domains(req.allowed_domains)
+        state.audit.append(
+            "plan.created",
+            {
+                "model": state.planner_model,
+                "scripted": True,
+                "steps": [s.model_dump(exclude={"code"}) | {"code_sha256": _sha(s.code)} for s in state.plan.steps],
+                "required_domains": state.plan.required_domains,
+                "unapproved_domains": state.pending_domains,
+                "est_cost_usd": state.plan.est_cost_usd,
+                "risk_notes": state.plan.risk_notes,
+            },
+        )
+        self._check_kill(state)
 
     async def _approval_gate(self, state: TaskState) -> None:
         if not state.pending_domains:
@@ -438,7 +472,7 @@ class Orchestrator:
                     raise
                 self._record_step(state, handle, current, result, attempts, repaired, record)
                 ok = result.exit_code == 0 and not result.missing_expected_outputs
-                if ok or not record or attempts > self.config.max_repairs:
+                if ok or not record or attempts > self.config.max_repairs or state.request.scripted_plan:
                     break
                 fixed, usage = await self.planner.repair(
                     state.request.task,
@@ -500,6 +534,8 @@ class Orchestrator:
                 raw=str(a.get("raw", "")),
             )
             state.egress_attempts.append(attempt)
+            if step.needs_network and attempt.verdict == "denied":
+                state.refused_packets += 1
             state.audit.append(
                 f"egress.{attempt.verdict}",
                 {
@@ -573,6 +609,7 @@ class Orchestrator:
                 n: b[: self.config.preview_bytes].decode("utf-8", "replace") for n, b in state.request.files.items()
             },
         )
+        self._check_refusals(state, verdict)
         state.verdict = verdict
         self._charge_tokens(state, verdict.verifier_model, verdict.usage, "verifier")
         state.audit.append(
@@ -588,6 +625,21 @@ class Orchestrator:
                 "model_review": verdict.model_review.model_dump() if verdict.model_review else None,
             },
         )
+
+    def _check_refusals(self, state: TaskState, verdict: VerifierVerdict) -> None:
+        """A task that tried to leave and was stopped did not go well, however good its output looks."""
+        assert state.plan is not None
+        if not any(s.needs_network for s in state.plan.steps):
+            return
+        n = state.refused_packets
+        if n == 0 or state.request.expect_refusals:
+            detail = f"{n} packets refused, as the requester expected" if n else "no packet was refused"
+            verdict.checks.append(Check(name="egress:nothing_unexpected_refused", passed=True, detail=detail))
+            return
+        detail = f"{n} packets to addresses outside the policy were refused by the kernel"
+        verdict.checks.append(Check(name="egress:nothing_unexpected_refused", passed=False, detail=detail))
+        verdict.passed = False
+        state.error = f"contained: {detail}"
 
     async def _scan_and_egress(self, state: TaskState, handle: SandboxHandle) -> None:
         self._check_kill(state)

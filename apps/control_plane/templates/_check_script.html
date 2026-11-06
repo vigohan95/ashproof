@@ -143,7 +143,7 @@ function tamperOneByte(text) {
   const pos = m ? at + m.index + m[0].length - 1 : text.indexOf(":", at) + 3;
   const was = text[pos];
   const now = was === "1" ? "2" : "1";
-  return { text: text.slice(0, pos) + now + text.slice(pos + 1), note: "Changed byte " + pos + " of the file from " + was + " to " + now + (m ? ", inside a " + m[1] + " field" : "") + "." };
+  return { text: text.slice(0, pos) + now + text.slice(pos + 1), note: "Changed byte " + pos + " of the file from " + was + " to " + now + (m ? ", in the " + m[1] + " field" : "") + "." };
 }
 
 async function runCheck(text) {

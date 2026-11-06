@@ -45,9 +45,11 @@
 <script>
 const DEMO_CSV = {{ demo_csv | tojson }};
 const PRESETS = {{ presets | tojson }};
+let chosen = {};
 function preset(i) {
-  document.getElementById("task").value = PRESETS[i].task;
-  document.getElementById("domains").value = PRESETS[i].domains;
+  chosen = PRESETS[i];
+  document.getElementById("task").value = chosen.task;
+  document.getElementById("domains").value = chosen.domains;
 }
 function toB64(bytes) { let s = ""; bytes.forEach(b => s += String.fromCharCode(b)); return btoa(s); }
 async function submitTask(ev) {
@@ -69,6 +71,8 @@ async function submitTask(ev) {
     allowed_domains: domains,
     files: files,
     require_approval: document.getElementById("require_approval").checked,
+    expect_refusals: !!chosen.expect_refusals,
+    scenario: chosen.scenario || null,
   };
   const r = await fetch("/tasks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
   if (!r.ok) {

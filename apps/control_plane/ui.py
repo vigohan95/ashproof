@@ -150,6 +150,7 @@ async def home(request: Request) -> HTMLResponse:
             request,
             replay_id=replay.id if replay else None,
             replay_when=replay.created_at.strftime("%Y-%m-%d %H:%M UTC") if replay else "",
+            replay_scripted=bool(replay and replay.request.scripted_plan),
             pinned=_pinned(store, featured),
             evidence=_load("evidence.json"),
             presets=PRESETS,
@@ -177,7 +178,7 @@ async def index(request: Request) -> HTMLResponse:
             "id": s.id,
             "status": s.status,
             "created_at": s.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-            "task": short_title(s.request.task),
+            "task": short_title(s.request.task, scripted=bool(s.request.scripted_plan)),
             "total_usd": s.cost.total_usd,
             "vms": len(s.sandboxes),
             "destroyed": all(h.proof and h.proof.destroyed for h in s.sandboxes) if s.sandboxes else None,
@@ -218,5 +219,6 @@ async def receipt_page(request: Request, task_id: str) -> HTMLResponse:
             verify_ok=ok,
             verify_problems=problems,
             receipt_html=markdown_to_html(receipt.to_markdown()),
+            outputs=sorted(state.outputs),
         ),
     )

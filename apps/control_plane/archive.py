@@ -47,7 +47,7 @@ class ArchivedTask:
         self.status: str = data["status"]
         self.created_at = datetime.fromisoformat(data["created_at"])
         self.finished_at = datetime.fromisoformat(data["finished_at"]) if data["finished_at"] else self.created_at
-        self.request = SimpleNamespace(task=data["task"])
+        self.request = SimpleNamespace(task=data["task"], scripted_plan=data["timeline"].get("scripted") or None)
         self.cost = SimpleNamespace(total_usd=data["total_usd"])
         self.sandboxes = [SimpleNamespace(proof=SimpleNamespace(destroyed=d)) for d in data["destroyed"]]
         self.receipt = Receipt.model_validate(data["receipt"]) if data["receipt"] else None

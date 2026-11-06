@@ -6,6 +6,13 @@ DEMO_CSV = "region,amount\nnorth,10\nsouth,20\nnorth,5\nwest,2.5\n"
 
 PRESETS: list[dict] = [
     {
+        "key": "compromised-agent",
+        "title": "Compromised agent",
+        "task": "Scripted attack: a fixed plan and a CSV with an injected note. This text and any file are not used.",
+        "domains": "",
+        "scenario": "compromised-agent",
+    },
+    {
         "key": "csv",
         "title": "Total a CSV",
         "task": "Total the amount column per region in sales.csv and write summary.json",
@@ -26,6 +33,7 @@ PRESETS: list[dict] = [
             "one connected. Use needs_network true. Those addresses are expected to be blocked, so list no domains."
         ),
         "domains": "",
+        "expect_refusals": True,
     },
     {
         "key": "long",
@@ -41,8 +49,10 @@ PRESETS: list[dict] = [
 _TITLES = {p["task"]: p["title"] for p in PRESETS}
 
 
-def short_title(task: str, limit: int = 90) -> str:
+def short_title(task: str, limit: int = 90, scripted: bool = False) -> str:
     """What a task list shows: the preset's name, or the first words of the task."""
+    if scripted:
+        return "Compromised agent (scripted attack)"
     title = _TITLES.get(task)
     if title:
         return title

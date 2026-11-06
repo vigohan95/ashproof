@@ -30,6 +30,10 @@
 
 {% include "_check.html" %}
 
+{% if outputs %}
+<div class="panel" style="font-size:14px">Output files: {% for n in outputs %}<a href="/tasks/{{ task_id }}/outputs/{{ n }}">{{ n }}</a>{% if not loop.last %}, {% endif %}{% endfor %}. Their hashes are in the steps table below.</div>
+{% endif %}
+
 <div class="panel receipt">
 {{ receipt_html | safe }}
 </div>

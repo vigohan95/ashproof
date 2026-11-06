@@ -10,6 +10,7 @@
 </div>
 <p id="task-text" class="muted"></p>
 
+<div id="scripted-note" class="panel" style="display:none;border-color:var(--warn)"><strong class="warn">Scripted attack.</strong> This plan is a fixed script standing in for an agent hijacked by the note in the CSV. No model wrote it, and Ashproof's real planner never sees file content. The VMs, the kernel log lines and the receipt are real. The note in the CSV does reach the verifier model, which reads a preview of every input.</div>
 <div id="task-error" class="panel bad" style="display:none"></div>
 <div id="approval" class="panel" style="display:none; border-color:var(--warn)">
   <strong class="warn">Approval required.</strong> The planner asked for egress to domains that are not pre-approved.
@@ -66,6 +67,7 @@ function money(x) { return "$" + (x ?? 0).toFixed(4); }
 function render(d) {
   const st = document.getElementById("status"); st.textContent = d.status; st.className = "badge " + d.status;
   document.getElementById("task-text").textContent = d.task;
+  document.getElementById("scripted-note").style.display = d.scripted ? "" : "none";
   const er = document.getElementById("task-error"); er.textContent = d.error || ""; er.style.display = d.error ? "" : "none";
   document.getElementById("stat-cost").firstChild.textContent = money(d.cost.total_usd);
   const destroyed = d.sandboxes.filter(s => s.destroyed).length;

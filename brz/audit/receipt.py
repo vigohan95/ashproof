@@ -138,6 +138,29 @@ class Receipt(BaseModel):
             problems.append("audit_head_hash does not match the events")
         return (not problems), problems
 
+    def refusals(self) -> list[dict[str, Any]]:
+        """What was stopped, read from the chain and the kernel's lines. One row per kind of thing."""
+        rows: list[dict[str, Any]] = []
+        for e in self.audit_events:
+            if e.kind == "plan.refused":
+                rows.append({"what": e.data.get("reason", ""), "by": "planner, no VM created", "count": 1})
+            elif e.kind == "approval.rejected":
+                rows.append(
+                    {"what": f"egress to {e.data.get('domains')}", "by": "human at the approval gate", "count": 1}
+                )
+            elif e.kind == "step.repair_rejected":
+                rows.append({"what": f"repair of {e.data.get('step_id')}", "by": "repair rules", "count": 1})
+        seen: dict[tuple, dict[str, Any]] = {}
+        for a in self.egress.attempts:
+            if a.verdict != "denied":
+                continue
+            key = (a.proto, a.dst_ip, a.dst_port)
+            row = seen.setdefault(
+                key, {"what": f"{a.proto} to {a.dst_ip}:{a.dst_port or ''}", "by": "kernel (nftables)", "count": 0}
+            )
+            row["count"] += 1
+        return rows + list(seen.values())
+
     @property
     def all_vms_destroyed(self) -> bool:
         return all(s.destroyed for s in self.sandboxes if s.provider != "local")
@@ -162,6 +185,22 @@ class Receipt(BaseModel):
             lines.append(f"- **Signed:** Ed25519, key `{sig.get('key_id')}`, at {sig.get('signed_at')}")
         else:
             lines.append("- **Signed:** no")
+        if str(self.plan.get("task_summary", "")).startswith("SCRIPTED ATTACK"):
+            lines.append(
+                "- **Plan source:** a fixed attack script standing in for a hijacked agent. No model wrote it. "
+                "The VMs, the kernel log lines and this receipt are real."
+            )
+        lines.append("")
+        lines.append("## What was refused")
+        lines.append("")
+        refused = self.refusals()
+        if refused:
+            lines.append("| Refused | Stopped by | Count |")
+            lines.append("|---|---|---|")
+            for row in refused:
+                lines.append(f"| DENIED {row['what']} | {row['by']} | {row['count']} |")
+        else:
+            lines.append("Nothing was refused.")
         lines.append("")
         lines.append("## Blast radius")
         lines.append("")

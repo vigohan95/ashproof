@@ -67,8 +67,8 @@
     <h1>An AI agent does its work on a Vultr VM that is deleted afterwards. You keep a receipt.</h1>
     <p class="for">Ashproof is for <strong>the security reviewer who has to approve an AI agent before it works on finance data</strong>. The receipt shows what ran, what was refused and that the VM is gone, so the review rests on evidence and not on the agent's word.</p>
     <div class="act">
-      <button class="run" id="run-live" type="button" onclick="runLive(0)">Run a live task</button>
-      <button class="alt" type="button" onclick="runLive(2)">Run a live wall test</button>
+      <button class="run" id="run-live" type="button" onclick="runLive(0)">Run the compromised agent live</button>
+      <button class="alt" type="button" onclick="runLive(1)">Run a normal task live</button>
     </div>
     <p class="state" id="state">Creates two real VMs. Takes about 2 minutes. One task at a time.</p>
   </div>
@@ -79,6 +79,7 @@
       <div class="rec">Recording, not live</div>
       <p>Task {{ replay_id }}, run {{ replay_when }} on Vultr.</p>
       <p id="till-scale">Real events in their real order, time compressed to about 15 seconds.</p>
+      {% if replay_scripted %}<p>The plan is a fixed attack script standing in for a hijacked agent. No model wrote it. The VMs, the kernel log and the receipt are real.</p>{% endif %}
     </div>
     <div class="roll" id="roll" aria-live="off"></div>
     <div class="bottom">
@@ -121,7 +122,7 @@
 {% block scripts %}
 <script>
 const REPLAY_ID = {{ replay_id | tojson }};
-const PRESETS = {{ presets | tojson }};
+const LIVE = {{ presets | tojson }};
 const DEMO_CSV = {{ demo_csv | tojson }};
 const PLAY_SECONDS = 15;
 let timers = [];
@@ -150,7 +151,8 @@ function toLines(d) {
     else if (e.kind === "step.finished") add(e, "Step " + x.step_id + " finished on the " + x.role + " VM, exit " + x.exit_code);
     else if (e.kind === "verify.verdict") {
       add(e, x.rerun_match ? "Both VMs produced identical output hashes" : "Outputs differ between the VMs");
-      if (x.verifier_model) add(e, x.verifier_model + " reviewed the result: " + (x.passed ? "pass" : "fail"), x.passed ? "" : "refused");
+      if (x.model_review) add(e, x.verifier_model + " reviewed the work: " + (x.model_review.satisfies_task ? "task done" : "task not done"));
+      for (const c of x.failed_checks || []) add(e, "Failed: " + c.detail, "refused");
     }
     else if (e.kind === "secret_scan.done") add(e, "Secret scan: " + (x.clean ? "clean" : x.findings_count + " finding(s)"));
     else if (e.kind === "vm.destroyed") add(e, x.role + " VM deleted, GET returned " + x.http_status, "gone");
@@ -233,12 +235,13 @@ async function showState() {
 }
 
 async function runLive(i) {
-  const p = PRESETS[i];
+  const p = LIVE[i];
   const state = document.getElementById("state");
   state.textContent = "Starting...";
   const body = {
     task: p.task, budget_usd: 0.25,
     allowed_domains: p.domains ? p.domains.split(",") : [],
+    scenario: p.scenario || null,
     files: [{ name: "sales.csv", content_b64: btoa(DEMO_CSV) }],
   };
   const r = await fetch("/tasks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
