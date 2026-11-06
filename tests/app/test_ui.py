@@ -15,6 +15,7 @@ from apps.control_plane import ui as ui_module
 from apps.control_plane.app import create_app
 from apps.control_plane.demo import demo_plan, demo_responder
 from apps.control_plane.deps import build_mock_deps
+from apps.control_plane.presets import PRESETS, short_title
 from apps.control_plane.ui import markdown_to_html
 from brz.llm import FakeLLM, Planner
 from brz.vultr.mock import MockVultrState
@@ -178,4 +179,7 @@ async def test_evidence_page_matches_the_stored_results(ui):
 async def test_task_list_does_not_print_long_preset_text(ui):
     client, _, _ = ui
     r = await client.get("/ui/tasks")
-    assert "This is an authorised test" not in r.text and "Test the walls" in r.text
+    assert "This is an authorised test" not in r.text
+    walls = next(p for p in PRESETS if p["key"] == "walls")
+    assert short_title(walls["task"]) == "Test the walls"
+    assert short_title("x" * 200).endswith("...") and short_title("any", scripted=True).startswith("Compromised")
