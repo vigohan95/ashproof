@@ -166,7 +166,7 @@ Known limitations:
 
 ## Status: what ran on Vultr
 
-All of this ran on real Vultr VMs in `ewr` on 2026-11-06, with real models. The final run used commit `5c771a2`; only
+All of this ran on real Vultr VMs in `ewr` on 2026-11-06, with real models. The final run used commit `fd2caaf`; only
 evidence, recordings, docs and the evidence page's wording changed after it. Evidence is in
 [`docs/evidence/vultr-2026-11-06/`](docs/evidence/vultr-2026-11-06/).
 
