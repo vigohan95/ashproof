@@ -67,7 +67,7 @@ async def main() -> int:
     log: dict = {"task_id": task_id, "plan": cfg.plan, "region": cfg.region, "only": a.only}
     rc = 1
     try:
-        handle = await backend.provision(task_id, "primary", [])
+        handle = await backend.provision(task_id, "primary", ["example.com"])  # C01 fetches it through the allowlist
         ip = handle.meta["main_ip"]
         target = f"root@{ip}"
         client = RunnerClient(handle.runner_url, task_id=task_id, token_key=handle.token_key)
@@ -86,7 +86,7 @@ async def main() -> int:
         only = f"--only {a.only}" if a.only else ""
         run = (
             "systemctl stop brz-runner; mkdir -p /srv/brz-attacks /var/lib/brz/bundles; cd /root/ashproof; "
-            "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/root/ashproof:/root/ashproof/sandbox/runner:/opt/brz-deps/site-packages "
+            f"BRZ_GIT_HEAD={head} PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/root/ashproof:/root/ashproof/sandbox/runner:/opt/brz-deps/site-packages "
             f"nohup timeout -k 10 {SUITE_LIMIT_S} python3 -m tests.attacks --out /root/out {only} "
             f"--heading '{a.heading}' > /root/suite.log 2>&1; echo finished $? > /root/suite.done"
         )

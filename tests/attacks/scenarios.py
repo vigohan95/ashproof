@@ -134,7 +134,13 @@ print('kernel', os.uname().release, 'uid', os.getuid())
     net = "curl -m 15 -sS -o /dev/null -w 'HTTP %{http_code}' https://example.com"
     hosts = "/tmp/brz-control.hosts"
     try:
-        pinned = f"{socket.gethostbyname('example.com')} example.com\n"
+        # A locked-down VM has no DNS at all: use the name it pinned at boot, as a real step would.
+        with open("/etc/brz/hosts") as fh:
+            pinned = "".join(line for line in fh if line.rstrip().endswith(" example.com"))
+    except OSError:
+        pinned = ""
+    try:
+        pinned = pinned or f"{socket.gethostbyname('example.com')} example.com\n"
     except OSError as exc:
         return False, {"harness": f"cannot resolve example.com from the host: {exc}"}
     with open(hosts, "w") as fh:

@@ -30,7 +30,9 @@ def _cmd(args: list[str]) -> str:
 
 
 def environment() -> dict:
-    head = _cmd(["git", "-c", "safe.directory=*", "-C", str(H.REPO), "rev-parse", "--short", "HEAD"])
+    head = os.environ.get("BRZ_GIT_HEAD") or _cmd(
+        ["git", "-c", "safe.directory=*", "-C", str(H.REPO), "rev-parse", "--short", "HEAD"]
+    )
     dirty = subprocess.run(
         ["git", "-c", "safe.directory=*", "-C", str(H.REPO), "status", "--porcelain", "--", "sandbox", "brz"],
         capture_output=True,
