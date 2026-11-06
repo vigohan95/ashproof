@@ -1,15 +1,15 @@
 {
-  "replay": "9cc672e2e9a4",
+  "replay": "ad7f7093dece",
   "pinned": [
     {
-      "id": "fe097f3ec1cf",
-      "title": "Normal work",
-      "note": "A CSV totalled on one VM, repeated on a second VM with identical output hashes, both VMs deleted."
+      "id": "ad7f7093dece",
+      "title": "Compromised agent",
+      "note": "A scripted hijack looks for keys and tries to send the file out, on two real VMs. The kernel refuses every packet and the task fails."
     },
     {
-      "id": "9cc672e2e9a4",
-      "title": "Hits the wall",
-      "note": "A step tries to reach 1.1.1.1 and the cloud metadata service. The kernel drops both and logs them."
+      "id": "ce3b53226fa0",
+      "title": "Normal work",
+      "note": "A CSV totalled on one VM, repeated on a second VM with identical output hashes, both VMs deleted."
     },
     {
       "id": "3c8cd25144f3",
