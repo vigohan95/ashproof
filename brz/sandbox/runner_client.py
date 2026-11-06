@@ -93,9 +93,10 @@ class RunnerClient:
         self.tokens_issued += 1
         return sign_token(self._key, task_id=self.task_id, scope=[action], step_id=step_id, ttl_s=self.token_ttl_s)
 
-    async def _post(self, path: str, body: dict[str, Any]) -> dict[str, Any]:
+    async def _post(self, path: str, body: dict[str, Any], timeout: float | None = None) -> dict[str, Any]:
+        kw = {} if timeout is None else {"timeout": timeout}
         try:
-            resp = await self._http.post(path, json=body)
+            resp = await self._http.post(path, json=body, **kw)
         except httpx.TransportError as exc:
             raise RunnerError(f"runner unreachable: {exc!r}") from exc
         data: Any
@@ -117,11 +118,19 @@ class RunnerClient:
         return resp.json()
 
     async def wait_ready(
-        self, *, timeout: float = 240.0, interval: float = 3.0, sleep=asyncio.sleep, clock=time.monotonic
+        self,
+        *,
+        timeout: float = 240.0,
+        interval: float = 3.0,
+        sleep=asyncio.sleep,
+        clock=time.monotonic,
+        should_stop=None,
     ) -> dict[str, Any]:
         deadline = clock() + timeout
         last_err = ""
         while True:
+            if should_stop is not None and should_stop():
+                raise RunnerError("stopped while waiting for the runner")
             try:
                 h = await self.health()
                 if h.get("task_id") == self.task_id and h.get("ok"):
@@ -145,7 +154,7 @@ class RunnerClient:
         }
         self.tokens_issued += 1
         token = sign_step_token(self._key, task_id=self.task_id, step=payload, ttl_s=self.token_ttl_s)
-        data = await self._post("/steps", {"token": token, "step": payload})
+        data = await self._post("/steps", {"token": token, "step": payload}, timeout=step.timeout_s + 60.0)
         files_out: dict[str, RunnerFile] = {}
         for name, meta in (data.get("files") or {}).items():
             content = base64.b64decode(meta["content_b64"]) if meta.get("content_b64") else None
@@ -158,11 +167,12 @@ class RunnerClient:
         body: dict[str, Any] = {"token": self._token("scan")}
         if paths:
             body["paths"] = paths
-        return await self._post("/scan", body)
+        return await self._post("/scan", body, timeout=120.0)
 
     async def egress(self) -> list[dict[str, Any]]:
-        data = await self._post("/egress", {"token": self._token("egress")})
+        data = await self._post("/egress", {"token": self._token("egress")}, timeout=15.0)
         return list(data.get("attempts") or [])
 
     async def revoke(self, *, poweroff: bool = False) -> dict[str, Any]:
-        return await self._post("/revoke", {"token": self._token("revoke"), "poweroff": poweroff})
+        # short on purpose: an unreachable VM must not hold up the kill switch; DELETE follows regardless
+        return await self._post("/revoke", {"token": self._token("revoke"), "poweroff": poweroff}, timeout=5.0)

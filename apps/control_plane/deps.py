@@ -9,7 +9,8 @@ Environment variables (live mode):
     VULTR_API_KEY, VULTR_REGION, VULTR_PLAN, VULTR_OS_ID, VULTR_SNAPSHOT_ID, VULTR_FIREWALL_GROUP_ID,
     BRZ_CONTROL_PLANE_CIDR, BRZ_RUNNER_PORT, BRZ_SANDBOX_TTL_MINUTES, BRZ_INNER_ISOLATION (gvisor|none),
     INFERENCE_API_KEY, INFERENCE_BASE_URL, BRZ_PLANNER_MODEL, BRZ_VERIFIER_MODEL, BRZ_VERIFY_FRESH_SANDBOX (1|0),
-    BRZ_REASONING_EFFORT (default low; the default of the models themselves is too slow and can return nothing)
+    BRZ_REASONING_EFFORT (default low; the default of the models themselves is too slow and can return nothing),
+    BRZ_PARALLEL_VERIFIER_BOOT (1|0), BRZ_MAX_STEP_TIMEOUT_S, BRZ_APPROVAL_TIMEOUT_S
 """
 
 from __future__ import annotations
@@ -122,6 +123,9 @@ def build_live_deps() -> Deps:
             verify_in_fresh_sandbox=_env_bool("BRZ_VERIFY_FRESH_SANDBOX", True),
             planner_model_label=planner_model,
             verifier_model_label=verifier_model,
+            parallel_verifier_boot=_env_bool("BRZ_PARALLEL_VERIFIER_BOOT", True),
+            max_step_timeout_s=int(os.environ.get("BRZ_MAX_STEP_TIMEOUT_S", "1800")),
+            approval_timeout_s=float(os.environ.get("BRZ_APPROVAL_TIMEOUT_S", "900")),
         ),
     )
     return Deps(orchestrator=orch, backend=backend, mode="live", llm_clients=[planner_llm, verifier_llm])

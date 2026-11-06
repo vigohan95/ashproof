@@ -113,6 +113,7 @@ def _ctx(request: Request, **extra):
         "mode": deps.mode,
         "provider": deps.backend.provider,
         "inner_isolation": deps.backend.inner_isolation,
+        "demo": request.app.state.guard.status(),
         **extra,
     }
 

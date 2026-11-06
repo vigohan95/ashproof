@@ -68,7 +68,18 @@ def test_live_price_table_from_payloads():
         {"id": "vc2-1c-1gb", "monthly_cost": 5.0},  # monthly / 672
         {"id": "weird", "monthly_cost": None},
     ]
-    models = [{"id": "glm-5.3", "pricing": {"input": 0.8, "output": 3.2}}, {"id": "no-pricing"}]
+    models = [
+        {
+            "id": "glm-5.3",
+            "input_modalities": [
+                {"type": "text", "pricing": [{"type": "prompt", "unit": "token", "cost_usd": "0.0000008"}]}
+            ],
+            "output_modalities": [
+                {"type": "text", "pricing": [{"type": "completion", "unit": "token", "cost_usd": "0.0000032"}]}
+            ],
+        },
+        {"id": "no-pricing"},
+    ]
     live = LivePriceTable.from_payloads(plans, models)
     assert live.vm_hourly("vx1-g-2c-8g") == 0.07
     assert live.vm_hourly("vc2-1c-1gb") == pytest.approx(5.0 / 672, rel=1e-3)

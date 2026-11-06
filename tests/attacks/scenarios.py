@@ -1413,7 +1413,9 @@ def _gvisor_backend(ctx: Ctx, prefix: str):
             self.provisioned: list[dict] = []
             self.runners: dict[str, RunnerHarness] = {}
 
-        async def provision(self, task_id: str, role: str, allowed_domains: list[str]) -> SandboxHandle:
+        async def provision(
+            self, task_id: str, role: str, allowed_domains: list[str], on_created=None
+        ) -> SandboxHandle:
             r = ctx.runner(f"{prefix}-{role}-{len(self.provisioned)}", task_id=task_id).start()
             self.runners[f"local-{role}"] = r
             self.provisioned.append({"role": role, "allowed_domains": list(allowed_domains)})

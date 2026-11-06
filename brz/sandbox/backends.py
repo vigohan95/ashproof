@@ -13,6 +13,7 @@ from __future__ import annotations
 import os
 import sys
 import tempfile
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Protocol
@@ -76,7 +77,13 @@ class SandboxBackend(Protocol):
     provider: str
     inner_isolation: str
 
-    async def provision(self, task_id: str, role: str, allowed_domains: list[str]) -> SandboxHandle: ...
+    async def provision(
+        self,
+        task_id: str,
+        role: str,
+        allowed_domains: list[str],
+        on_created: Callable[[SandboxHandle], None] | None = None,
+    ) -> SandboxHandle: ...
 
     async def destroy(self, handle: SandboxHandle) -> ProofOfDestruction: ...
 
@@ -123,7 +130,14 @@ class VultrSandboxBackend:
             sshkey_id=list(c.sshkey_ids),
         )
 
-    async def provision(self, task_id: str, role: str, allowed_domains: list[str]) -> SandboxHandle:
+    async def provision(
+        self,
+        task_id: str,
+        role: str,
+        allowed_domains: list[str],
+        on_created: Callable[[SandboxHandle], None] | None = None,
+    ) -> SandboxHandle:
+        """``on_created`` fires as soon as the instance exists, so a kill during boot can reach it."""
         key = new_key()
         user_data = render_cloud_init(self._spec(task_id, allowed_domains, key))
         inst = await self.client.create_instance(self._instance_spec(task_id, role, user_data))
@@ -144,6 +158,8 @@ class VultrSandboxBackend:
             },
         )
         self.user_data_cache[inst.id] = user_data
+        if on_created is not None:
+            on_created(handle)
         active = await self.client.wait_until_active(
             inst.id, timeout=self.config.vm_active_timeout_s, interval=self.config.vm_poll_interval_s
         )
@@ -186,8 +202,14 @@ class LocalRunnerVultrBackend(VultrSandboxBackend):
         self.python_bin = python_bin
         self.runners: dict[str, BackgroundRunner] = {}
 
-    async def provision(self, task_id: str, role: str, allowed_domains: list[str]) -> SandboxHandle:
-        handle = await super().provision(task_id, role, allowed_domains)
+    async def provision(
+        self,
+        task_id: str,
+        role: str,
+        allowed_domains: list[str],
+        on_created: Callable[[SandboxHandle], None] | None = None,
+    ) -> SandboxHandle:
+        handle = await super().provision(task_id, role, allowed_domains, on_created)
         work = os.path.join(self.workroot, task_id, role)
         os.makedirs(work, exist_ok=True)
         egress: EgressReader = self.egress_reader_factory(role)

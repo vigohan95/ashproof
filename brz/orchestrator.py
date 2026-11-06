@@ -61,6 +61,8 @@ class OrchestratorConfig:
     preview_bytes: int = 4000
     planner_model_label: str = ""
     verifier_model_label: str = ""
+    parallel_verifier_boot: bool = False  # boot the second VM while the first works; saves one boot per task
+    max_step_timeout_s: int = 1800
 
 
 def repair_violations(original: PlanStep, fixed: PlanStep) -> list[str]:
@@ -113,6 +115,7 @@ class TaskState:
     error: str = ""
     outputs: dict[str, bytes] = field(default_factory=dict)  # final output files (primary run)
     _clients: dict[str, RunnerClient] = field(default_factory=dict)
+    _destroy_locks: dict[str, asyncio.Lock] = field(default_factory=dict)
 
     def set_status(self, status: str, **data: Any) -> None:
         self.status = status
@@ -206,15 +209,18 @@ class Orchestrator:
     # ------------------------------------------------------------------ run
     async def run(self, state: TaskState) -> Receipt:
         final_status = "error"
+        verifier_boot: asyncio.Task | None = None
         try:
             await self._plan(state)
             await self._approval_gate(state)
             self._budget_preflight(state)
+            if self.config.verify_in_fresh_sandbox and self.config.parallel_verifier_boot:
+                verifier_boot = asyncio.create_task(self._provision(state, "verifier", background=True))
             primary = await self._provision(state, "primary")
             await self._execute_steps(state, primary, record=True)
             if self.config.verify_in_fresh_sandbox:
                 state.set_status("verifying", mode="fresh-sandbox re-run")
-                verifier_vm = await self._provision(state, "verifier")
+                verifier_vm = await (verifier_boot or self._provision(state, "verifier"))
                 state.rerun_outcomes = await self._execute_steps(state, verifier_vm, record=False)
                 await self._destroy(state, verifier_vm)
             else:
@@ -232,10 +238,17 @@ class Orchestrator:
             state.error = str(exc)
             final_status = "failed"
         except Exception as exc:  # noqa: BLE001 - anything else is recorded, VMs still destroyed
-            state.error = f"{type(exc).__name__}: {exc}"
-            state.audit.append("task.error", {"error": state.error})
-            final_status = "error"
+            if state.kill_requested:  # a VM deleted under a waiting call is the kill working, not a fault
+                final_status = "killed"
+            else:
+                state.error = f"{type(exc).__name__}: {exc}"
+                state.audit.append("task.error", {"error": state.error})
+                final_status = "error"
         finally:
+            if verifier_boot is not None:
+                if not verifier_boot.done():
+                    verifier_boot.cancel()
+                await asyncio.gather(verifier_boot, return_exceptions=True)
             await self._destroy_all(state)
             await self._close_clients(state)
             state.finished_at = datetime.now(timezone.utc)
@@ -254,6 +267,8 @@ class Orchestrator:
             attachments=sorted(req.files),
             vm_plan=getattr(getattr(self.backend, "config", None), "plan", "vhp-1c-1gb-amd"),
         )
+        for step in res.plan.steps:
+            step.timeout_s = min(step.timeout_s, self.config.max_step_timeout_s)
         state.plan = res.plan
         state.planner_model = res.model or self.config.planner_model_label
         self._charge_tokens(state, state.planner_model, res.usage, "planner")
@@ -316,12 +331,15 @@ class Orchestrator:
         if projected > state.request.budget_usd:
             raise TaskFailed(f"projected cost ${projected:.4f} exceeds budget ${state.request.budget_usd:.4f}")
 
-    async def _provision(self, state: TaskState, role: str) -> SandboxHandle:
+    async def _provision(self, state: TaskState, role: str, *, background: bool = False) -> SandboxHandle:
         self._check_kill(state)
-        state.set_status("provisioning", role=role)
+        if background:
+            state.audit.append("task.provisioning", {"task_id": state.id, "role": role, "background": True})
+        else:
+            state.set_status("provisioning", role=role)
         domains = sorted({*state.request.allowed_domains, *state.approved_domains})
-        handle = await self.backend.provision(state.id, role, domains)
-        state.sandboxes.append(handle)
+        handle = await self.backend.provision(state.id, role, domains, on_created=state.sandboxes.append)
+        self._check_kill(state)
         state.audit.append(
             "vm.created",
             {
@@ -340,7 +358,9 @@ class Orchestrator:
         client = RunnerClient(handle.runner_url, task_id=state.id, token_key=handle.token_key)
         state._clients[handle.instance_id] = client
         health = await client.wait_ready(
-            timeout=self.config.runner_ready_timeout_s, interval=self.config.runner_ready_interval_s
+            timeout=self.config.runner_ready_timeout_s,
+            interval=self.config.runner_ready_interval_s,
+            should_stop=lambda: state.kill_requested,
         )
         state.audit.append(
             "vm.runner_ready",
@@ -504,7 +524,14 @@ class Orchestrator:
         assert state.plan is not None
         self._check_kill(state)
         verdict = await self.verifier.verify(
-            state.request.task, state.plan, state.primary_outcomes, state.rerun_outcomes
+            state.request.task,
+            state.plan,
+            state.primary_outcomes,
+            state.rerun_outcomes,
+            inputs={
+                n: b[: self.config.preview_bytes].decode("utf-8", "replace")
+                for n, b in state.request.files.items()
+            },
         )
         state.verdict = verdict
         self._charge_tokens(state, verdict.verifier_model, verdict.usage, "verifier")
@@ -537,12 +564,16 @@ class Orchestrator:
         )
         state.audit.append("secret_scan.done", state.secret_scan.model_dump())
 
-    async def _destroy(self, state: TaskState, handle: SandboxHandle) -> None:
+    async def _destroy(self, state: TaskState, handle: SandboxHandle, *, revoke: bool = True) -> None:
+        async with state._destroy_locks.setdefault(handle.instance_id, asyncio.Lock()):
+            await self._destroy_locked(state, handle, revoke)
+
+    async def _destroy_locked(self, state: TaskState, handle: SandboxHandle, revoke: bool) -> None:
         if handle.proof is not None:
             return
         state.set_status("destroying", instance_id=handle.instance_id, role=handle.role)
         client = state._clients.get(handle.instance_id)
-        if client is not None:
+        if client is not None and revoke:
             try:
                 await client.revoke()
             except RunnerError:
@@ -584,22 +615,23 @@ class Orchestrator:
         state.kill_reason = reason
         state.audit.append("kill.requested", {"reason": reason, "status_at_kill": state.status})
         state.approval.set()  # unblock an approval wait
-        for handle in list(state.sandboxes):
-            client = state._clients.get(handle.instance_id)
-            if client is not None:
-                try:
-                    rev = await client.revoke()
-                    state.audit.append(
-                        "kill.tokens_revoked",
-                        {"instance_id": handle.instance_id, "killed_running_step": rev.get("killed_running_step")},
-                    )
-                except RunnerError as exc:
-                    state.audit.append("kill.revoke_failed", {"instance_id": handle.instance_id, "error": str(exc)})
-            if handle.proof is None:
-                try:
-                    await self._destroy(state, handle)
-                except Exception as exc:  # noqa: BLE001
-                    state.audit.append("vm.destroy_failed", {"instance_id": handle.instance_id, "error": repr(exc)})
+        await asyncio.gather(*(self._kill_one(state, h) for h in list(state.sandboxes)))
+
+    async def _kill_one(self, state: TaskState, handle: SandboxHandle) -> None:
+        client = state._clients.get(handle.instance_id)
+        if client is not None:
+            try:
+                rev = await client.revoke()
+                state.audit.append(
+                    "kill.tokens_revoked",
+                    {"instance_id": handle.instance_id, "killed_running_step": rev.get("killed_running_step")},
+                )
+            except RunnerError as exc:
+                state.audit.append("kill.revoke_failed", {"instance_id": handle.instance_id, "error": str(exc)})
+        try:
+            await self._destroy(state, handle, revoke=False)
+        except Exception as exc:  # noqa: BLE001
+            state.audit.append("vm.destroy_failed", {"instance_id": handle.instance_id, "error": repr(exc)})
 
     def _check_kill(self, state: TaskState) -> None:
         if state.kill_requested:

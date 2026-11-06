@@ -17,6 +17,7 @@
     <code id="pending-domains"></code>
     <button class="approve" onclick="approve(true)">Approve these domains</button>
     <button class="reject" onclick="approve(false)">Reject</button>
+    <span id="approve-msg" class="bad" style="font-size:13px"></span>
   </div>
 </div>
 
@@ -124,7 +125,11 @@ async function refresh() {
   if (r.ok) render(await r.json());
 }
 async function approve(yes) {
-  await fetch(`/tasks/${TASK_ID}/approve`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ approved: yes }) });
+  const r = await fetch(`/tasks/${TASK_ID}/approve`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ approved: yes }) });
+  if (!r.ok) {
+    const d = await r.json().catch(() => ({}));
+    document.getElementById("approve-msg").textContent = d.detail || ("refused: " + r.status);
+  }
   refresh();
 }
 async function killTask() {

@@ -61,6 +61,9 @@
   <div class="mode">mode <strong>{{ mode }}</strong> · provider <strong>{{ provider }}</strong> · inner layer <strong>{{ inner_isolation }}</strong> · v{{ version }}</div>
 </header>
 <main>
+{% if demo and demo.enabled %}
+<div class="panel muted" style="font-size:13px">Public demo on real Vultr VMs. Tasks and receipts here are visible to everyone, so do not paste anything private. Limits: {{ demo.tasks_today }} of {{ demo.tasks_per_day }} tasks used today, budget up to ${{ '%.2f' % demo.max_budget_usd }} per task, outbound domains limited to {{ demo.allowed_domains | join(', ') }}.</div>
+{% endif %}
 {% block content %}{% endblock %}
 </main>
 <footer>Every task: one throwaway Vultr VM · default-deny egress · zero secrets inside · independent re-run · hash-chained receipt · VM deleted (GET 404).</footer>
