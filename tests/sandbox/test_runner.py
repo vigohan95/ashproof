@@ -301,11 +301,9 @@ def test_memory_limit_stays_below_the_machine(tmp_path):
     from brz_runner.executor import MAX_STEP_MEMORY, default_memory_limit
 
     small = tmp_path / "small"
-    small.write_text("MemTotal:         978944 kB
-")
+    small.write_text("MemTotal:         978944 kB\n")
     assert default_memory_limit(str(small)) == 978944 * 1024 * 60 // 100
     big = tmp_path / "big"
-    big.write_text("MemTotal:       33554432 kB
-")
+    big.write_text("MemTotal:       33554432 kB\n")
     assert default_memory_limit(str(big)) == MAX_STEP_MEMORY
     assert default_memory_limit(str(tmp_path / "missing")) == MAX_STEP_MEMORY
