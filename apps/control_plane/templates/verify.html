@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Verify a receipt · Ashproof{% endblock %}
+{% block notice %}{% endblock %}
+{% block content %}
+<h1>Check a receipt file</h1>
+<div class="panel">
+  <label for="file">Choose a receipt JSON file. It stays in this browser.</label>
+  <input type="file" id="file" accept=".json,application/json" onchange="pick(this)">
+  <p class="muted" style="font-size:13px;margin:10px 0 0">Public key: <code id="pub">loading</code>. Public log: <a href="/anchors.jsonl">/anchors.jsonl</a>.</p>
+</div>
+{% include "_check.html" %}
+{% endblock %}
+{% block scripts %}
+{% include "_check_script.html" %}
+<script>
+async function pick(input) {
+  const f = input.files[0];
+  if (f) await useText(await f.text());
+}
+loadContext().then(() => {
+  document.getElementById("pub").textContent = checkState.key || "this deployment does not sign receipts";
+  document.getElementById("check-title").textContent = "Choose a file to check it.";
+});
+</script>
+{% endblock %}

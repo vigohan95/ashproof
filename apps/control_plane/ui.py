@@ -3,6 +3,7 @@
     /  and /ui               home: what this is, a replay of a real recorded task, a live run
     /ui/tasks                task list
     /ui/evidence             attack results, kill switch and reliability numbers from real runs
+    /ui/verify               check any receipt file in the browser
     /ui/new                  new task form (posts JSON to /tasks from the browser)
     /ui/tasks/{id}           live task page: polls GET /tasks/{id} every 2 s
     /ui/tasks/{id}/receipt   receipt: verification result, rendered Markdown, JSON download
@@ -155,6 +156,11 @@ async def home(request: Request) -> HTMLResponse:
             demo_csv=DEMO_CSV,
         ),
     )
+
+
+@router.get("/verify", response_class=HTMLResponse)
+async def verify_page(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request, "verify.html", _ctx(request))
 
 
 @router.get("/evidence", response_class=HTMLResponse)

@@ -25,10 +25,18 @@
     <div class="stat">{{ '$%.4f' % receipt.cost.total_usd }}<small>total cost · egress denied {{ receipt.egress.denied_count }}</small></div>
   </div>
   {% if verify_problems %}<ul>{% for p in verify_problems %}<li class="bad">{{ p }}</li>{% endfor %}</ul>{% endif %}
-  <p class="muted" style="font-size:12px;margin:8px 0 0">Verify offline, with nothing but Python: <code>python brz/audit/offline_verify.py receipt-{{ task_id }}.json</code> &middot; machine-readable: <a href="/tasks/{{ task_id }}/receipt/verify">/tasks/{{ task_id }}/receipt/verify</a></p>
+  <p class="muted" style="font-size:12px;margin:8px 0 0">Verify offline, with nothing but Python: <code>python brz/audit/offline_verify.py receipt-{{ task_id }}.json --require-signature</code>. Machine-readable: <a href="/tasks/{{ task_id }}/receipt/verify">/tasks/{{ task_id }}/receipt/verify</a></p>
 </div>
+
+{% include "_check.html" %}
 
 <div class="panel receipt">
 {{ receipt_html | safe }}
 </div>
+{% endblock %}
+{% block scripts %}
+{% include "_check_script.html" %}
+<script>
+loadAndCheck("/tasks/" + {{ task_id | tojson }} + "/receipt");
+</script>
 {% endblock %}

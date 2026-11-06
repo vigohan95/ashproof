@@ -41,6 +41,7 @@ def main() -> None:
         "BRZ_DEMO_DOMAINS": "example.com",
         "BRZ_MAX_STEP_TIMEOUT_S": "120",
         "BRZ_APPROVAL_TIMEOUT_S": "180",
+        "BRZ_SIGNING_KEY_FILE": "/etc/ashproof/signing.key",
     }
     env.update(kv.split("=", 1) for kv in extra)
     archive = subprocess.run(

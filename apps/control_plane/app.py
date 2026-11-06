@@ -28,6 +28,8 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel, Field
 
 from brz import __version__
+from brz.audit.offline_verify import check_signature
+from brz.audit.signing import AnchorLog, ReceiptSigner
 from brz.orchestrator import TaskRequest, TaskState
 
 from . import archive
@@ -92,7 +94,12 @@ async def sweep_loop(d: Deps, interval_s: float = SWEEP_INTERVAL_S) -> None:
             log.warning("orphan sweep failed: %s", type(exc).__name__)
 
 
-def create_app(deps: Deps | None = None, guard: DemoGuard | None = None, data_dir: Path | None = None) -> FastAPI:
+def create_app(
+    deps: Deps | None = None,
+    guard: DemoGuard | None = None,
+    data_dir: Path | None = None,
+    signer: ReceiptSigner | None = None,
+) -> FastAPI:
     store = TaskStore()
 
     @asynccontextmanager
@@ -103,6 +110,9 @@ def create_app(deps: Deps | None = None, guard: DemoGuard | None = None, data_di
         env_dir = os.environ.get("BRZ_DATA_DIR")
         app.state.data_dir = data_dir or (Path(env_dir) if env_dir else None)
         d = app.state.data_dir
+        key_file = os.environ.get("BRZ_SIGNING_KEY_FILE")
+        app.state.signer = signer or (ReceiptSigner.from_file(key_file) if key_file else None)
+        app.state.anchors = AnchorLog(d / "anchors.jsonl", app.state.signer) if d and app.state.signer else None
         app.state.guard = guard or DemoGuard(DemoPolicy.from_env(), d / "demo-state.json" if d else None)
         if d:
             d.mkdir(parents=True, exist_ok=True)
@@ -133,11 +143,23 @@ def create_app(deps: Deps | None = None, guard: DemoGuard | None = None, data_di
     def _deps() -> Deps:
         return app.state.deps
 
+    def _notarize(state: TaskState) -> None:
+        """Sign the finished receipt and add it to the public log. A failure here must not lose the receipt."""
+        if state.receipt is None or app.state.signer is None:
+            return
+        try:
+            app.state.signer.sign(state.receipt)
+            if app.state.anchors:
+                app.state.anchors.append(state.receipt)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("could not sign or log receipt %s: %s", state.id, type(exc).__name__)
+
     async def _run(state: TaskState) -> None:
         try:
             await _deps().orchestrator.run(state)
         finally:
             app.state.guard.note_finished(state.cost.total_usd)
+            _notarize(state)
             if app.state.data_dir:
                 archive.save(app.state.data_dir / "tasks", state)
 
@@ -257,14 +279,34 @@ def create_app(deps: Deps | None = None, guard: DemoGuard | None = None, data_di
         if state.receipt is None:
             raise HTTPException(status_code=409, detail=f"receipt not ready (task is {state.status})")
         ok, problems = state.receipt.verify()
+        signer = app.state.signer
+        signature, reasons = check_signature(
+            state.receipt.model_dump(mode="json"), signer.public_hex if signer else None
+        )
         return {
             "id": task_id,
-            "ok": ok,
-            "problems": problems,
+            "ok": ok and signature != "invalid",
+            "problems": problems + reasons,
+            "signature": signature,
             "events": len(state.receipt.audit_events),
             "head_hash": state.receipt.audit_head_hash,
             "receipt_sha256": state.receipt.receipt_sha256,
         }
+
+    @app.get("/pubkey")
+    async def pubkey() -> dict[str, Any]:
+        """The public half of the receipt signing key. The same value is in the repository."""
+        signer = app.state.signer
+        if signer is None:
+            raise HTTPException(status_code=404, detail="this deployment does not sign receipts")
+        return {"alg": "ed25519", "public_key": signer.public_hex, "key_id": signer.key_id}
+
+    @app.get("/anchors.jsonl")
+    async def anchors() -> Response:
+        """Every signed receipt head, one chained and signed line each. Served by this machine: see the README."""
+        log_file: AnchorLog | None = app.state.anchors
+        text = log_file.path.read_text(encoding="utf-8") if log_file and log_file.path.exists() else ""
+        return PlainTextResponse(text, media_type="text/plain; charset=utf-8")
 
     @app.get("/tasks/{task_id}/receipt.md")
     async def receipt_md(task_id: str) -> Response:

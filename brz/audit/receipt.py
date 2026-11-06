@@ -117,17 +117,18 @@ class Receipt(BaseModel):
     audit_head_hash: str
     audit_chain: ChainVerification
     receipt_sha256: str = ""
+    signature: dict[str, Any] | None = None  # Ed25519 over the head; outside receipt_sha256, which it covers
 
     # ----------------------------------------------------------------- build
     def finalize(self) -> Receipt:
-        body = self.model_dump(mode="json", exclude={"receipt_sha256"})
+        body = self.model_dump(mode="json", exclude={"receipt_sha256", "signature"})
         self.receipt_sha256 = sha256_hex(canonical_json(body))
         return self
 
     def verify(self) -> tuple[bool, list[str]]:
         """Recompute everything verifiable offline: receipt hash + audit chain + head hash."""
         problems: list[str] = []
-        body = self.model_dump(mode="json", exclude={"receipt_sha256"})
+        body = self.model_dump(mode="json", exclude={"receipt_sha256", "signature"})
         if sha256_hex(canonical_json(body)) != self.receipt_sha256:
             problems.append("receipt_sha256 mismatch (receipt modified)")
         chain = verify_chain(self.audit_events)
@@ -156,6 +157,11 @@ class Receipt(BaseModel):
         lines.append(f"- **Task sha256:** `{self.task_text_sha256}`")
         lines.append(f"- **Receipt sha256:** `{self.receipt_sha256}`")
         lines.append(f"- **Receipt integrity:** {'OK' if ok else 'BROKEN: ' + '; '.join(problems)}")
+        if self.signature:
+            sig = self.signature
+            lines.append(f"- **Signed:** Ed25519, key `{sig.get('key_id')}`, at {sig.get('signed_at')}")
+        else:
+            lines.append("- **Signed:** no")
         lines.append("")
         lines.append("## Blast radius")
         lines.append("")

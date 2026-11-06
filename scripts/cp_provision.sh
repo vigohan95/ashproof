@@ -25,6 +25,13 @@ chmod 0640 /etc/ashproof/env
 /opt/ashproof/venv/bin/pip install -q --force-reinstall --no-deps "$APP"
 /opt/ashproof/venv/bin/pip install -q "$APP"
 
+# The receipt signing key is made here and stays here: it is outside git, and only its public half is ever printed.
+if [ ! -f /etc/ashproof/signing.key ]; then
+  (umask 027 && /opt/ashproof/venv/bin/python -m brz.audit.signing keygen /etc/ashproof/signing.key)
+fi
+chown root:ashproof /etc/ashproof/signing.key
+chmod 0640 /etc/ashproof/signing.key
+
 cat > /etc/systemd/system/ashproof.service <<'EOF'
 [Unit]
 Description=Ashproof control plane

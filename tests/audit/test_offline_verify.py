@@ -92,7 +92,7 @@ def _edit(raw: bytes, fn) -> bytes:
 
 
 def _reseal_receipt(data: dict) -> None:
-    body = {k: v for k, v in data.items() if k != "receipt_sha256"}
+    body = {k: v for k, v in data.items() if k not in ("receipt_sha256", "signature")}
     data["receipt_sha256"] = hashlib.sha256(canonical_json(body).encode("utf-8")).hexdigest()
 
 

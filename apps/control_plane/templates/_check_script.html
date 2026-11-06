@@ -1,0 +1,186 @@
+<script>
+// Checks a receipt in the browser, with the same rules as brz/audit/offline_verify.py.
+// JSON.parse would turn 1.0 into 1, and the hashes cover Python's exact number text, so numbers keep their source text.
+class Num { constructor(text) { this.text = text; } }
+
+function parseKeepingNumbers(src) {
+  let i = 0;
+  const ws = () => { while (" \t\n\r".includes(src[i]) && i < src.length) i++; };
+  function string() {
+    const start = i++;
+    while (src[i] !== '"') { if (i >= src.length) throw new Error("unterminated string"); i += src[i] === "\\" ? 2 : 1; }
+    i++;
+    return JSON.parse(src.slice(start, i));
+  }
+  function value() {
+    ws();
+    const c = src[i];
+    if (c === "{") {
+      i++; const out = {}; ws();
+      if (src[i] === "}") { i++; return out; }
+      for (;;) {
+        ws(); const k = string(); ws();
+        if (src[i++] !== ":") throw new Error("expected : at " + i);
+        out[k] = value(); ws();
+        const n = src[i++];
+        if (n === "}") return out;
+        if (n !== ",") throw new Error("expected , at " + i);
+      }
+    }
+    if (c === "[") {
+      i++; const out = []; ws();
+      if (src[i] === "]") { i++; return out; }
+      for (;;) {
+        out.push(value()); ws();
+        const n = src[i++];
+        if (n === "]") return out;
+        if (n !== ",") throw new Error("expected , at " + i);
+      }
+    }
+    if (c === '"') return string();
+    for (const [word, v] of [["true", true], ["false", false], ["null", null]]) {
+      if (src.startsWith(word, i)) { i += word.length; return v; }
+    }
+    const m = /^-?\d+(\.\d+)?([eE][-+]?\d+)?/.exec(src.slice(i, i + 40));
+    if (!m) throw new Error("bad JSON at " + i);
+    i += m[0].length;
+    return new Num(m[0]);
+  }
+  const v = value(); ws();
+  if (i !== src.length) throw new Error("text after the JSON value");
+  return v;
+}
+
+function canonical(v) {
+  if (v instanceof Num) return v.text;
+  if (v === null || typeof v === "boolean") return String(v);
+  if (typeof v === "string") return JSON.stringify(v);
+  if (Array.isArray(v)) return "[" + v.map(canonical).join(",") + "]";
+  return "{" + Object.keys(v).sort().map(k => JSON.stringify(k) + ":" + canonical(v[k])).join(",") + "}";
+}
+
+const enc = new TextEncoder();
+const toHex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("");
+const fromHex = h => Uint8Array.from(h.match(/../g) || [], x => parseInt(x, 16));
+async function sha256(text) { return toHex(await crypto.subtle.digest("SHA-256", enc.encode(text))); }
+
+async function checkReceipt(text, publicKey, anchorsText) {
+  const rows = [];
+  const add = (state, label) => rows.push({ state, label });
+  let r;
+  try { r = parseKeepingNumbers(text); } catch (e) { add("bad", "Not valid JSON: " + e.message); return rows; }
+
+  let prev = "0".repeat(64), broken = null;
+  const events = r.audit_events || [];
+  for (let i = 0; i < events.length; i++) {
+    const e = events[i];
+    const payload = { seq: e.seq, ts: e.ts, kind: e.kind, data: e.data, prev_hash: e.prev_hash };
+    if (e.prev_hash !== prev || e.hash !== await sha256(prev + canonical(payload))) { broken = i + " (" + e.kind + ")"; break; }
+    prev = e.hash;
+  }
+  if (broken !== null) add("bad", "Hash chain is broken at event " + broken);
+  else if (prev !== r.audit_head_hash) add("bad", "The head hash does not match the events");
+  else add("ok", events.length + " events link up, hashes recomputed here");
+
+  const body = {};
+  for (const k of Object.keys(r)) if (k !== "receipt_sha256" && k !== "signature") body[k] = r[k];
+  add(await sha256(canonical(body)) === r.receipt_sha256 ? "ok" : "bad",
+      await sha256(canonical(body)) === r.receipt_sha256 ? "The receipt hash matches the whole file" : "The receipt hash does not match the file");
+
+  const s = r.signature;
+  if (!s) {
+    add("none", "Not signed. Receipts from before signing was added have no signature");
+  } else if (!crypto.subtle || !window.isSecureContext) {
+    add("none", "This page has no WebCrypto here, so the signature was not checked");
+  } else if (publicKey && s.public_key !== publicKey) {
+    add("bad", "Signed by another key, not the one this demo publishes");
+  } else {
+    const msg = ["ashproof-receipt-v1", r.task_id, r.status, r.audit_head_hash, r.receipt_sha256, s.signed_at, ""].join("\n");
+    try {
+      const key = await crypto.subtle.importKey("raw", fromHex(s.public_key), { name: "Ed25519" }, false, ["verify"]);
+      const good = await crypto.subtle.verify({ name: "Ed25519" }, key, fromHex(s.value), enc.encode(msg));
+      add(good ? "ok" : "bad", good ? "Ed25519 signature is valid, key " + s.key_id : "The Ed25519 signature does not match the receipt head");
+    } catch (e) {
+      add("none", "This browser cannot check Ed25519 (" + e.name + "). Use offline_verify.py");
+    }
+  }
+
+  if (anchorsText !== null) {
+    const lines = anchorsText.split("\n").filter(Boolean).map(l => JSON.parse(l));
+    const hit = lines.find(l => l.task_id === r.task_id);
+    if (!hit) add(s ? "bad" : "none", s ? "Not in the public log" : "Not in the public log, which starts with signing");
+    else if (hit.audit_head_hash === r.audit_head_hash && hit.receipt_sha256 === r.receipt_sha256) add("ok", "Found at line " + hit.seq + " of the public log");
+    else add("bad", "The public log holds a different head for this task");
+  }
+  return rows;
+}
+
+function showRows(rows, title) {
+  const bad = rows.some(x => x.state === "bad");
+  const unsigned = rows.some(x => x.state === "none");
+  const t = document.getElementById("check-title");
+  t.textContent = title || (bad ? "This receipt failed the check" : unsigned ? "The hashes pass. Signature not confirmed" : "This receipt passed every check");
+  t.className = bad ? "bad" : unsigned ? "warn" : "ok";
+  document.getElementById("check-panel").style.borderColor = bad ? "var(--bad)" : unsigned ? "var(--warn)" : "var(--ok)";
+  const list = document.getElementById("check-list");
+  list.textContent = "";
+  for (const x of rows) {
+    const li = document.createElement("li");
+    const mark = document.createElement("span");
+    mark.className = x.state === "ok" ? "ok" : x.state === "bad" ? "bad" : "warn";
+    mark.textContent = x.state === "ok" ? "✓ " : x.state === "bad" ? "✗ " : "- ";
+    li.append(mark, x.label);
+    list.appendChild(li);
+  }
+}
+
+let checkState = { original: null, tampered: false, key: null, anchors: null };
+
+// The first digit of an exit code or port inside the chain, so the failure names a real event.
+function tamperOneByte(text) {
+  const at = text.indexOf('"audit_events"');
+  const m = /"(exit_code|dst_port|http_status)":(\d)/.exec(text.slice(at));
+  const pos = m ? at + m.index + m[0].length - 1 : text.indexOf(":", at) + 3;
+  const was = text[pos];
+  const now = was === "1" ? "2" : "1";
+  return { text: text.slice(0, pos) + now + text.slice(pos + 1), note: "Changed byte " + pos + " of the file from " + was + " to " + now + (m ? ", inside a " + m[1] + " field" : "") + "." };
+}
+
+async function runCheck(text) {
+  showRows(await checkReceipt(text, checkState.key, checkState.anchors));
+}
+
+async function tamperOrRestore() {
+  const btn = document.getElementById("tamper-btn");
+  const note = document.getElementById("tamper-note");
+  if (checkState.tampered) {
+    checkState.tampered = false; btn.textContent = "Change one byte and check again"; note.textContent = "";
+    return runCheck(checkState.original);
+  }
+  const t = tamperOneByte(checkState.original);
+  checkState.tampered = true; btn.textContent = "Put the byte back"; note.textContent = t.note;
+  return runCheck(t.text);
+}
+
+async function loadContext() {
+  const k = await fetch("/pubkey");
+  checkState.key = k.ok ? (await k.json()).public_key : null;
+  const a = await fetch("/anchors.jsonl");
+  checkState.anchors = a.ok ? await a.text() : null;
+}
+
+async function useText(text) {
+  checkState.original = text; checkState.tampered = false;
+  document.getElementById("tamper-note").textContent = "";
+  const btn = document.getElementById("tamper-btn");
+  btn.disabled = false; btn.textContent = "Change one byte and check again";
+  await runCheck(text);
+}
+
+async function loadAndCheck(url) {
+  await loadContext();
+  const r = await fetch(url);
+  if (!r.ok) { document.getElementById("check-title").textContent = "Could not load the receipt (HTTP " + r.status + ")."; return; }
+  await useText(await r.text());
+}
+</script>
