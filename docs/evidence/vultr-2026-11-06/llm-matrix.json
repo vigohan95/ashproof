@@ -1,0 +1,496 @@
+[
+ {
+  "model": "glm-5.3",
+  "effort": "minimal",
+  "schema": true,
+  "status": 200,
+  "seconds": 103.2,
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 394,
+   "completion_tokens": 390,
+   "total_tokens": 784,
+   "prompt_tokens_details": {
+    "cached_tokens": 256
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 0
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 1377,
+  "reasoning_len": 0,
+  "valid_plan": true
+ },
+ {
+  "model": "glm-5.3",
+  "effort": "minimal",
+  "schema": false,
+  "status": 200,
+  "seconds": 103.2,
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 840,
+   "completion_tokens": 432,
+   "total_tokens": 1272,
+   "prompt_tokens_details": {
+    "cached_tokens": 256
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 0
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 1450,
+  "reasoning_len": 0,
+  "valid_plan": true
+ },
+ {
+  "model": "glm-5.3",
+  "effort": "low",
+  "schema": true,
+  "status": 200,
+  "seconds": 91.1,
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 394,
+   "completion_tokens": 350,
+   "total_tokens": 744,
+   "prompt_tokens_details": {
+    "cached_tokens": 0
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 0
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 1268,
+  "reasoning_len": 0,
+  "valid_plan": true
+ },
+ {
+  "model": "glm-5.3",
+  "effort": "low",
+  "schema": false,
+  "status": 200,
+  "seconds": 103.2,
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 840,
+   "completion_tokens": 432,
+   "total_tokens": 1272,
+   "prompt_tokens_details": {
+    "cached_tokens": 768
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 0
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 1450,
+  "reasoning_len": 0,
+  "valid_plan": true
+ },
+ {
+  "model": "glm-5.3",
+  "effort": null,
+  "schema": true,
+  "status": 200,
+  "seconds": 141.9,
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 394,
+   "completion_tokens": 5203,
+   "total_tokens": 5597,
+   "prompt_tokens_details": {
+    "cached_tokens": 256
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 4434
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 2833,
+  "reasoning_len": 18195,
+  "valid_plan": true
+ },
+ {
+  "model": "glm-5.3",
+  "effort": null,
+  "schema": false,
+  "status": 200,
+  "seconds": 116.8,
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 840,
+   "completion_tokens": 1896,
+   "total_tokens": 2736,
+   "prompt_tokens_details": {
+    "cached_tokens": 0
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 1177
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 2583,
+  "reasoning_len": 4943,
+  "valid_plan": true
+ },
+ {
+  "model": "qwen3.8-27b",
+  "effort": "minimal",
+  "schema": true,
+  "status": 200,
+  "seconds": 3.5,
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 435,
+   "completion_tokens": 614,
+   "total_tokens": 1049,
+   "prompt_tokens_details": {
+    "cached_tokens": 0
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 208
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 1395,
+  "reasoning_len": 763,
+  "valid_plan": true
+ },
+ {
+  "model": "qwen3.8-27b",
+  "effort": "minimal",
+  "schema": false,
+  "status": 200,
+  "seconds": 3.2,
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 887,
+   "completion_tokens": 447,
+   "total_tokens": 1334,
+   "prompt_tokens_details": {
+    "cached_tokens": 0
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 157
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 1086,
+  "reasoning_len": 617,
+  "valid_plan": true
+ },
+ {
+  "model": "qwen3.8-27b",
+  "effort": "low",
+  "schema": true,
+  "status": 200,
+  "seconds": 3.4,
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 435,
+   "completion_tokens": 614,
+   "total_tokens": 1049,
+   "prompt_tokens_details": {
+    "cached_tokens": 384
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 208
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 1395,
+  "reasoning_len": 763,
+  "valid_plan": true
+ },
+ {
+  "model": "qwen3.8-27b",
+  "effort": "low",
+  "schema": false,
+  "status": 200,
+  "seconds": 3.0,
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 887,
+   "completion_tokens": 447,
+   "total_tokens": 1334,
+   "prompt_tokens_details": {
+    "cached_tokens": 768
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 157
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 1086,
+  "reasoning_len": 617,
+  "valid_plan": true
+ },
+ {
+  "model": "qwen3.8-27b",
+  "effort": null,
+  "schema": true,
+  "status": 200,
+  "seconds": 17.4,
+  "finish": "length",
+  "usage": {
+   "prompt_tokens": 447,
+   "completion_tokens": 8000,
+   "total_tokens": 8447,
+   "prompt_tokens_details": {
+    "cached_tokens": 0
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 7541
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 1861,
+  "reasoning_len": 31131,
+  "valid_plan": false,
+  "content_head": "{\n  \"task_summary\": \"Read /work/input/sales.csv, sum the amount column for each region, and write deterministic JSON to /work/out/summary.json.\",\n  \"steps\": [\n ",
+  "why": "1 validation error for Plan\n  Invalid JSON: EOF while parsing a string at line 8 column 1568 [type=json_invalid, input_value='{\\n  \"task_summary\": \"Re...raw_amo"
+ },
+ {
+  "model": "qwen3.8-27b",
+  "effort": null,
+  "schema": false,
+  "status": 200,
+  "seconds": 19.0,
+  "finish": "length",
+  "usage": {
+   "prompt_tokens": 899,
+   "completion_tokens": 8000,
+   "total_tokens": 8899,
+   "prompt_tokens_details": {
+    "cached_tokens": 0
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 8000
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 0,
+  "reasoning_len": 31979,
+  "valid_plan": false,
+  "content_head": "",
+  "why": "1 validation error for Plan\n  Invalid JSON: EOF while parsing a value at line 1 column 0 [type=json_invalid, input_value='', input_type=str]\n    For further inf"
+ },
+ {
+  "model": "glm-5.3-flash",
+  "effort": "minimal",
+  "schema": true,
+  "status": 200,
+  "seconds": 3.2,
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 394,
+   "completion_tokens": 367,
+   "total_tokens": 761,
+   "prompt_tokens_details": {
+    "cached_tokens": 0
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 28
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 1206,
+  "reasoning_len": 113,
+  "valid_plan": true
+ },
+ {
+  "model": "glm-5.3-flash",
+  "effort": "minimal",
+  "schema": false,
+  "status": 200,
+  "seconds": 3.0,
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 840,
+   "completion_tokens": 267,
+   "total_tokens": 1107,
+   "prompt_tokens_details": {
+    "cached_tokens": 256
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 0
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 1053,
+  "reasoning_len": 0,
+  "valid_plan": false,
+  "content_head": "```json\n{\"task_summary\":\"Sum the amount column grouped by region from /work/input/sales.csv and write /work/out/summary.json\",\"steps\":[{\"id\":\"s1\",\"title\":\"Aggre",
+  "why": "1 validation error for Plan\n  Invalid JSON: expected value at line 1 column 1 [type=json_invalid, input_value='```json\\n{\"task_summary\"... input is dirty\"]}\\n``"
+ },
+ {
+  "model": "glm-5.3-flash",
+  "effort": "low",
+  "schema": true,
+  "status": 200,
+  "seconds": 2.9,
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 394,
+   "completion_tokens": 367,
+   "total_tokens": 761,
+   "prompt_tokens_details": {
+    "cached_tokens": 256
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 28
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 1206,
+  "reasoning_len": 113,
+  "valid_plan": true
+ },
+ {
+  "model": "glm-5.3-flash",
+  "effort": "low",
+  "schema": false,
+  "status": 200,
+  "seconds": 2.7,
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 840,
+   "completion_tokens": 267,
+   "total_tokens": 1107,
+   "prompt_tokens_details": {
+    "cached_tokens": 768
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 0
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 1053,
+  "reasoning_len": 0,
+  "valid_plan": false,
+  "content_head": "```json\n{\"task_summary\":\"Sum the amount column grouped by region from /work/input/sales.csv and write /work/out/summary.json\",\"steps\":[{\"id\":\"s1\",\"title\":\"Aggre",
+  "why": "1 validation error for Plan\n  Invalid JSON: expected value at line 1 column 1 [type=json_invalid, input_value='```json\\n{\"task_summary\"... input is dirty\"]}\\n``"
+ },
+ {
+  "model": "glm-5.3-flash",
+  "effort": null,
+  "schema": true,
+  "status": 200,
+  "seconds": 13.9,
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 394,
+   "completion_tokens": 4798,
+   "total_tokens": 5192,
+   "prompt_tokens_details": {
+    "cached_tokens": 0
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 3870
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 3500,
+  "reasoning_len": 15715,
+  "valid_plan": true
+ },
+ {
+  "model": "glm-5.3-flash",
+  "effort": null,
+  "schema": false,
+  "status": 200,
+  "seconds": 4.6,
+  "finish": "stop",
+  "usage": {
+   "prompt_tokens": 840,
+   "completion_tokens": 1348,
+   "total_tokens": 2188,
+   "prompt_tokens_details": {
+    "cached_tokens": 256
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 681
+   }
+  },
+  "msg_keys": [
+   "content",
+   "reasoning",
+   "role"
+  ],
+  "content_len": 2585,
+  "reasoning_len": 2870,
+  "valid_plan": true
+ }
+]

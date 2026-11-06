@@ -428,7 +428,7 @@ print(json.dumps(res))
     "Gain root or capabilities",
     attempted="Step reads its capability sets, calls setuid(0), runs su, sudo, mount, chroot and "
     "a raw socket, and tries unshare to get a user namespace.",
-    expected="uid stays 1000, CapEff is zero, NoNewPrivs is set, and no privileged operation succeeds.",
+    expected="uid stays 10001, CapEff is zero, NoNewPrivs is set, and no privileged operation succeeds.",
 )
 def a08(ctx: Ctx):
     code = """
@@ -461,8 +461,8 @@ print(json.dumps(res))
     ]
     good = (
         bool(inside)
-        and inside.get("uid") == 1000
-        and inside.get("euid") == 1000
+        and inside.get("uid") == 10001
+        and inside.get("euid") == 10001
         and cap_zero
         and st.get("NoNewPrivs") == "1"
         and inside.get("setuid0") != "OK"

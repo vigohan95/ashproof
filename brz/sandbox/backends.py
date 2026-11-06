@@ -67,6 +67,9 @@ class VultrSandboxConfig:
     vm_poll_interval_s: float = 5.0
     destroy_confirm_timeout_s: float = 120.0
     extra_tags: list[str] = field(default_factory=list)
+    # Debug door, off by default: SSH into the sandbox from one address. Recorded on every VM it applies to.
+    sshkey_ids: list[str] = field(default_factory=list)
+    admin_cidr: str | None = None
 
 
 class SandboxBackend(Protocol):
@@ -102,6 +105,7 @@ class VultrSandboxBackend:
             ttl_minutes=c.ttl_minutes,
             dns_server=c.dns_server,
             inner_isolation=c.inner_isolation,
+            admin_cidr=c.admin_cidr,
         )
 
     def _instance_spec(self, task_id: str, role: str, user_data: str) -> InstanceCreate:
@@ -116,6 +120,7 @@ class VultrSandboxBackend:
             tags=[SANDBOX_TAG, f"task-{task_id}", f"role-{role}", *c.extra_tags],
             user_data=user_data,
             firewall_group_id=c.firewall_group_id,
+            sshkey_id=list(c.sshkey_ids),
         )
 
     async def provision(self, task_id: str, role: str, allowed_domains: list[str]) -> SandboxHandle:
@@ -131,7 +136,12 @@ class VultrSandboxBackend:
             plan=inst.plan,
             region=inst.region,
             created_at=datetime.now(timezone.utc),
-            meta={"label": inst.label, "tags": inst.tags, "user_data_bytes": len(user_data)},
+            meta={
+                "label": inst.label,
+                "tags": inst.tags,
+                "user_data_bytes": len(user_data),
+                "admin_access": bool(self.config.admin_cidr or self.config.sshkey_ids),
+            },
         )
         self.user_data_cache[inst.id] = user_data
         active = await self.client.wait_until_active(

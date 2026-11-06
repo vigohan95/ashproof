@@ -39,6 +39,8 @@ EXIT_TIMEOUT = 124
 EXIT_QUOTA = 125
 
 # A step id becomes a directory name, a bundle path and part of a container id.
+# Not 1000: on Vultr's Ubuntu image uid 1000 is `linuxuser`, a member of sudo and lxd (found on the first real boot).
+STEP_UID = 10001
 STEP_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
 _O_NOFOLLOW = getattr(os, "O_NOFOLLOW", 0)
 _O_NONBLOCK = getattr(os, "O_NONBLOCK", 0)
@@ -434,8 +436,8 @@ class GvisorExecutor(BaseExecutor):
         runsc_bin: str = "/usr/local/bin/runsc",
         platform: str = "systrap",
         bundle_root: str = "/var/lib/brz/bundles",
-        uid: int = 1000,
-        gid: int = 1000,
+        uid: int = STEP_UID,
+        gid: int = STEP_UID,
         memory_limit_bytes: int = 1_500_000_000,
         network: str = "none",  # steps without needs_network get no network at all
         network_when_needed: str = "host",  # steps with needs_network: host networking, filtered by VM nftables

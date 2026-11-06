@@ -1,0 +1,326 @@
+{
+ "regions_total": 33,
+ "regions_us": [
+  "atl",
+  "dfw",
+  "ewr",
+  "hnl",
+  "lax",
+  "mia",
+  "ord",
+  "sea",
+  "sjc"
+ ],
+ "ewr": {
+  "id": "ewr",
+  "city": "New Jersey",
+  "country": "US",
+  "continent": "North America",
+  "options": [
+   "ddos_protection",
+   "block_storage_high_perf",
+   "block_storage_storage_opt",
+   "load_balancers",
+   "kubernetes"
+  ],
+  "connectivity": [
+   "public_ip",
+   "nat_gateway"
+  ]
+ },
+ "plans_total": 139,
+ "plan_keys": [
+  "bandwidth",
+  "cpu_vendor",
+  "deploy_ondemand",
+  "deploy_preemptible",
+  "disk",
+  "disk_count",
+  "disk_type",
+  "gpu_brand",
+  "hourly_cost",
+  "hourly_cost_preemptible",
+  "id",
+  "invoice_type",
+  "location_cost",
+  "locations",
+  "monthly_cost",
+  "monthly_cost_preemptible",
+  "ram",
+  "storage_type",
+  "type",
+  "vcpu_count",
+  "vcpu_type"
+ ],
+ "picked_plans": [
+  {
+   "id": "vc2-1c-0.5gb",
+   "vcpu_count": 1,
+   "ram": 512,
+   "disk": 10,
+   "bandwidth": 512,
+   "monthly_cost": 3.5,
+   "hourly_cost": 0.005,
+   "type": "vc2",
+   "locations": 1,
+   "disk_type": "SSD",
+   "disk_count": 1,
+   "monthly_cost_preemptible": 3.5,
+   "hourly_cost_preemptible": 0.005,
+   "invoice_type": "monthly",
+   "cpu_vendor": "Intel",
+   "storage_type": "local_storage",
+   "vcpu_type": "thread",
+   "deploy_ondemand": true,
+   "deploy_preemptible": false,
+   "location_cost": {},
+   "gpu_brand": "none",
+   "locations_has_ewr": true
+  },
+  {
+   "id": "vc2-1c-1gb",
+   "vcpu_count": 1,
+   "ram": 1024,
+   "disk": 25,
+   "bandwidth": 1024,
+   "monthly_cost": 5.0,
+   "hourly_cost": 0.007,
+   "type": "vc2",
+   "locations": 31,
+   "disk_type": "SSD",
+   "disk_count": 1,
+   "monthly_cost_preemptible": 5,
+   "hourly_cost_preemptible": 0.007,
+   "invoice_type": "monthly",
+   "cpu_vendor": "Intel",
+   "storage_type": "local_storage",
+   "vcpu_type": "thread",
+   "deploy_ondemand": true,
+   "deploy_preemptible": false,
+   "location_cost": {
+    "sao": {
+     "monthly_cost": 7.5,
+     "hourly_cost": 0.01,
+     "monthly_cost_preemptible": 7.5,
+     "hourly_cost_preemptible": 0.01
+    }
+   },
+   "gpu_brand": "none",
+   "locations_has_ewr": true
+  },
+  {
+   "id": "vhf-1c-1gb",
+   "vcpu_count": 1,
+   "ram": 1024,
+   "disk": 32,
+   "bandwidth": 1024,
+   "monthly_cost": 6.0,
+   "hourly_cost": 0.008,
+   "type": "vhf",
+   "locations": 31,
+   "disk_type": "HIGHFREQUENCY",
+   "disk_count": 1,
+   "monthly_cost_preemptible": 6,
+   "hourly_cost_preemptible": 0.008,
+   "invoice_type": "monthly",
+   "cpu_vendor": "Intel",
+   "storage_type": "local_storage",
+   "vcpu_type": "thread",
+   "deploy_ondemand": true,
+   "deploy_preemptible": false,
+   "location_cost": {
+    "sao": {
+     "monthly_cost": 9,
+     "hourly_cost": 0.012,
+     "monthly_cost_preemptible": 9,
+     "hourly_cost_preemptible": 0.012
+    }
+   },
+   "gpu_brand": "none",
+   "locations_has_ewr": true
+  },
+  {
+   "id": "vhp-1c-1gb-amd",
+   "vcpu_count": 1,
+   "ram": 1024,
+   "disk": 25,
+   "bandwidth": 2048,
+   "monthly_cost": 6.0,
+   "hourly_cost": 0.008,
+   "type": "vhp",
+   "locations": 32,
+   "disk_type": "AMDHIGHPERF",
+   "disk_count": 1,
+   "monthly_cost_preemptible": 6,
+   "hourly_cost_preemptible": 0.008,
+   "invoice_type": "monthly",
+   "cpu_vendor": "AMD",
+   "storage_type": "local_storage",
+   "vcpu_type": "thread",
+   "deploy_ondemand": true,
+   "deploy_preemptible": false,
+   "location_cost": {
+    "sao": {
+     "monthly_cost": 9,
+     "hourly_cost": 0.012,
+     "monthly_cost_preemptible": 9,
+     "hourly_cost_preemptible": 0.012
+    }
+   },
+   "gpu_brand": "none",
+   "locations_has_ewr": true
+  },
+  {
+   "id": "vx1-g-2c-8g",
+   "vcpu_count": 2,
+   "ram": 8192,
+   "disk": 1,
+   "bandwidth": 5120,
+   "monthly_cost": 43.8,
+   "hourly_cost": 0.06,
+   "type": "vx1",
+   "locations": 9,
+   "disk_type": "VX",
+   "disk_count": 1,
+   "monthly_cost_preemptible": 43.8,
+   "hourly_cost_preemptible": 0.06,
+   "invoice_type": "hourly",
+   "cpu_vendor": "AMD",
+   "storage_type": "block_storage",
+   "vcpu_type": "thread",
+   "deploy_ondemand": true,
+   "deploy_preemptible": false,
+   "location_cost": {},
+   "gpu_brand": "none",
+   "link_speed": 15,
+   "link_type": "shared",
+   "locations_has_ewr": true
+  },
+  {
+   "id": "vx1-g-2c-8g-120s",
+   "vcpu_count": 2,
+   "ram": 8192,
+   "disk": 120,
+   "bandwidth": 5120,
+   "monthly_cost": 55.48,
+   "hourly_cost": 0.076,
+   "type": "vx1",
+   "locations": 12,
+   "disk_type": "VX",
+   "disk_count": 1,
+   "monthly_cost_preemptible": 55.48,
+   "hourly_cost_preemptible": 0.076,
+   "invoice_type": "hourly",
+   "cpu_vendor": "AMD",
+   "storage_type": "local_and_block_storage",
+   "vcpu_type": "thread",
+   "deploy_ondemand": true,
+   "deploy_preemptible": false,
+   "location_cost": {},
+   "gpu_brand": "none",
+   "link_speed": 15,
+   "link_type": "shared",
+   "locations_has_ewr": true
+  }
+ ],
+ "cheapest_ewr": [
+  {
+   "id": "vc2-1c-0.5gb-v6",
+   "vcpu": 1,
+   "ram": 512,
+   "disk": 10,
+   "monthly": 2.5,
+   "hourly_field": 0.003,
+   "type": "vc2"
+  },
+  {
+   "id": "vc2-1c-0.5gb",
+   "vcpu": 1,
+   "ram": 512,
+   "disk": 10,
+   "monthly": 3.5,
+   "hourly_field": 0.005,
+   "type": "vc2"
+  },
+  {
+   "id": "vc2-1c-1gb",
+   "vcpu": 1,
+   "ram": 1024,
+   "disk": 25,
+   "monthly": 5.0,
+   "hourly_field": 0.007,
+   "type": "vc2"
+  },
+  {
+   "id": "vhf-1c-1gb",
+   "vcpu": 1,
+   "ram": 1024,
+   "disk": 32,
+   "monthly": 6.0,
+   "hourly_field": 0.008,
+   "type": "vhf"
+  },
+  {
+   "id": "vhp-1c-1gb-amd",
+   "vcpu": 1,
+   "ram": 1024,
+   "disk": 25,
+   "monthly": 6.0,
+   "hourly_field": 0.008,
+   "type": "vhp"
+  },
+  {
+   "id": "vhp-1c-1gb-intel",
+   "vcpu": 1,
+   "ram": 1024,
+   "disk": 25,
+   "monthly": 6.0,
+   "hourly_field": 0.008,
+   "type": "vhp"
+  },
+  {
+   "id": "vc2-1c-2gb",
+   "vcpu": 1,
+   "ram": 2048,
+   "disk": 55,
+   "monthly": 10.0,
+   "hourly_field": 0.014,
+   "type": "vc2"
+  },
+  {
+   "id": "vhf-1c-2gb",
+   "vcpu": 1,
+   "ram": 2048,
+   "disk": 64,
+   "monthly": 12.0,
+   "hourly_field": 0.016,
+   "type": "vhf"
+  }
+ ],
+ "os_ubuntu": [
+  {
+   "id": 1743,
+   "name": "Ubuntu 22.04 LTS x64",
+   "arch": "x64",
+   "family": "ubuntu"
+  },
+  {
+   "id": 2284,
+   "name": "Ubuntu 24.04 LTS x64",
+   "arch": "x64",
+   "family": "ubuntu"
+  },
+  {
+   "id": 2760,
+   "name": "Ubuntu 26.04 LTS x64",
+   "arch": "x64",
+   "family": "ubuntu"
+  },
+  {
+   "id": 2838,
+   "name": "Ubuntu 26.10 x64",
+   "arch": "x64",
+   "family": "ubuntu"
+  }
+ ]
+}

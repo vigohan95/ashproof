@@ -28,7 +28,8 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field, field_validator
 
-GVISOR_RELEASE_URL = "https://storage.googleapis.com/gvisor/releases/release/latest"
+# Pinned: `latest` moved between our test run and the first boot, and two VMs must run the same sandbox.
+GVISOR_RELEASE_URL = "https://storage.googleapis.com/gvisor/releases/release/20261102.0"
 RUNNER_FILES = (
     "__init__.py",
     "__main__.py",
@@ -57,6 +58,7 @@ class SandboxSpec(BaseModel):
     inner_isolation: str = "gvisor"  # "gvisor" | "none" (plain subprocess; local/dev only)
     gvisor_release_url: str = GVISOR_RELEASE_URL
     hostname: str | None = None
+    admin_cidr: str | None = None  # debug only: lets this one address reach port 22
 
     @field_validator("allowed_domains")
     @classmethod
@@ -74,6 +76,11 @@ class SandboxSpec(BaseModel):
     @classmethod
     def _cidr(cls, v: str) -> str:
         return str(ipaddress.ip_network(v, strict=False))
+
+    @field_validator("admin_cidr")
+    @classmethod
+    def _admin(cls, v: str | None) -> str | None:
+        return str(ipaddress.ip_network(v, strict=False)) if v else None
 
     @field_validator("dns_server")
     @classmethod
@@ -126,6 +133,7 @@ def render_cloud_init(spec: SandboxSpec, *, runner_dir: Path | None = None) -> s
         control_plane_cidr=spec.control_plane_cidr,
         gvisor_release_url=spec.gvisor_release_url.rstrip("/"),
         runner_extra_args=extra_args,
+        admin_cidr=spec.admin_cidr or "",
         runner_files_block=_runner_files_block(src),
     )
     if not text.startswith("#cloud-config"):

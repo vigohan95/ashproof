@@ -1,0 +1,52 @@
+[
+ {
+  "model": "glm-5.3",
+  "effort": "low",
+  "status": 200,
+  "seconds": 3.7,
+  "finish": "stop",
+  "valid_plan": true,
+  "error": null,
+  "completion_tokens": 336
+ },
+ {
+  "model": "glm-5.3",
+  "effort": "low",
+  "status": 200,
+  "seconds": 4.2,
+  "finish": "stop",
+  "valid_plan": true,
+  "error": null,
+  "completion_tokens": 376
+ },
+ {
+  "model": "glm-5.3",
+  "effort": "low",
+  "status": 200,
+  "seconds": 4.5,
+  "finish": "stop",
+  "valid_plan": true,
+  "error": null,
+  "completion_tokens": 365
+ },
+ {
+  "model": "glm-5.3-flash",
+  "effort": "low",
+  "status": 200,
+  "seconds": 4.3,
+  "finish": "stop",
+  "valid_plan": true,
+  "error": null,
+  "completion_tokens": 367
+ },
+ {
+  "model": "qwen3.8-27b",
+  "effort": "low",
+  "status": 200,
+  "seconds": 3.3,
+  "finish": "stop",
+  "valid_plan": true,
+  "error": null,
+  "completion_tokens": 614
+ }
+]

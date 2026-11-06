@@ -1,0 +1,516 @@
+{
+ "task_id": "first-vm-052821",
+ "started_at": "2026-11-06T05:28:21.115307+00:00",
+ "plan": "vhp-1c-1gb-amd",
+ "region": "ewr",
+ "os_id": 2284,
+ "debug_ssh": true,
+ "instance_id": "bd1fc906-ff5e-4318-ab94-b34d087f67cd",
+ "user_data_bytes": 105810,
+ "seconds_to_active": 39.2,
+ "health": {
+  "ok": true,
+  "task_id": "first-vm-052821",
+  "executor": "gvisor-systrap",
+  "revoked": false,
+  "steps_run": 0,
+  "started_at": "2026-11-06T05:29:58.779284+00:00",
+  "version": "0.1.0",
+  "egress_source": "journalctl -k"
+ },
+ "seconds_to_runner_ready": 81.6,
+ "step_probe": {
+  "step_id": "probe",
+  "exit_code": 0,
+  "stdout": "{\"cwd\": \"/work\", \"dev\": [\"char\", \"fd\", \"full\", \"fuse\", \"net\", \"null\", \"ptmx\", \"pts\", \"random\", \"shm\", \"stderr\", \"stdin\", \"stdout\", \"tty\", \"urandom\", \"zero\"], \"env_keys\": [\"BRZ_INPUT\", \"BRZ_OUT\", \"BRZ_STEP_ID\", \"BRZ_WORK\", \"HOME\", \"LANG\", \"PATH\", \"PYTHONDONTWRITEBYTECODE\", \"PYTHONIOENCODING\"], \"interfaces\": [\"lo\"], \"kernel\": \"4.19.0-gvisor\", \"root\": [\"bin\", \"dev\", \"etc\", \"lib\", \"lib64\", \"proc\", \"sbin\", \"sys\", \"tmp\", \"usr\", \"work\"], \"uid\": 1000}\n",
+  "stderr": "",
+  "stdout_sha256": "49c57e19dfb1c5eea0c5bcc6af099676b10cab987560c0d2000c1ceeb3531f12",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "duration_s": 0.115,
+  "timed_out": false,
+  "executor": "gvisor-systrap",
+  "error": "",
+  "egress_attempts": [
+   {
+    "ts": "2026-11-06T05:30:03.653824+00:00",
+    "verdict": "denied",
+    "dst_ip": "108.61.10.10",
+    "dst_port": 53,
+    "proto": "udp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:03.653824+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=108.61.10.10 LEN=65 TOS=0x00 PREC=0x00 TTL=64 ID=38794 DF PROTO=UDP SPT=52049 DPT=53 LEN=45"
+   },
+   {
+    "ts": "2026-11-06T05:30:03.653842+00:00",
+    "verdict": "denied",
+    "dst_ip": "108.61.115.10",
+    "dst_port": 53,
+    "proto": "udp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:03.653842+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=108.61.115.10 LEN=65 TOS=0x00 PREC=0x00 TTL=64 ID=60768 DF PROTO=UDP SPT=42487 DPT=53 LEN=45"
+   },
+   {
+    "ts": "2026-11-06T05:30:03.653843+00:00",
+    "verdict": "denied",
+    "dst_ip": "108.61.10.10",
+    "dst_port": 53,
+    "proto": "udp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:03.653843+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=108.61.10.10 LEN=65 TOS=0x00 PREC=0x00 TTL=64 ID=6900 DF PROTO=UDP SPT=34224 DPT=53 LEN=45"
+   },
+   {
+    "ts": "2026-11-06T05:30:03.653843+00:00",
+    "verdict": "denied",
+    "dst_ip": "108.61.115.10",
+    "dst_port": 53,
+    "proto": "udp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:03.653843+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=108.61.115.10 LEN=65 TOS=0x00 PREC=0x00 TTL=64 ID=51810 DF PROTO=UDP SPT=39019 DPT=53 LEN=45"
+   },
+   {
+    "ts": "2026-11-06T05:30:03.653844+00:00",
+    "verdict": "denied",
+    "dst_ip": "108.61.10.10",
+    "dst_port": 53,
+    "proto": "udp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:03.653844+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=108.61.10.10 LEN=65 TOS=0x00 PREC=0x00 TTL=64 ID=26537 DF PROTO=UDP SPT=60280 DPT=53 LEN=45"
+   }
+  ],
+  "missing_expected_outputs": [],
+  "skipped_outputs": [],
+  "secret_findings": [],
+  "stdout_truncated": false,
+  "stderr_truncated": false,
+  "files": {
+   "probe.json": "8c0d101fcd5bc82da785bcd0494d56ece6b55ae974d6cc746bc3e88cab676814"
+  }
+ },
+ "step_egress": {
+  "step_id": "egress",
+  "exit_code": 0,
+  "stdout": "== name not on the allowlist (no DNS in the sandbox)\n000\nexit=6\n== IP not on the allowlist\n000\nexit=28\n== metadata service\n000\nexit=28\n== allowlisted name, wrong port\n000\nexit=28\n== allowlisted name\n200\nexit=0\n",
+  "stderr": "curl: (6) Could not resolve host: wikipedia.org\ncurl: (28) Connection timed out after 6002 milliseconds\ncurl: (28) Connection timed out after 4002 milliseconds\ncurl: (28) Connection timed out after 4002 milliseconds\n",
+  "stdout_sha256": "dcefa1242917ef20eefb3e83c070a1ec21af309fab26349fd93789f0b69fb7e5",
+  "stderr_sha256": "8eb757082d4f64d0a2c77c11db8235c5e359502db91ebc6c44251f723e88bed9",
+  "duration_s": 14.236,
+  "timed_out": false,
+  "executor": "gvisor-systrap",
+  "error": "",
+  "egress_attempts": [
+   {
+    "ts": "2026-11-06T05:30:04+00:00",
+    "verdict": "denied",
+    "dst_ip": "1.1.1.1",
+    "dst_port": 443,
+    "proto": "tcp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:04+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53765 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0"
+   },
+   {
+    "ts": "2026-11-06T05:30:05+00:00",
+    "verdict": "denied",
+    "dst_ip": "ff02:0000:0000:0000:0000:0000:0000:0002",
+    "dst_port": null,
+    "proto": "icmpv6",
+    "src_ip": "fe80:0000:0000:0000:5400:07ff:fe03:c710",
+    "domain": null,
+    "raw": "2026-11-06T05:30:05+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=fe80:0000:0000:0000:5400:07ff:fe03:c710 DST=ff02:0000:0000:0000:0000:0000:0000:0002 LEN=56 TC=0 HOPLIMIT=255 FLOWLBL=383373 PROTO=ICMPv6 TYPE=133 CODE=0"
+   },
+   {
+    "ts": "2026-11-06T05:30:05+00:00",
+    "verdict": "denied",
+    "dst_ip": "1.1.1.1",
+    "dst_port": 443,
+    "proto": "tcp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:05+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53766 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0"
+   },
+   {
+    "ts": "2026-11-06T05:30:06+00:00",
+    "verdict": "denied",
+    "dst_ip": "1.1.1.1",
+    "dst_port": 443,
+    "proto": "tcp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:06+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53767 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0"
+   },
+   {
+    "ts": "2026-11-06T05:30:07+00:00",
+    "verdict": "denied",
+    "dst_ip": "1.1.1.1",
+    "dst_port": 443,
+    "proto": "tcp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:07+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53768 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0"
+   },
+   {
+    "ts": "2026-11-06T05:30:08+00:00",
+    "verdict": "denied",
+    "dst_ip": "1.1.1.1",
+    "dst_port": 443,
+    "proto": "tcp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:08+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53769 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0"
+   },
+   {
+    "ts": "2026-11-06T05:30:09+00:00",
+    "verdict": "denied",
+    "dst_ip": "1.1.1.1",
+    "dst_port": 443,
+    "proto": "tcp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:09+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53770 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0"
+   },
+   {
+    "ts": "2026-11-06T05:30:10+00:00",
+    "verdict": "denied",
+    "dst_ip": "169.254.169.254",
+    "dst_port": 80,
+    "proto": "tcp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:10+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=169.254.169.254 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=40737 DF PROTO=TCP SPT=60250 DPT=80 WINDOW=42340 RES=0x00 SYN URGP=0"
+   },
+   {
+    "ts": "2026-11-06T05:30:11+00:00",
+    "verdict": "denied",
+    "dst_ip": "169.254.169.254",
+    "dst_port": 80,
+    "proto": "tcp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:11+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=169.254.169.254 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=40738 DF PROTO=TCP SPT=60250 DPT=80 WINDOW=42340 RES=0x00 SYN URGP=0"
+   },
+   {
+    "ts": "2026-11-06T05:30:12+00:00",
+    "verdict": "denied",
+    "dst_ip": "169.254.169.254",
+    "dst_port": 80,
+    "proto": "tcp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:12+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=169.254.169.254 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=40739 DF PROTO=TCP SPT=60250 DPT=80 WINDOW=42340 RES=0x00 SYN URGP=0"
+   },
+   {
+    "ts": "2026-11-06T05:30:13+00:00",
+    "verdict": "denied",
+    "dst_ip": "169.254.169.254",
+    "dst_port": 80,
+    "proto": "tcp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:13+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=169.254.169.254 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=40740 DF PROTO=TCP SPT=60250 DPT=80 WINDOW=42340 RES=0x00 SYN URGP=0"
+   },
+   {
+    "ts": "2026-11-06T05:30:14+00:00",
+    "verdict": "denied",
+    "dst_ip": "104.20.23.154",
+    "dst_port": 8080,
+    "proto": "tcp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:14+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=104.20.23.154 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=43058 DF PROTO=TCP SPT=36868 DPT=8080 WINDOW=42340 RES=0x00 SYN URGP=0"
+   },
+   {
+    "ts": "2026-11-06T05:30:15+00:00",
+    "verdict": "denied",
+    "dst_ip": "104.20.23.154",
+    "dst_port": 8080,
+    "proto": "tcp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:15+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=104.20.23.154 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=43059 DF PROTO=TCP SPT=36868 DPT=8080 WINDOW=42340 RES=0x00 SYN URGP=0"
+   },
+   {
+    "ts": "2026-11-06T05:30:16+00:00",
+    "verdict": "denied",
+    "dst_ip": "104.20.23.154",
+    "dst_port": 8080,
+    "proto": "tcp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:16+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=104.20.23.154 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=43060 DF PROTO=TCP SPT=36868 DPT=8080 WINDOW=42340 RES=0x00 SYN URGP=0"
+   },
+   {
+    "ts": "2026-11-06T05:30:17+00:00",
+    "verdict": "denied",
+    "dst_ip": "104.20.23.154",
+    "dst_port": 8080,
+    "proto": "tcp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:17+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=104.20.23.154 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=43061 DF PROTO=TCP SPT=36868 DPT=8080 WINDOW=42340 RES=0x00 SYN URGP=0"
+   },
+   {
+    "ts": "2026-11-06T05:30:18+00:00",
+    "verdict": "allowed",
+    "dst_ip": "104.20.23.154",
+    "dst_port": 443,
+    "proto": "tcp",
+    "src_ip": "45.77.201.46",
+    "domain": null,
+    "raw": "2026-11-06T05:30:18+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-ALLOW IN= OUT=enp1s0 SRC=45.77.201.46 DST=104.20.23.154 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=1437 DF PROTO=TCP SPT=51068 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0"
+   }
+  ],
+  "missing_expected_outputs": [],
+  "skipped_outputs": [],
+  "secret_findings": [],
+  "stdout_truncated": false,
+  "stderr_truncated": false
+ },
+ "egress_all": [
+  {
+   "ts": "2026-11-06T05:30:03+00:00",
+   "verdict": "denied",
+   "dst_ip": "108.61.10.10",
+   "dst_port": 53,
+   "proto": "udp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:03+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=108.61.10.10 LEN=65 TOS=0x00 PREC=0x00 TTL=64 ID=38794 DF PROTO=UDP SPT=52049 DPT=53 LEN=45"
+  },
+  {
+   "ts": "2026-11-06T05:30:03+00:00",
+   "verdict": "denied",
+   "dst_ip": "108.61.115.10",
+   "dst_port": 53,
+   "proto": "udp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:03+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=108.61.115.10 LEN=65 TOS=0x00 PREC=0x00 TTL=64 ID=60768 DF PROTO=UDP SPT=42487 DPT=53 LEN=45"
+  },
+  {
+   "ts": "2026-11-06T05:30:03+00:00",
+   "verdict": "denied",
+   "dst_ip": "108.61.10.10",
+   "dst_port": 53,
+   "proto": "udp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:03+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=108.61.10.10 LEN=65 TOS=0x00 PREC=0x00 TTL=64 ID=6900 DF PROTO=UDP SPT=34224 DPT=53 LEN=45"
+  },
+  {
+   "ts": "2026-11-06T05:30:03+00:00",
+   "verdict": "denied",
+   "dst_ip": "108.61.115.10",
+   "dst_port": 53,
+   "proto": "udp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:03+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=108.61.115.10 LEN=65 TOS=0x00 PREC=0x00 TTL=64 ID=51810 DF PROTO=UDP SPT=39019 DPT=53 LEN=45"
+  },
+  {
+   "ts": "2026-11-06T05:30:03+00:00",
+   "verdict": "denied",
+   "dst_ip": "108.61.10.10",
+   "dst_port": 53,
+   "proto": "udp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:03+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=108.61.10.10 LEN=65 TOS=0x00 PREC=0x00 TTL=64 ID=26537 DF PROTO=UDP SPT=60280 DPT=53 LEN=45"
+  },
+  {
+   "ts": "2026-11-06T05:30:04+00:00",
+   "verdict": "denied",
+   "dst_ip": "1.1.1.1",
+   "dst_port": 443,
+   "proto": "tcp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:04+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53765 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0"
+  },
+  {
+   "ts": "2026-11-06T05:30:05+00:00",
+   "verdict": "denied",
+   "dst_ip": "ff02:0000:0000:0000:0000:0000:0000:0002",
+   "dst_port": null,
+   "proto": "icmpv6",
+   "src_ip": "fe80:0000:0000:0000:5400:07ff:fe03:c710",
+   "domain": null,
+   "raw": "2026-11-06T05:30:05+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=fe80:0000:0000:0000:5400:07ff:fe03:c710 DST=ff02:0000:0000:0000:0000:0000:0000:0002 LEN=56 TC=0 HOPLIMIT=255 FLOWLBL=383373 PROTO=ICMPv6 TYPE=133 CODE=0"
+  },
+  {
+   "ts": "2026-11-06T05:30:05+00:00",
+   "verdict": "denied",
+   "dst_ip": "1.1.1.1",
+   "dst_port": 443,
+   "proto": "tcp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:05+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53766 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0"
+  },
+  {
+   "ts": "2026-11-06T05:30:06+00:00",
+   "verdict": "denied",
+   "dst_ip": "1.1.1.1",
+   "dst_port": 443,
+   "proto": "tcp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:06+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53767 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0"
+  },
+  {
+   "ts": "2026-11-06T05:30:07+00:00",
+   "verdict": "denied",
+   "dst_ip": "1.1.1.1",
+   "dst_port": 443,
+   "proto": "tcp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:07+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53768 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0"
+  },
+  {
+   "ts": "2026-11-06T05:30:08+00:00",
+   "verdict": "denied",
+   "dst_ip": "1.1.1.1",
+   "dst_port": 443,
+   "proto": "tcp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:08+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53769 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0"
+  },
+  {
+   "ts": "2026-11-06T05:30:09+00:00",
+   "verdict": "denied",
+   "dst_ip": "1.1.1.1",
+   "dst_port": 443,
+   "proto": "tcp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:09+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53770 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0"
+  },
+  {
+   "ts": "2026-11-06T05:30:10+00:00",
+   "verdict": "denied",
+   "dst_ip": "169.254.169.254",
+   "dst_port": 80,
+   "proto": "tcp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:10+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=169.254.169.254 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=40737 DF PROTO=TCP SPT=60250 DPT=80 WINDOW=42340 RES=0x00 SYN URGP=0"
+  },
+  {
+   "ts": "2026-11-06T05:30:11+00:00",
+   "verdict": "denied",
+   "dst_ip": "169.254.169.254",
+   "dst_port": 80,
+   "proto": "tcp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:11+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=169.254.169.254 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=40738 DF PROTO=TCP SPT=60250 DPT=80 WINDOW=42340 RES=0x00 SYN URGP=0"
+  },
+  {
+   "ts": "2026-11-06T05:30:12+00:00",
+   "verdict": "denied",
+   "dst_ip": "169.254.169.254",
+   "dst_port": 80,
+   "proto": "tcp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:12+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=169.254.169.254 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=40739 DF PROTO=TCP SPT=60250 DPT=80 WINDOW=42340 RES=0x00 SYN URGP=0"
+  },
+  {
+   "ts": "2026-11-06T05:30:13+00:00",
+   "verdict": "denied",
+   "dst_ip": "169.254.169.254",
+   "dst_port": 80,
+   "proto": "tcp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:13+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=169.254.169.254 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=40740 DF PROTO=TCP SPT=60250 DPT=80 WINDOW=42340 RES=0x00 SYN URGP=0"
+  },
+  {
+   "ts": "2026-11-06T05:30:14+00:00",
+   "verdict": "denied",
+   "dst_ip": "104.20.23.154",
+   "dst_port": 8080,
+   "proto": "tcp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:14+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=104.20.23.154 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=43058 DF PROTO=TCP SPT=36868 DPT=8080 WINDOW=42340 RES=0x00 SYN URGP=0"
+  },
+  {
+   "ts": "2026-11-06T05:30:15+00:00",
+   "verdict": "denied",
+   "dst_ip": "104.20.23.154",
+   "dst_port": 8080,
+   "proto": "tcp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:15+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=104.20.23.154 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=43059 DF PROTO=TCP SPT=36868 DPT=8080 WINDOW=42340 RES=0x00 SYN URGP=0"
+  },
+  {
+   "ts": "2026-11-06T05:30:16+00:00",
+   "verdict": "denied",
+   "dst_ip": "104.20.23.154",
+   "dst_port": 8080,
+   "proto": "tcp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:16+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=104.20.23.154 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=43060 DF PROTO=TCP SPT=36868 DPT=8080 WINDOW=42340 RES=0x00 SYN URGP=0"
+  },
+  {
+   "ts": "2026-11-06T05:30:17+00:00",
+   "verdict": "denied",
+   "dst_ip": "104.20.23.154",
+   "dst_port": 8080,
+   "proto": "tcp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:17+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=104.20.23.154 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=43061 DF PROTO=TCP SPT=36868 DPT=8080 WINDOW=42340 RES=0x00 SYN URGP=0"
+  },
+  {
+   "ts": "2026-11-06T05:30:18+00:00",
+   "verdict": "allowed",
+   "dst_ip": "104.20.23.154",
+   "dst_port": 443,
+   "proto": "tcp",
+   "src_ip": "45.77.201.46",
+   "domain": null,
+   "raw": "2026-11-06T05:30:18+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-ALLOW IN= OUT=enp1s0 SRC=45.77.201.46 DST=104.20.23.154 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=1437 DF PROTO=TCP SPT=51068 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0"
+  }
+ ],
+ "scan": {
+  "clean": true,
+  "findings": [],
+  "files_scanned": 21,
+  "files_skipped": 0,
+  "env_vars_checked": 16,
+  "scanned_paths": [
+   "/work",
+   "/etc/environment",
+   "/etc/profile.d",
+   "/root",
+   "/home",
+   "/etc/brz/task.env"
+  ],
+  "scanner": "brz_runner.secretscan",
+  "findings_count": 0
+ },
+ "vm_debug": "status: error\nextended_status: error - done\nboot_status_code: enabled-by-generator\nlast_update: Thu, 01 Jan 1970 00:00:38 +0000\ndetail: DataSourceVultr\nerrors:\n\t- ('users-groups', ProcessExecutionError(\"Unexpected error while running command.\\nCommand: ['useradd', 'runner', '--comment', 'brz step runner (unprivileged)', '--shell', '/usr/sbin/nologin', '--uid', '1000', '-m']\\nExit code: 4\\nReason: -\\nStdout: \\nStderr: useradd: UID 1000 is not unique\"))\n\t- ('ssh-authkey-fingerprints', KeyError(\"getpwnam(): name not found: 'runner'\"))\nrecoverable_errors:\nWARNING:\n\t- Failed to create user runner\n\t- Running module users-groups (<module 'cloudinit.config.cc_users_groups' from '/usr/lib/python3/dist-packages/cloudinit/config/cc_users_groups.py'>) failed\n\t- Running module ssh-authkey-fingerprints (<module 'cloudinit.config.cc_ssh_authkey_fingerprints' from '/usr/lib/python3/dist-packages/cloudinit/config/cc_ssh_authkey_fingerprints.py'>) failed\nStartup finished in 3.766s (kernel) + 34.845s (userspace) = 38.612s \ngraphical.target reached after 11.144s in userspace.\nCreated symlink /etc/systemd/system/timers.target.wants/brz-ttl.timer \u2192 /etc/systemd/system/brz-ttl.timer.\nCreated symlink /etc/systemd/system/multi-user.target.wants/brz-runner.service \u2192 /etc/systemd/system/brz-runner.service.\n{\"ok\": true, \"task_id\": \"first-vm-052821\", \"executor\": \"gvisor-systrap\", \"revoked\": false, \"steps_run\": 0, \"started_at\": \"2026-11-06T05:29:58.779284+00:00\", \"version\": \"0.1.0\", \"egress_source\": \"journalctl -k\"}2026-11-06 05:30:00,676 - log_util.py[WARNING]: Running module ssh-authkey-fingerprints (<module 'cloudinit.config.cc_ssh_authkey_fingerprints' from '/usr/lib/python3/dist-packages/cloudinit/config/cc_ssh_authkey_fingerprints.py'>) failed\nbrz sandbox for task first-vm-052821 ready after 38.43 seconds (ttl 30m, inner=gvisor)\nexample.com 104.20.23.154 172.66.147.243\n104.20.23.154 example.com\n172.66.147.243 example.com\nls: cannot access '/dev/kvm': No such file or directory\n0\nModel name:                              AMD EPYC-Milan Processor\nBIOS Model name:                         pc-q35-8.2  CPU @ 2.0GHz\n               total        used        free      shared  buff/cache   available\nMem:             955         347         288           1         475         608\nStatus: inactive\ntable inet brz {\n\tset allow4 {\n\t\ttype ipv4_addr\n\t\tflags interval\n\t\telements = { 104.20.23.154, 172.66.147.243 }\n\t}\n\n\tchain input {\n\t\ttype filter hook input priority filter; policy drop;\n\t\tiif \"lo\" accept\n\t\tct state established,related accept\n\t\tct state invalid drop\n\t\tip saddr <operator-ip> tcp dport 8700 accept\n\t\tip saddr <operator-ip> tcp dport 22 accept\n\t\ticmp type echo-request limit rate 5/second burst 5 packets accept\n\t}\n\n\tchain output {\n\t\ttype filter hook output priority filter; policy drop;\n\t\toif \"lo\" accept\n\t\tct state established,related accept\n\t\tct state invalid drop\n\t\tip daddr @allow4 tcp dport { 80, 443 } limit rate 50/second burst 5 packets log prefix \"BRZ-EGRESS-ALLOW \"\n\t\tip daddr @allow4 tcp dport { 80, 443 } accept\n\t\tlimit rate 50/second burst 5 packets log prefix \"BRZ-EGRESS-DENY \"\n\t\tdrop\n\t}\n\n\tchain forward {\n\t\ttype filter hook forward priority filter; policy drop;\n\t}\n}\n2026-11-06T05:30:04+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53765 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0 \n2026-11-06T05:30:05+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=fe80:0000:0000:0000:5400:07ff:fe03:c710 DST=ff02:0000:0000:0000:0000:0000:0000:0002 LEN=56 TC=0 HOPLIMIT=255 FLOWLBL=383373 PROTO=ICMPv6 TYPE=133 CODE=0 \n2026-11-06T05:30:05+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53766 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0 \n2026-11-06T05:30:06+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53767 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0 \n2026-11-06T05:30:07+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53768 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0 \n2026-11-06T05:30:08+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53769 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0 \n2026-11-06T05:30:09+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=1.1.1.1 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=53770 DF PROTO=TCP SPT=46250 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0 \n2026-11-06T05:30:10+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=169.254.169.254 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=40737 DF PROTO=TCP SPT=60250 DPT=80 WINDOW=42340 RES=0x00 SYN URGP=0 \n2026-11-06T05:30:11+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=169.254.169.254 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=40738 DF PROTO=TCP SPT=60250 DPT=80 WINDOW=42340 RES=0x00 SYN URGP=0 \n2026-11-06T05:30:12+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=169.254.169.254 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=40739 DF PROTO=TCP SPT=60250 DPT=80 WINDOW=42340 RES=0x00 SYN URGP=0 \n2026-11-06T05:30:13+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=169.254.169.254 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=40740 DF PROTO=TCP SPT=60250 DPT=80 WINDOW=42340 RES=0x00 SYN URGP=0 \n2026-11-06T05:30:14+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=104.20.23.154 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=43058 DF PROTO=TCP SPT=36868 DPT=8080 WINDOW=42340 RES=0x00 SYN URGP=0 \n2026-11-06T05:30:15+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=104.20.23.154 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=43059 DF PROTO=TCP SPT=36868 DPT=8080 WINDOW=42340 RES=0x00 SYN URGP=0 \n2026-11-06T05:30:16+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=104.20.23.154 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=43060 DF PROTO=TCP SPT=36868 DPT=8080 WINDOW=42340 RES=0x00 SYN URGP=0 \n2026-11-06T05:30:17+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=104.20.23.154 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=43061 DF PROTO=TCP SPT=36868 DPT=8080 WINDOW=42340 RES=0x00 SYN URGP=0 \n2026-11-06T05:30:18+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-ALLOW IN= OUT=enp1s0 SRC=45.77.201.46 DST=104.20.23.154 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=1437 DF PROTO=TCP SPT=51068 DPT=443 WINDOW=42340 RES=0x00 SYN URGP=0 \n2026-11-06T05:30:24+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=108.61.10.10 LEN=67 TOS=0x00 PREC=0x00 TTL=64 ID=6610 DF PROTO=UDP SPT=59738 DPT=53 LEN=47 \n2026-11-06T05:30:24+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=108.61.115.10 LEN=67 TOS=0x00 PREC=0x00 TTL=64 ID=13675 DF PROTO=UDP SPT=49913 DPT=53 LEN=47 \n2026-11-06T05:30:24+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=108.61.10.10 LEN=67 TOS=0x00 PREC=0x00 TTL=64 ID=27024 DF PROTO=UDP SPT=48747 DPT=53 LEN=47 \n2026-11-06T05:30:24+00:00 brz-first-vm-052821 kernel: BRZ-EGRESS-DENY IN= OUT=enp1s0 SRC=45.77.201.46 DST=108.61.115.10 LEN=67 TOS=0x00 PREC=0x00 TTL=64 ID=13964 DF PROTO=UDP SPT=44197 DPT=53 LEN=47 \nrunsc version release-20261102.0\nspec: 1.2.1\n/dev/vda2        23G  6.0G   16G  28% /\n",
+ "revoke": {
+  "revoked": true,
+  "killed_running_step": false,
+  "poweroff": false,
+  "revoked_at": "2026-11-06T05:30:25.691196+00:00"
+ },
+ "destroy": {
+  "http_status": 404,
+  "attempts": 1,
+  "observed_at": "2026-11-06T05:30:07.805089+00:00",
+  "seconds_delete_to_404": 2.41
+ },
+ "finished_at": "2026-11-06T05:30:07.805788+00:00"
+}

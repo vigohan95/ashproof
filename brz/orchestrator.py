@@ -334,6 +334,7 @@ class Orchestrator:
                 "egress_policy": "default-deny",
                 "inner_isolation": self.backend.inner_isolation,
                 "label": handle.meta.get("label"),
+                "admin_access": bool(handle.meta.get("admin_access")),
             },
         )
         client = RunnerClient(handle.runner_url, task_id=state.id, token_key=handle.token_key)

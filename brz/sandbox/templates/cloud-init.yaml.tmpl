@@ -11,7 +11,7 @@ users:
     gecos: brz step runner (unprivileged)
     shell: /usr/sbin/nologin
     lock_passwd: true
-    uid: 1000
+    uid: 10001
     # deliberately: no sudo, no ssh keys, no password
 
 package_update: true
@@ -32,6 +32,7 @@ write_files:
       TTL_MINUTES=@@{ttl_minutes}
       DNS_SERVER=@@{dns_server}
       INNER_ISOLATION=@@{inner_isolation}
+      ADMIN_CIDR=@@{admin_cidr}
   - path: /etc/brz/token.key
     permissions: "0600"
     owner: root:root
@@ -103,7 +104,7 @@ write_files:
       ExecStart=/usr/bin/python3 -m brz_runner --task-id @@{task_id} --token-key-file /etc/brz/token.key --workroot /work --port @@{runner_port} --allow-poweroff@@{runner_extra_args}
       Restart=on-failure
       RestartSec=2
-      # The runner itself is root (it has to drive runsc); every STEP runs as uid 1000 inside gVisor.
+      # The runner itself is root (it has to drive runsc); every STEP runs as uid 10001 inside gVisor.
       NoNewPrivileges=yes
       ProtectHome=read-only
       PrivateTmp=yes
@@ -135,12 +136,17 @@ write_files:
 @@{runner_files_block}
 
 runcmd:
+  # The image ships linuxuser (uid 1000, groups sudo and lxd). Nothing here needs it.
+  - [sh, -c, "userdel -r -f linuxuser 2>/dev/null || true"]
   - mkdir -p /work/input /work/out /work/steps /var/lib/brz/bundles
-  - chown -R 1000:1000 /work
+  - chown -R 10001:10001 /work
   - chmod 0600 /etc/brz/token.key
   - systemctl restart systemd-resolved
   - [bash, /usr/local/bin/brz-install-gvisor]
   - [bash, /usr/local/bin/brz-egress-apply]
+  # After lock-down nothing on the host may talk out, so a BRZ-EGRESS line can only come from a step.
+  - systemctl stop systemd-resolved systemd-timesyncd
+  - sysctl -q -w net.ipv6.conf.all.disable_ipv6=1 net.ipv6.conf.default.disable_ipv6=1
   - systemctl daemon-reload
   - systemctl enable --now brz-ttl.timer
   - systemctl enable --now brz-runner.service

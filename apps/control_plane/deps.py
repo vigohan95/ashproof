@@ -58,6 +58,8 @@ def sandbox_config_from_env() -> VultrSandboxConfig:
         runner_port=int(os.environ.get("BRZ_RUNNER_PORT", "8700")),
         ttl_minutes=int(os.environ.get("BRZ_SANDBOX_TTL_MINUTES", "20")),
         inner_isolation=os.environ.get("BRZ_INNER_ISOLATION", "gvisor"),
+        sshkey_ids=[k for k in os.environ.get("BRZ_DEBUG_SSHKEY_ID", "").split(",") if k],
+        admin_cidr=os.environ.get("BRZ_ADMIN_CIDR") or None,
     )
 
 

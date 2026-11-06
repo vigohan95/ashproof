@@ -109,7 +109,7 @@ def test_gvisor_executor_bundle_config(tmp_path: Path):
     assert "run" in cmd and "--bundle" in cmd
     cfg = json.loads((tmp_path / "bundles" / "s1" / "config.json").read_text())
     assert cfg["process"]["args"] == ["python3", "-I", "/work/steps/s1/main.py"]
-    assert cfg["process"]["user"] == {"uid": 1000, "gid": 1000}
+    assert cfg["process"]["user"] == {"uid": 10001, "gid": 10001}
     assert cfg["process"]["noNewPrivileges"] is True and cfg["process"]["capabilities"]["bounding"] == []
     assert cfg["root"] == {"path": str(tmp_path / "bundles" / "_rootfs"), "readonly": True}
     assert not any(m["destination"].startswith("/etc/brz") for m in cfg["mounts"])
