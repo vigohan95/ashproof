@@ -258,6 +258,11 @@ class Receipt(BaseModel):
                 lines.append(f"  - {r}")
             for cnc in mr.get("concerns", []):
                 lines.append(f"  - concern: {cnc}")
+        sf = v.get("safety")
+        if sf:
+            lines.append(f"- **Content filter:** `{sf.get('model')}`")
+            for item in sf.get("items", []):
+                lines.append(f"  - {item.get('source')} {item.get('name')}: {item.get('verdict')}")
         lines.append("")
         lines.append("## Egress")
         lines.append("")

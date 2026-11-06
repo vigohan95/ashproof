@@ -2,7 +2,8 @@
 
     python scripts/safety_probe.py <out.json>
 
-Sends real step outputs and inputs from recorded tasks, plus plain unsafe text as a positive control. Prints no key.
+Sends the injected CSV, the attack's code and log, plain unsafe text as a positive control, and real outputs from
+earlier tasks as a negative control. Prints no key.
 """
 
 from __future__ import annotations
@@ -40,6 +41,14 @@ SAMPLES = {
 }
 
 
+EV = ROOT / "docs" / "evidence" / "vultr-2026-11-06" / "tasks"
+for name in ("rel-07-csv", "rel-09-walls"):
+    timeline = json.loads((EV / f"{name}.timeline.json").read_text(encoding="utf-8"))
+    SAMPLES[f"real_{name}_stdout"] = timeline["steps"][0]["log"]["stdout"]
+    SAMPLES[f"real_{name}_task"] = timeline["task"]
+SAMPLES["real_heartbeat_stdout"] = "\n".join(f"heartbeat {i}" for i in range(100))
+
+
 def main() -> None:
     load_env()
     key = os.environ["INFERENCE_API_KEY"]
@@ -51,9 +60,16 @@ def main() -> None:
             t0 = time.monotonic()
             r = c.post(
                 f"{BASE}/chat/completions",
-                json={"model": MODEL, "messages": [{"role": "user", "content": text}], "max_tokens": 300, "temperature": 0},
+                json={
+                    "model": MODEL,
+                    "messages": [{"role": "user", "content": text}],
+                    "max_tokens": 300,
+                    "temperature": 0,
+                },
             )
-            body = r.json() if r.headers.get("content-type", "").startswith("application/json") else {"text": r.text[:300]}
+            body = (
+                r.json() if r.headers.get("content-type", "").startswith("application/json") else {"text": r.text[:300]}
+            )
             choice = (body.get("choices") or [{}])[0].get("message", {})
             results[name] = {
                 "http": r.status_code,

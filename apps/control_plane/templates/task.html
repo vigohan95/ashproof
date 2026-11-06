@@ -105,6 +105,7 @@ function render(d) {
     for (const c of v.checks) h += `<li><span class="${c.passed ? "ok" : "bad"}">${c.passed ? "&#10003;" : "&#10007;"}</span> ${esc(c.name)} <span class="muted">${esc(c.detail)}</span></li>`;
     h += "</ul>";
     if (v.model_review) h += `<p>model review: satisfies_task=<strong>${v.model_review.satisfies_task}</strong> confidence=${v.model_review.confidence}<br><span class="muted">${v.model_review.reasons.map(esc).join("; ")}</span>${v.model_review.concerns.length ? '<br><span class="warn">concerns: ' + v.model_review.concerns.map(esc).join("; ") + "</span>" : ""}</p>`;
+    if (v.safety) h += `<p>content filter <code>${esc(v.safety.model)}</code>: ${v.safety.items.map(i => `<span class="${i.verdict === "unsafe" ? "bad" : i.verdict === "safe" ? "ok" : "warn"}">${esc(i.source)} ${esc(i.name)} ${esc(i.verdict)}</span>`).join(", ")}</p>`;
     if (v.primary_hashes) h += `<details><summary>output hashes (primary vs re-run)</summary><table><tbody>${Object.entries(v.primary_hashes).map(([k, hv]) => `<tr><td>${esc(k)}</td><td><code>${esc(hv.slice(0, 16))}</code></td><td><code>${esc((v.rerun_hashes || {})[k] ? v.rerun_hashes[k].slice(0, 16) : "-")}</code></td></tr>`).join("")}</tbody></table></details>`;
     document.getElementById("verdict").innerHTML = h;
   }

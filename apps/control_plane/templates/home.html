@@ -154,6 +154,10 @@ function toLines(d) {
       if (x.model_review) add(e, x.verifier_model + " reviewed the work: " + (x.model_review.satisfies_task ? "task done" : "task not done"));
       for (const c of x.failed_checks || []) add(e, "Failed: " + c.detail, "refused");
     }
+    else if (e.kind === "safety.review") {
+      const bad = x.items.filter(i => i.verdict === "unsafe").map(i => i.name);
+      add(e, x.model + ": " + (bad.length ? "marked " + bad.join(", ") + " unsafe" : "nothing unsafe"), bad.length ? "refused" : "");
+    }
     else if (e.kind === "secret_scan.done") add(e, "Secret scan: " + (x.clean ? "clean" : x.findings_count + " finding(s)"));
     else if (e.kind === "vm.destroyed") add(e, x.role + " VM deleted, GET returned " + x.http_status, "gone");
   }

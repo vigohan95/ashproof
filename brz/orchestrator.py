@@ -611,6 +611,9 @@ class Orchestrator:
         )
         self._check_refusals(state, verdict)
         state.verdict = verdict
+        if verdict.safety:
+            self._charge_tokens(state, verdict.safety.model, verdict.safety.usage, "safety model")
+            state.audit.append("safety.review", verdict.safety.model_dump(exclude={"usage"}))
         self._charge_tokens(state, verdict.verifier_model, verdict.usage, "verifier")
         state.audit.append(
             "verify.verdict",

@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 
 from .client import LLM, Usage
 from .planner import Plan
+from .safety import SafetyReview, SafetyReviewer
 from .structured import structured
 
 
@@ -69,6 +70,7 @@ class VerifierVerdict(BaseModel):
     model_review: ModelReview | None
     verifier_model: str
     usage: Usage = Field(default_factory=Usage)
+    safety: SafetyReview | None = None
 
     @property
     def failed_checks(self) -> list[Check]:
@@ -136,6 +138,14 @@ def run_deterministic_checks(
     return checks, rerun_match
 
 
+def _output_texts(primary: list[StepOutcome]) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for o in primary:
+        out[f"{o.step_id}/stdout"] = o.stdout_preview
+        out.update({f"{o.step_id}/{name}": text for name, text in o.file_previews.items()})
+    return out
+
+
 class Verifier:
     def __init__(
         self,
@@ -144,8 +154,10 @@ class Verifier:
         prefer_schema: bool = True,
         require_rerun_match: bool = True,
         max_tokens: int = 8000,
+        safety: SafetyReviewer | None = None,
     ):
         self.llm = llm
+        self.safety = safety
         self.max_tokens = max_tokens
         self.prefer_schema = prefer_schema
         self.require_rerun_match = require_rerun_match
@@ -164,10 +176,18 @@ class Verifier:
             checks.append(Check(name="rerun:performed", passed=False, detail="independent re-run not performed"))
             deterministic_ok = False
 
+        safety: SafetyReview | None = None
+        if self.safety is not None:
+            safety = await self.safety.review(inputs or {}, _output_texts(primary))
+            bad = safety.unsafe_outputs
+            detail = f"{safety.model} marked unsafe: {bad}" if bad else f"{safety.model} marked nothing unsafe"
+            checks.append(Check(name="safety:step_output", passed=not bad, detail=detail))
+            deterministic_ok = deterministic_ok and not bad
+
         review: ModelReview | None = None
         usage = Usage()
         if self.llm is not None:
-            review, usage = await self._model_review(task, plan, primary, inputs)
+            review, usage = await self._model_review(task, plan, primary, inputs, safety)
 
         passed = deterministic_ok and (review is None or review.satisfies_task)
         return VerifierVerdict(
@@ -180,10 +200,16 @@ class Verifier:
             model_review=review,
             verifier_model=getattr(self.llm, "model", "") if self.llm else "deterministic-only",
             usage=usage,
+            safety=safety,
         )
 
     async def _model_review(
-        self, task: str, plan: Plan, primary: list[StepOutcome], inputs: dict[str, str] | None = None
+        self,
+        task: str,
+        plan: Plan,
+        primary: list[StepOutcome],
+        inputs: dict[str, str] | None = None,
+        safety: SafetyReview | None = None,
     ) -> tuple[ModelReview, Usage]:
         assert self.llm is not None
         evidence: list[dict[str, Any]] = []
@@ -215,6 +241,9 @@ class Verifier:
                         "plan_summary": plan.task_summary,
                         "input_files": inputs or {},
                         "evidence": evidence,
+                        "marked_unsafe_by_content_filter": (safety.unsafe_inputs + safety.unsafe_outputs)
+                        if safety
+                        else [],
                     },
                     ensure_ascii=False,
                 ),

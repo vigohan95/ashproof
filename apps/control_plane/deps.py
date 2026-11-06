@@ -1,14 +1,15 @@
 """Dependency wiring for the control plane.
 
 ``BRZ_MODE=live`` (default when ``VULTR_API_KEY`` is set): real Vultr API + Vultr Serverless
-Inference (planner ``glm-5.3``, verifier ``qwen3.8-27b``).
+Inference (planner ``glm-5.3``, verifier ``qwen3.8-27b``, content filter ``nemotron-3.5-content-safety``).
 ``BRZ_MODE=mock`` (default otherwise): in-process mock Vultr + local runner + demo FakeLLM, so
 the whole product runs on a laptop with zero credentials.
 
 Environment variables (live mode):
     VULTR_API_KEY, VULTR_REGION, VULTR_PLAN, VULTR_OS_ID, VULTR_SNAPSHOT_ID, VULTR_FIREWALL_GROUP_ID,
     BRZ_CONTROL_PLANE_CIDR, BRZ_RUNNER_PORT, BRZ_SANDBOX_TTL_MINUTES, BRZ_INNER_ISOLATION (gvisor|none),
-    INFERENCE_API_KEY, INFERENCE_BASE_URL, BRZ_PLANNER_MODEL, BRZ_VERIFIER_MODEL, BRZ_VERIFY_FRESH_SANDBOX (1|0),
+    INFERENCE_API_KEY, INFERENCE_BASE_URL, BRZ_PLANNER_MODEL, BRZ_VERIFIER_MODEL, BRZ_SAFETY_MODEL,
+    BRZ_VERIFY_FRESH_SANDBOX (1|0),
     BRZ_REASONING_EFFORT (default low; the default of the models themselves is too slow and can return nothing),
     BRZ_PARALLEL_VERIFIER_BOOT (1|0), BRZ_MAX_STEP_TIMEOUT_S, BRZ_APPROVAL_TIMEOUT_S
 """
@@ -24,6 +25,7 @@ import httpx
 from brz.cost import LivePriceTable, StaticPriceTable
 from brz.llm import VULTR_INFERENCE_BASE_URL, ChatClient, FakeLLM, Planner, Verifier
 from brz.llm.client import DEFAULT_REASONING_EFFORT
+from brz.llm.safety import SafetyReviewer
 from brz.orchestrator import Orchestrator, OrchestratorConfig
 from brz.sandbox.backends import LocalRunnerVultrBackend, SandboxBackend, VultrSandboxBackend, VultrSandboxConfig
 from brz.vultr import VultrClient
@@ -113,10 +115,12 @@ def build_live_deps() -> Deps:
     effort = os.environ.get("BRZ_REASONING_EFFORT", DEFAULT_REASONING_EFFORT) or None
     planner_llm = ChatClient(base_url, inference_key, planner_model, reasoning_effort=effort)
     verifier_llm = ChatClient(base_url, inference_key, verifier_model, reasoning_effort=effort)
+    safety_model = os.environ.get("BRZ_SAFETY_MODEL", "nemotron-3.5-content-safety")  # empty turns it off
+    safety_llm = ChatClient(base_url, inference_key, safety_model, timeout=30.0) if safety_model else None
     backend = VultrSandboxBackend(VultrClient(api_key), sandbox_config_from_env())
     orch = Orchestrator(
         planner=Planner(planner_llm),
-        verifier=Verifier(verifier_llm),
+        verifier=Verifier(verifier_llm, safety=SafetyReviewer(safety_llm) if safety_llm else None),
         backend=backend,
         prices=StaticPriceTable(),  # replaced by Deps.refresh_prices() when the app starts
         config=OrchestratorConfig(
@@ -128,7 +132,8 @@ def build_live_deps() -> Deps:
             approval_timeout_s=float(os.environ.get("BRZ_APPROVAL_TIMEOUT_S", "900")),
         ),
     )
-    return Deps(orchestrator=orch, backend=backend, mode="live", llm_clients=[planner_llm, verifier_llm])
+    clients = [c for c in (planner_llm, verifier_llm, safety_llm) if c]
+    return Deps(orchestrator=orch, backend=backend, mode="live", llm_clients=clients)
 
 
 def build_deps_from_env() -> Deps:
