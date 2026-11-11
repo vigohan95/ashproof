@@ -211,7 +211,14 @@ class VultrClient:
             params["tag"] = tag
         if label:
             params["label"] = label
-        return [Instance.model_validate(i) for i in await self._paginate("/instances", "instances", params)]
+        found = [Instance.model_validate(i) for i in await self._paginate("/instances", "instances", params)]
+        # The API has answered ``?tag=`` with every instance on the account (seen 2026-11-11),
+        # so the filter is applied again here and never left to the server alone.
+        if tag:
+            found = [i for i in found if tag in i.tags]
+        if label:
+            found = [i for i in found if i.label == label]
+        return found
 
     async def wait_until_active(
         self,
@@ -293,10 +300,18 @@ class VultrClient:
 
         This is the safety net for crashed control planes: a cron job calls it with the
         sandbox tag so no throwaway VM outlives its task budget.
+
+        An instance is deleted only if its own ``tags`` contain ``tag``. The check is made on
+        each returned instance: a server that ignores the ``tag`` query returns the whole
+        account, and deleting from that list destroyed two unrelated VMs.
         """
+        if not tag:
+            raise ValueError("cleanup_orphans needs a tag")
         now = now or datetime.now(timezone.utc)
         deleted: list[str] = []
         for inst in await self.list_instances(tag=tag):
+            if tag not in inst.tags:
+                continue
             if inst.date_created is None:
                 continue
             created = inst.date_created

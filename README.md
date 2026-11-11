@@ -14,7 +14,7 @@ is the review evidence: what ran, what was refused, and proof that the VM is gon
 **Code:** https://github.com/vigohan95/ashproof
 **Live demo:** https://45-76-6-117.sslip.io/ (real Vultr VMs and real models; one task at a time, limits on the page).
 **A real receipt:** [`compromised-agent.receipt.md`](docs/evidence/vultr-2026-11-11/compromised-agent.receipt.md), from the compromised agent.
-**Rebuilt on 2026-11-11:** the first demo server was destroyed on 2026-11-09, and its signing key and log went with it. [What changed](#the-demo-server-was-rebuilt-on-2026-11-11).
+**Rebuilt on 2026-11-11:** the first demo server was destroyed on 2026-11-09, by its own orphan sweep as far as we can tell, and its signing key and log went with it. [What happened and what changed](#the-demo-server-was-rebuilt-on-2026-11-11).
 
 ## Judge in 60 seconds
 
@@ -170,8 +170,20 @@ Known limitations:
 ### The demo server was rebuilt on 2026-11-11
 
 The control plane VM that produced the 2026-11-06 evidence (`66.135.3.140`) was destroyed on 2026-11-09 at 17:19 UTC.
-A new one was created from this repository on 2026-11-11 at `45.76.6.117`. Three things follow from how Ashproof is
-built:
+A new one was created from this repository on 2026-11-11 at `45.76.6.117`.
+
+**Our own orphan sweep did it.** The sweep asked the Vultr API for instances tagged `brz-sandbox` and deleted every
+one in the answer that was older than 25 minutes. It never looked at the tags of what came back. On 2026-11-11 the
+API answered that query with every instance on the account (an unknown tag returned everything too), and nine
+minutes after the rebuild the new control plane logged `orphan sweep deleted [...]` for an unrelated VM on the same
+account. We stopped the service three minutes before the pass that would have deleted the control plane itself. The
+log of the first server is gone, but its end fits: both VMs on the account were destroyed 11 seconds apart. The sweep
+now checks each instance's own tags before deleting, the test server ignores the tag filter the way the real one
+did, and a test covers it (`brz/vultr/client.py`, `tests/vultr/test_client.py`). With the fix deployed, the control
+plane, by then 36 minutes old, was still there after the next sweep pass, and the same query run on it returned the
+control plane from the server and nothing after the client's own filter.
+
+Three things follow from how Ashproof is built:
 
 - **The signing key is new.** The private key is generated on the control plane and exists nowhere else, so it was
   lost with the VM. The current public key is [`docs/keys/receipt-signing.pub`](docs/keys/receipt-signing.pub)
@@ -212,7 +224,7 @@ evidence, recordings, docs and the evidence page's wording changed after it. Evi
 | Kill switch, during boot, 3 runs | 20 to 77 s, because of Vultr's 409. All VMs 404 | [`kill-switch.md`](docs/evidence/vultr-2026-11-06/kill-switch.md) |
 | Task the planner refuses | data theft request: refused in 3.2 s, $0.0011, no VM, status `failed` | `tasks/exfil-refused.*` |
 | Serverless Inference | `json_schema` accepted by the planner and the verifier. Alone, `glm-5.3` takes about 4 s and `qwen3.8-27b` about 3 s. Verifier passed good work and rejected wrong numbers, empty output and an injection | `llm-*.json` |
-| Orphan sweep | a script of ours was killed before its cleanup and left a tagged VM running. The control plane found it by tag at 25 minutes and deleted it on its own; `GET` returned 404. The control plane VM has a different tag and is not swept | `orphan-sweep.txt` |
+| Orphan sweep | a script of ours was killed before its cleanup and left a tagged VM running. The control plane found it by tag at 25 minutes and deleted it on its own; `GET` returned 404. The control plane VM has a different tag and was not swept that day; three days later [it was](#the-demo-server-was-rebuilt-on-2026-11-11) | `orphan-sweep.txt` |
 | Prices | live from `/v2/plans` and `/v1/models`; each receipt names its price source. The VM rate matches the pending charges (0.008929 per started hour). Receipts before the last commit were metered about 10 percent low | `tasks/final-csv.*` |
 
 Measured earlier on a workstation (WSL2, gVisor release-20261026.0), and not repeated on Vultr:

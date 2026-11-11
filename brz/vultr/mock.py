@@ -222,6 +222,9 @@ class MockVultrState:
     _faults: list[dict[str, Any]] = field(default_factory=list)
     _rule_seq: int = 0
     now: datetime | None = None  # override "current time" for date_created (orphan tests)
+    # The real API answered GET /v2/instances?tag=... with every instance (2026-11-11), so the
+    # mock does the same unless a test turns the filter on.
+    honor_tag_filter: bool = False
 
     # ---- helpers for tests
     def fail_next(self, status: int, times: int = 1, method: str | None = None, path_prefix: str = "") -> None:
@@ -346,7 +349,7 @@ def create_mock_app(state: MockVultrState | None = None) -> FastAPI:
     async def list_instances(tag: str | None = None, label: str | None = None) -> dict[str, Any]:
         items = []
         for inst in state.live_instances():
-            if tag and tag not in inst.tags:
+            if tag and state.honor_tag_filter and tag not in inst.tags:
                 continue
             if label and label != inst.label:
                 continue

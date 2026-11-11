@@ -72,6 +72,43 @@ async def test_list_by_tag_and_orphan_cleanup(vultr: VultrClient, vultr_state: M
         await vultr.get_instance(a.id)
 
 
+async def test_cleanup_orphans_spares_untagged_when_server_ignores_tag_filter(
+    vultr: VultrClient, vultr_state: MockVultrState
+):
+    """2026-11-11: GET /v2/instances?tag=brz-sandbox returned the whole account and the sweep
+    deleted an unrelated VM. Only instances that carry the tag themselves may be deleted."""
+    assert vultr_state.honor_tag_filter is False
+    sandbox = await vultr.create_instance(SPEC)
+    control_plane = await vultr.create_instance(
+        SPEC.model_copy(update={"label": "ashproof-control-plane", "tags": ["ashproof-control-plane"]})
+    )
+    unrelated = await vultr.create_instance(
+        SPEC.model_copy(update={"label": "docsdrift-live", "tags": ["docsdrift-live"]})
+    )
+    untagged = await vultr.create_instance(SPEC.model_copy(update={"label": "no-tags", "tags": []}))
+    age_instances(vultr_state, timedelta(hours=8))
+
+    assert {i.id for i in await vultr.list_instances(tag="brz-sandbox")} == {sandbox.id}
+    assert await vultr.cleanup_orphans("brz-sandbox", older_than_seconds=600) == [sandbox.id]
+    assert {i.id for i in vultr_state.live_instances()} == {control_plane.id, unrelated.id, untagged.id}
+    deletes = [c.path for c in vultr_state.calls_for("DELETE")]
+    assert len(deletes) == 1 and deletes[0].endswith(f"/instances/{sandbox.id}")
+
+
+async def test_cleanup_orphans_same_result_when_server_filters(vultr: VultrClient, vultr_state: MockVultrState):
+    vultr_state.honor_tag_filter = True
+    sandbox = await vultr.create_instance(SPEC)
+    other = await vultr.create_instance(SPEC.model_copy(update={"tags": ["control-plane"]}))
+    age_instances(vultr_state, timedelta(hours=1))
+    assert await vultr.cleanup_orphans("brz-sandbox", older_than_seconds=600) == [sandbox.id]
+    assert {i.id for i in vultr_state.live_instances()} == {other.id}
+
+
+async def test_cleanup_orphans_refuses_empty_tag(vultr: VultrClient):
+    with pytest.raises(ValueError):
+        await vultr.cleanup_orphans("", older_than_seconds=0)
+
+
 async def test_cleanup_orphans_uses_explicit_now(vultr: VultrClient):
     inst = await vultr.create_instance(SPEC)
     future = datetime.now(timezone.utc) + timedelta(hours=2)
