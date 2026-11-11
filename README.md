@@ -12,18 +12,19 @@ is the review evidence: what ran, what was refused, and proof that the VM is gon
 > **plans, dispatches and verifies real executed work** inside a sandbox. MIT licensed.
 
 **Code:** https://github.com/vigohan95/ashproof
-**Live demo:** https://66-135-3-140.sslip.io/ (real Vultr VMs and real models; one task at a time, limits on the page).
-**A real receipt:** [`rel-01-compromised-agent.receipt.md`](docs/evidence/vultr-2026-11-06/final-run/rel-01-compromised-agent.receipt.md), from the compromised agent.
+**Live demo:** https://45-76-6-117.sslip.io/ (real Vultr VMs and real models; one task at a time, limits on the page).
+**A real receipt:** [`compromised-agent.receipt.md`](docs/evidence/vultr-2026-11-11/compromised-agent.receipt.md), from the compromised agent.
+**Rebuilt on 2026-11-11:** the first demo server was destroyed on 2026-11-09, and its signing key and log went with it. [What changed](#the-demo-server-was-rebuilt-on-2026-11-11).
 
 ## Judge in 60 seconds
 
-1. Open the [demo](https://66-135-3-140.sslip.io/). A real recorded task prints on the right in about 15 seconds. It is
+1. Open the [demo](https://45-76-6-117.sslip.io/). A real recorded task prints on the right in about 15 seconds. It is
    labelled as a recording, and its plan is labelled as a script.
 2. Click **Open the receipt**. It opens with what was refused, and your browser checks the chain, the hash, the signature
    and the public log. Click **Change one byte and check again**.
 3. Click **Run the compromised agent live** on the home page. Two real VMs, about 2 minutes, one task at a time. If a task
    is already running, the page links to it.
-4. [Evidence](https://66-135-3-140.sslip.io/ui/evidence) lists all 31 attacks and the kill switch numbers.
+4. [Evidence](https://45-76-6-117.sslip.io/ui/evidence) lists all 31 attacks and the kill switch numbers.
 
 ## The problem
 
@@ -119,8 +120,8 @@ key's access control list must include the control plane's address.
 | **Zero secrets in the sandbox** | the VM never receives a cloud or inference key; the only secret is a per-task HMAC key that authenticates the control plane to that one runner. Capability tokens are single-use, scoped (`exec`/`scan`/`egress`/`revoke`), expire in 60 s and pin the exact step body; replies carry an HMAC, so the plain-HTTP control link is authenticated both ways. Step env is allow-listed. stdout and stderr are scanned and redacted in the runner before they reach any model prompt; a final scan covers env and the work tree. A dirty scan fails the task | `brz_runner/tokens.py`, `brz_runner/secretscan.py`, `brz_runner/server.py` |
 | **Independent verifier** | deterministic checks (exit codes, expected outputs, plan assertions) + the whole plan re-run in a **second clean VM** with byte-identical output hashes required + a review by a *different model family*, which sees input previews and recomputes what it can; the model can only lower a verdict, never rescue a failed check. A step with a network that had packets refused fails the task, whatever its output, unless the requester (never the plan) said this is a wall test. `nemotron-3.5-content-safety` reads inputs and step output first: unsafe output fails a check, an unsafe input is recorded and told to the verifier model. A repair may change a step's code, never widen it: turning on the network, raising the timeout or dropping expected outputs fails the task | `brz/llm/verifier.py`, `brz/llm/safety.py`, `brz/orchestrator.py` |
 | **Hash-chained receipts** | every event is `sha256(prev_hash + canonical_json(event))`; the receipt pins the head hash and its own `receipt_sha256`; anyone can re-verify with `python brz/audit/offline_verify.py receipt.json`, which needs nothing but Python. Modified, dropped or reordered events are pinpointed, and the readable fields are checked against the chain | `brz/audit/` |
-| **Signed receipts** | the control plane signs the head and receipt hash with Ed25519. Public key: [`docs/keys/receipt-signing.pub`](docs/keys/receipt-signing.pub), `/pubkey` and inside `offline_verify.py`, which verifies in pure Python so it still needs nothing installed. The receipt page repeats chain, hash, signature and log checks in the browser, and [`/ui/verify`](https://66-135-3-140.sslip.io/ui/verify) checks any receipt file. The private key is a 0640 file on the control plane, outside git, read only by the control plane service; it appears in no receipt, log or response. A signature can be removed from a file, so an unsigned receipt is reported and `--require-signature` fails it | `brz/audit/signing.py`, `brz/audit/offline_verify.py` |
-| **Public log** | every signed head is appended to [`/anchors.jsonl`](https://66-135-3-140.sslip.io/anchors.jsonl): each line chains to the one before and is signed. The repository holds an earlier copy, [`anchors-checkpoint.jsonl`](docs/evidence/vultr-2026-11-06/anchors-checkpoint.jsonl); `offline_verify.py --anchors live.jsonl --checkpoint old.jsonl` fails if the live log no longer starts with it | `brz/audit/signing.py` |
+| **Signed receipts** | the control plane signs the head and receipt hash with Ed25519. Public key: [`docs/keys/receipt-signing.pub`](docs/keys/receipt-signing.pub), `/pubkey` and inside `offline_verify.py`, which verifies in pure Python so it still needs nothing installed. The receipt page repeats chain, hash, signature and log checks in the browser, and [`/ui/verify`](https://45-76-6-117.sslip.io/ui/verify) checks any receipt file. The private key is a 0640 file on the control plane, outside git, read only by the control plane service; it appears in no receipt, log or response. A signature can be removed from a file, so an unsigned receipt is reported and `--require-signature` fails it | `brz/audit/signing.py`, `brz/audit/offline_verify.py` |
+| **Public log** | every signed head is appended to [`/anchors.jsonl`](https://45-76-6-117.sslip.io/anchors.jsonl): each line chains to the one before and is signed. The repository holds an earlier copy, [`anchors-checkpoint.jsonl`](docs/evidence/vultr-2026-11-11/anchors-checkpoint.jsonl); `offline_verify.py --anchors live.jsonl --checkpoint old.jsonl` fails if the live log no longer starts with it | `brz/audit/signing.py` |
 | **Compromised agent** | a fixed server-side scenario: a CSV with an injected note and a scripted plan standing in for a hijacked agent. A caller can name the scenario but cannot supply a plan. It passes the same gates as a model's plan, and it is refused outside live mode. Every page, the chain and the receipt mark the plan as a script | `apps/control_plane/scenarios.py` |
 | **Kill switch** | `POST /tasks/{id}/kill`: revoke all runner tokens (kills the running step), `DELETE` every VM at once, confirm 404, write it all into the chain; works in any state, including during boot and "awaiting approval" | `Orchestrator.kill` |
 | **Cost meter** | per-started-hour VM cost x plan price + tokens x per-model price, per task, from live Vultr prices; budget preflight refuses before the first VM; mid-task breaker | `brz/cost/` |
@@ -165,6 +166,27 @@ Known limitations:
   group limits who is on that path; no secret crosses it.
 
 ## Status: what ran on Vultr
+
+### The demo server was rebuilt on 2026-11-11
+
+The control plane VM that produced the 2026-11-06 evidence (`66.135.3.140`) was destroyed on 2026-11-09 at 17:19 UTC.
+A new one was created from this repository on 2026-11-11 at `45.76.6.117`. Three things follow from how Ashproof is
+built:
+
+- **The signing key is new.** The private key is generated on the control plane and exists nowhere else, so it was
+  lost with the VM. The current public key is [`docs/keys/receipt-signing.pub`](docs/keys/receipt-signing.pub)
+  (key id `6a6bb9987143083f`); the first one is kept as
+  [`docs/keys/receipt-signing-2026-11-06.pub`](docs/keys/receipt-signing-2026-11-06.pub) (key id `ee7704217a7ac13d`).
+- **The public log starts again at line 0.** The 2026-11-06 log survives only as the 14-line copy in
+  [`docs/evidence/vultr-2026-11-06/anchors-checkpoint.jsonl`](docs/evidence/vultr-2026-11-06/anchors-checkpoint.jsonl).
+  Any receipt signed after that copy was taken has no log line left.
+- **The 2026-11-06 evidence is unchanged** and still verifies with the first key (the command is under
+  [Reproduce the evidence](#reproduce-the-evidence)). The numbers in the table below are from that day and were not re-measured.
+
+After the rebuild three tasks were run through the public URL, and they are the recordings the demo now plays:
+[`docs/evidence/vultr-2026-11-11/`](docs/evidence/vultr-2026-11-11/). The CSV task was verified in 101.4 s; the theft
+request was refused by the planner in 2.5 s with no VM; the compromised agent failed in 116.5 s with 20 of 20 packets
+refused by the kernel. All four sandbox VMs returned 404 afterwards.
 
 All of this ran on real Vultr VMs in `ewr` on 2026-11-06, with real models. The final run used commit `fd2caaf`; only
 evidence, recordings, docs and the evidence page's wording changed after it. Evidence is in
@@ -263,9 +285,17 @@ python scripts/tamper_signed.py <receipt.json> <out.json>           # flip one b
 Check a receipt against the live log and the copy in this repository:
 
 ```bash
-curl -s https://66-135-3-140.sslip.io/anchors.jsonl -o live.jsonl
+curl -s https://45-76-6-117.sslip.io/anchors.jsonl -o live.jsonl
 python brz/audit/offline_verify.py receipt.json --require-signature --anchors live.jsonl \
-    --checkpoint docs/evidence/vultr-2026-11-06/anchors-checkpoint.jsonl
+    --checkpoint docs/evidence/vultr-2026-11-11/anchors-checkpoint.jsonl
+```
+
+Receipts from before the rebuild were signed with the first key, so name it:
+
+```bash
+python brz/audit/offline_verify.py docs/evidence/vultr-2026-11-06/final-run/rel-01-compromised-agent.receipt.json \
+    --require-signature --pubkey "$(cat docs/keys/receipt-signing-2026-11-06.pub)" \
+    --anchors docs/evidence/vultr-2026-11-06/anchors-checkpoint.jsonl
 ```
 
 ## Docs

@@ -62,7 +62,7 @@ Vultr, Vultr Cloud Compute, Vultr Serverless Inference, gVisor, nftables, Ed2551
 
 ## Links
 
-- Demo: https://66-135-3-140.sslip.io/
+- Demo: https://45-76-6-117.sslip.io/
 - GitHub: https://github.com/vigohan95/ashproof
 - Video: https://youtu.be/2jKjxSnxIjE
 - Slides: `ashproof-slides.pdf`, built from `docs/SLIDES-OUTLINE.md`

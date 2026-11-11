@@ -38,7 +38,9 @@ import sys
 
 GENESIS_HASH = "0" * 64
 # The demo's receipt signing key, public half. The private half never leaves the control plane.
-PUBLISHED_PUBLIC_KEY = "753ff09ddb997eef5e84bc265068bf57bcbbeda35dc4725f067521053c392df6"
+# Receipts from before 2026-11-11 were signed with docs/keys/receipt-signing-2026-11-06.pub: pass it with --pubkey.
+# Receipts from before 2026-11-11 were signed with docs/keys/receipt-signing-2026-11-06.pub: pass it with --pubkey.
+PUBLISHED_PUBLIC_KEY = "028bb46e3ac65c86e38de02a20b83daaadb5c2ad0a929b53536e600813f6fdeb"
 
 # --- Ed25519 verification, RFC 8032 section 5.1.7. Verification only, so no secret is handled here.
 _P = 2**255 - 19

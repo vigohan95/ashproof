@@ -1,18 +1,18 @@
 {
-  "replay": "c27596e66a07",
+  "replay": "78b6cc1245e5",
   "pinned": [
     {
-      "id": "c27596e66a07",
+      "id": "78b6cc1245e5",
       "title": "Compromised agent",
       "note": "A scripted hijack looks for keys and tries to send the file out, on two real VMs. The kernel refuses every packet and the task fails."
     },
     {
-      "id": "0c498b45904a",
+      "id": "4295c1eeb105",
       "title": "Normal work",
       "note": "A CSV totalled on one VM, repeated on a second VM with identical output hashes, both VMs deleted."
     },
     {
-      "id": "66eb127a9fcb",
+      "id": "9748d809548f",
       "title": "Refused by the planner",
       "note": "A request to steal data. The model refused in about 3 seconds, so no VM was created."
     }

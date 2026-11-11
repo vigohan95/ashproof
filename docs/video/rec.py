@@ -12,7 +12,7 @@ import pathlib
 import threading
 import time
 
-BASE = "https://66-135-3-140.sslip.io"
+BASE = "https://45-76-6-117.sslip.io"
 SCALE = 1.5  # a 1280x720 CSS window at this scale gives 1920x1080 frames, with text a viewer can read
 
 POINTER_JS = r"""
